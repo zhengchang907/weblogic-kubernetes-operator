@@ -189,7 +189,10 @@ public abstract class JobStepContext implements StepContextConstants {
   }
 
   private V1PodTemplateSpec createPodTemplateSpec(TuningParameters tuningParameters) {
-    V1ObjectMeta metadata = new V1ObjectMeta().name(getJobName());
+    V1ObjectMeta metadata =
+        new V1ObjectMeta()
+            .name(getJobName())
+            .putAnnotationsItem("sidecar.istio.io/inject", "false");
     V1PodTemplateSpec podTemplateSpec =
         new V1PodTemplateSpec().metadata(metadata).spec(createPodSpec(tuningParameters));
     return podTemplateSpec;
