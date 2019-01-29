@@ -128,6 +128,7 @@ public class ServiceHelper {
         }
         if (scan.getListenPort() != null) {
           ports.add(new V1ServicePort().name("default").port(scan.getListenPort()).protocol("TCP"));
+          ports.add(new V1ServicePort().name("node-manager").port(5556).protocol("TCP"));
         }
         if (scan.getSslListenPort() != null) {
           ports.add(
