@@ -28,14 +28,5 @@ The table below summarizes changes made so far within this branch and an explana
 | Change Made | Reason |
 | --- | --- |
 | Disabled auto-injection for Introspection job | When the domain introspection job completes, the associated istio container within the job pod does not complete.  So the job never shows as completed and eventuall reaches a `BackoffLimitExceeded` state. |
-| Change node manager listen address to 127.0.0.1 | Node manager is listening on sample-domain1-admin-server:5556 and wlst is using sample-domain1-admin-server:5556 to connect it.  istio-proxy intercepts all request to sample-domain1-admin-server:5556 and translate the request to 127.0.0.1:5556, even the downstream and upstream processes are located in same local container. |
-| start-server.py connects to 127.0.0.1 | Connect to address 127.0.0.1 instead of the service name | 
-| Change create-domain.sh sample script for domain on PV to specify container | kubectl logs commands were changed to specify the create job container name. This is needed because when istio injection is enabled an additional container called istio-proxy is run. |
-| Change readiness probe to listen on port 8888 | Port 7001 and 8001 are being used for http and tcp traffic, needed to separate out http traffic on separate channel for istio |
-
-
-## Known Issues
-
-Listed below are issues we observed that did not block progress on getting a domain started in an Istio environment
-
-* Scale up/down causes a restart of the domain.  We suspect this is due to the annotations that Istio adds to the pod.  The operator treats the annotations as changes to the pod and restarts it.
+| Change node manager listen address to 0.0.0.0 | Node manager is listening on sample-domain1-admin-server:5556 and wlst is using sample-domain1-admin-server:5556 to connect it.  istio-proxy intercepts all request to sample-domain1-admin-server:5556 and translate the request to 127.0.0.1:5556, even the downstream and upstream processes are located in same local container. |
+| Add port 5556 to admin server service | Expose port 5556 in for istio-proxy | 
