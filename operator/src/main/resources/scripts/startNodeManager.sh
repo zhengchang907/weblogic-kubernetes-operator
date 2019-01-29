@@ -175,7 +175,7 @@ cat <<EOF > ${nm_props_file}
   JavaHome=${JAVA_HOME}
   LogLevel=FINEST
   DomainsFileEnabled=true
-  ListenAddress=${SERVICE_NAME}
+  ListenAddress=0.0.0.0
   NativeVersionEnabled=true
   ListenPort=5556
   LogToStderr=true
