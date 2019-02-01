@@ -797,7 +797,7 @@ public abstract class PodStepContext implements StepContextConstants {
         .timeoutSeconds(getReadinessProbeTimeoutSeconds(tuning))
         .periodSeconds(getReadinessProbePeriodSeconds(tuning))
         .failureThreshold(FAILURE_THRESHOLD)
-        .httpGet(httpGetAction(READINESS_PATH, getDefaultPort()));
+        .httpGet(httpGetAction(READINESS_PATH, 8888));
     return readinessProbe;
   }
 
