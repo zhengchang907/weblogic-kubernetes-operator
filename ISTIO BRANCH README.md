@@ -31,6 +31,8 @@ The table below summarizes changes made so far within this branch and an explana
 | Change node manager listen address to 127.0.0.1 | Node manager is listening on sample-domain1-admin-server:5556 and wlst is using sample-domain1-admin-server:5556 to connect it.  istio-proxy intercepts all request to sample-domain1-admin-server:5556 and translate the request to 127.0.0.1:5556, even the downstream and upstream processes are located in same local container. |
 | start-server.py connects to 127.0.0.1 | Connect to address 127.0.0.1 instead of the service name | 
 | Change create-domain.sh sample script for domain on PV to specify container | kubectl logs commands were changed to specify the create job container name. This is needed because when istio injection is enabled an additional container called istio-proxy is run. |
+| Change readiness probe to listen on port 8888 | Port 7001 and 8001 are being used for http and tcp traffic, needed to separate out http traffic on separate channel for istio |
+
 
 ## Known Issues
 
