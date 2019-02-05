@@ -29,7 +29,7 @@ import oracle.kubernetes.weblogic.domain.v2.ServerSpec;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 @SuppressWarnings("deprecation")
-public abstract class PodStepContext implements StepContextConstants {
+public abstract class PodStepContext extends StepContextBase {
 
   private static final LoggingFacade LOGGER = LoggingFactory.getLogger("Operator", "Operator");
 
@@ -44,7 +44,6 @@ public abstract class PodStepContext implements StepContextConstants {
   protected final WlsServerConfig scan;
   private final Step conflictStep;
   private V1Pod podModel;
-  private Map<String, String> substitutionVariables = new HashMap<>();
 
   PodStepContext(Step conflictStep, Packet packet) {
     this.conflictStep = conflictStep;
@@ -165,12 +164,14 @@ public abstract class PodStepContext implements StepContextConstants {
       List<V1ContainerPort> ports = new ArrayList<>();
       if (scan.getNetworkAccessPoints() != null) {
         for (NetworkAccessPoint nap : scan.getNetworkAccessPoints()) {
-          V1ContainerPort port =
-              new V1ContainerPort()
-                  .name(LegalNames.toDNS1123LegalName(nap.getName()))
-                  .containerPort(nap.getListenPort())
-                  .protocol("TCP");
-          ports.add(port);
+          if ((nap.getListenPort() != 8888) && (!nap.getName().equals("istio"))) {
+            V1ContainerPort port =
+                new V1ContainerPort()
+                    .name(LegalNames.toDNS1123LegalName(nap.getName()))
+                    .containerPort(nap.getListenPort())
+                    .protocol("TCP");
+            ports.add(port);
+          }
         }
       }
       if (scan.getListenPort() != null) {
@@ -714,8 +715,6 @@ public abstract class PodStepContext implements StepContextConstants {
     return Collections.singletonList(START_SERVER);
   }
 
-  abstract List<V1EnvVar> getEnvironmentVariables(TuningParameters tuningParameters);
-
   private List<V1VolumeMount> getVolumeMounts() {
     List<V1VolumeMount> mounts = PodDefaults.getStandardVolumeMounts(getDomainUID());
     mounts.addAll(getServerSpec().getAdditionalVolumeMounts());
@@ -739,43 +738,10 @@ public abstract class PodStepContext implements StepContextConstants {
     if (mockWLS()) {
       addEnvVar(vars, "MOCK_WLS", "true");
     }
-    hideAdminUserCredentials(vars);
   }
 
   private String getDomainHome() {
     return getDomain().getDomainHome();
-  }
-
-  // Hide the admin account's user name and password.
-  // Note: need to use null v.s. "" since if you upload a "" to kubectl then download it,
-  // it comes back as a null and V1EnvVar.equals returns false even though it's supposed to
-  // be the same value.
-  // Regardless, the pod ends up with an empty string as the value (v.s. thinking that
-  // the environment variable hasn't been set), so it honors the value (instead of using
-  // the default, e.g. 'weblogic' for the user name).
-  private static void hideAdminUserCredentials(List<V1EnvVar> vars) {
-    addEnvVar(vars, "ADMIN_USERNAME", null);
-    addEnvVar(vars, "ADMIN_PASSWORD", null);
-  }
-
-  static void addEnvVar(List<V1EnvVar> vars, String name, String value) {
-    vars.add(new V1EnvVar().name(name).value(value));
-  }
-
-  void doSubstitution(List<V1EnvVar> vars) {
-    for (V1EnvVar var : vars) {
-      var.setValue(translate(var.getValue()));
-    }
-  }
-
-  private String translate(String rawValue) {
-    String result = rawValue;
-    for (Map.Entry<String, String> entry : substitutionVariables.entrySet()) {
-      if (result != null && entry.getValue() != null) {
-        result = result.replace(String.format("$(%s)", entry.getKey()), entry.getValue());
-      }
-    }
-    return result;
   }
 
   private V1Lifecycle createLifecycle() {
@@ -797,7 +763,7 @@ public abstract class PodStepContext implements StepContextConstants {
         .timeoutSeconds(getReadinessProbeTimeoutSeconds(tuning))
         .periodSeconds(getReadinessProbePeriodSeconds(tuning))
         .failureThreshold(FAILURE_THRESHOLD)
-        .httpGet(httpGetAction(READINESS_PATH, getDefaultPort()));
+        .httpGet(httpGetAction(READINESS_PATH, 8888));
     return readinessProbe;
   }
 
