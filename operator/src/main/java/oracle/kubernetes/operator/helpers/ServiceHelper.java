@@ -118,12 +118,14 @@ public class ServiceHelper {
         List<V1ServicePort> ports = new ArrayList<>();
         if (scan.getNetworkAccessPoints() != null) {
           for (NetworkAccessPoint nap : scan.getNetworkAccessPoints()) {
-            V1ServicePort port =
-                new V1ServicePort()
-                    .name(LegalNames.toDNS1123LegalName(nap.getName()))
-                    .port(nap.getListenPort())
-                    .protocol("TCP");
-            ports.add(port);
+            if ((nap.getListenPort() != 8888) && (!nap.getName().equals("istio"))) {
+              V1ServicePort port =
+                  new V1ServicePort()
+                      .name(LegalNames.toDNS1123LegalName(nap.getName()))
+                      .port(nap.getListenPort())
+                      .protocol("TCP");
+              ports.add(port);
+            }
           }
         }
         if (scan.getListenPort() != null) {
@@ -627,12 +629,14 @@ public class ServiceHelper {
           // for every server in the cluster, locate ports
           if (server.getNetworkAccessPoints() != null) {
             for (NetworkAccessPoint nap : server.getNetworkAccessPoints()) {
-              V1ServicePort port =
-                  new V1ServicePort()
-                      .name(LegalNames.toDNS1123LegalName(nap.getName()))
-                      .port(nap.getListenPort())
-                      .protocol("TCP");
-              ports.putIfAbsent(nap.getName(), port);
+              if ((nap.getListenPort() != 8888) && (!nap.getName().equals("istio"))) {
+                V1ServicePort port =
+                    new V1ServicePort()
+                        .name(LegalNames.toDNS1123LegalName(nap.getName()))
+                        .port(nap.getListenPort())
+                        .protocol("TCP");
+                ports.putIfAbsent(nap.getName(), port);
+              }
             }
           }
           if (server.getListenPort() != null) {
