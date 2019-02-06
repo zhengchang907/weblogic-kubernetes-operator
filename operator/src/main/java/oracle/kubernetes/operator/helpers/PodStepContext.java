@@ -196,7 +196,7 @@ public abstract class PodStepContext extends StepContextBase {
       List<V1ContainerPort> ports = new ArrayList<>();
       if (scan.getNetworkAccessPoints() != null) {
         for (NetworkAccessPoint nap : scan.getNetworkAccessPoints()) {
-          if ((nap.getListenPort() != 8888) && (!nap.getName().equals("istio"))) {
+          if ((nap.getListenPort() != 8888) && (!nap.getName().startsWith("istio-"))) {
             V1ContainerPort port =
                 new V1ContainerPort()
                     .name(LegalNames.toDNS1123LegalName(nap.getName()))

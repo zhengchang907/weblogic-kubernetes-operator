@@ -118,7 +118,7 @@ public class ServiceHelper {
         List<V1ServicePort> ports = new ArrayList<>();
         if (scan.getNetworkAccessPoints() != null) {
           for (NetworkAccessPoint nap : scan.getNetworkAccessPoints()) {
-            if ((nap.getListenPort() != 8888) && (!nap.getName().equals("istio"))) {
+            if ((nap.getListenPort() != 8888) && (!nap.getName().startsWith("istio-"))) {
               V1ServicePort port =
                   new V1ServicePort()
                       .name(LegalNames.toDNS1123LegalName(nap.getName()))
@@ -629,7 +629,7 @@ public class ServiceHelper {
           // for every server in the cluster, locate ports
           if (server.getNetworkAccessPoints() != null) {
             for (NetworkAccessPoint nap : server.getNetworkAccessPoints()) {
-              if ((nap.getListenPort() != 8888) && (!nap.getName().equals("istio"))) {
+              if ((nap.getListenPort() != 8888) && (!nap.getName().startsWith("istio-"))) {
                 V1ServicePort port =
                     new V1ServicePort()
                         .name(LegalNames.toDNS1123LegalName(nap.getName()))
