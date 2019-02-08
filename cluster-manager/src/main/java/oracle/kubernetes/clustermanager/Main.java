@@ -10,11 +10,12 @@ import com.oracle.bmc.auth.ConfigFileAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.SimplePrivateKeySupplier;
 import com.oracle.bmc.objectstorage.ObjectStorage;
 import com.oracle.bmc.objectstorage.ObjectStorageClient;
-import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
-import com.oracle.bmc.objectstorage.responses.GetObjectResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.function.Supplier;
+import oracle.kubernetes.clustermanager.helpers.LeaseManager;
+import oracle.kubernetes.clustermanager.types.Lease;
 
 /** Cluster manager lets you get an ephemeral Kubernetes cluster for testing the operator. */
 public class Main {
@@ -56,13 +57,10 @@ public class Main {
       System.exit(1);
     }
 
-    GetObjectRequest getObjectRequest =
-        GetObjectRequest.builder()
-            .namespaceName(NAMESPACE)
-            .bucketName(BUCKET_NAME)
-            .objectName(OBJECT_NAME)
-            .build();
-    GetObjectResponse result = client.getObject(getObjectRequest);
-    System.out.println("Got the lease object with e-tag: " + result.getETag());
+    List<Lease> theLeases = LeaseManager.getLeases(client);
+    System.out.println("Current leases:");
+    for (Lease lease : theLeases) {
+      System.out.println(lease);
+    }
   }
 }
