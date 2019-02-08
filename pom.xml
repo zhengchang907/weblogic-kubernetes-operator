@@ -19,6 +19,7 @@
     <module>json-schema-maven-plugin</module>
     <module>json-schema</module>
     <module>buildtime-reports</module>
+    <module>cluster-manager</module>
   </modules>
 
   <scm>
