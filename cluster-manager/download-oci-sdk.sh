@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo 'Downloading the OCI Java SDK...'
-wget https://github.com/oracle/oci-java-sdk/releases/download/v1.3.7/oci-java-sdk.zip
+wget -q https://github.com/oracle/oci-java-sdk/releases/download/v1.3.7/oci-java-sdk.zip
 
 jar xvf oci-java-sdk.zip lib/oci-java-sdk-full-1.3.7.jar
 
