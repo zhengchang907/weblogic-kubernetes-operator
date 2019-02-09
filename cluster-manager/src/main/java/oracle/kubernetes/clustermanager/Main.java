@@ -57,10 +57,13 @@ public class Main {
       System.exit(1);
     }
 
-    List<Lease> theLeases = LeaseManager.getLeases(client);
+    List<Lease> theLeases = LeaseManager.getLeases(client).getLeases();
     System.out.println("Current leases:");
     for (Lease lease : theLeases) {
       System.out.println(lease);
     }
+
+    // try to acquire lease
+    LeaseManager.acquireLease(client, "mark", 1);
   }
 }

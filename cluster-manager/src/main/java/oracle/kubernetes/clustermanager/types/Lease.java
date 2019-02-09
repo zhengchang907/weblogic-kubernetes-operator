@@ -1,4 +1,4 @@
-// Copyright 2019, Oracle Corporation and/or its affiliates. All rights reserverd.
+// Copyright 2019, Oracle Corporation and/or its affiliates. All rights reserved.
 
 package oracle.kubernetes.clustermanager.types;
 
