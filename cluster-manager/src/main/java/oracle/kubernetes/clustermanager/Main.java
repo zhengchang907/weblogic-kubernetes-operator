@@ -64,6 +64,6 @@ public class Main {
     }
 
     // try to acquire lease
-    LeaseManager.acquireLease(client, "mark", 1);
+    Lease myLease = LeaseManager.acquireLease(client, "mark", 1);
   }
 }

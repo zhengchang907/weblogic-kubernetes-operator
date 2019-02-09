@@ -24,10 +24,12 @@ import org.apache.commons.io.IOUtils;
 public class LeaseManager {
 
   /** Attempt to acquire a lease. */
-  public static void acquireLease(ObjectStorage client, String tenant, int buildNumber) {
+  public static Lease acquireLease(ObjectStorage client, String tenant, int buildNumber) {
     Leases leases = getLeases(client);
+    Lease theLease = null;
 
     // find a vacancy
+    boolean found = false;
     main_loop:
     for (Lease lease : leases.getLeases()) {
       if (lease.getTenant() == null) {
@@ -37,12 +39,45 @@ public class LeaseManager {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.HOUR, 3);
         lease.setExpiryTime(cal.getTime());
+        found = true;
+        theLease = lease;
         break main_loop;
       }
     }
 
-    for (Lease theLease : leases.getLeases()) {
-      System.out.println(theLease);
+    // if no vacancy found, check for any expired leases
+    if (!found) {
+      Calendar now = Calendar.getInstance();
+
+      evict_loop:
+      for (Lease lease : leases.getLeases()) {
+        Calendar expiry = Calendar.getInstance();
+        expiry.setTime(lease.getExpiryTime());
+        if (expiry.before(now)) {
+          System.out.println(
+              "found an expired lease, evicting "
+                  + lease.getTenant()
+                  + " from unit "
+                  + lease.getId());
+          lease.setTenant(tenant);
+          lease.setBuildNumber(buildNumber);
+          Calendar cal = Calendar.getInstance();
+          cal.add(Calendar.HOUR, 3);
+          lease.setExpiryTime(cal.getTime());
+          found = true;
+          theLease = lease;
+          break evict_loop;
+        }
+      }
+    }
+
+    if (!found) {
+      System.out.println("no room at the inn!");
+      return null;
+    }
+
+    for (Lease eachLease : leases.getLeases()) {
+      System.out.println(eachLease);
     }
 
     // update the leases
@@ -62,6 +97,8 @@ public class LeaseManager {
     } else {
       System.out.println("Different etag " + response.getETag());
     }
+
+    return theLease;
   }
 
   /** Get a list of current leases. */
