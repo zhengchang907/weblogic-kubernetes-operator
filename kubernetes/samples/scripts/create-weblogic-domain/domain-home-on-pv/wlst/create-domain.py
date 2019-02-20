@@ -100,6 +100,15 @@ else:
   cd('/ServerTemplates/%s' % templateName)
   cmo.setListenPort(server_port)
   cmo.setCluster(cl)
+
+  templateChannelName = cluster_name + "-NAP"
+  create(templateChannelName, 'NetworkAccessPoint')
+  cd('NetworkAccessPoints/%s' % templateChannelName)
+  #set('ListenAddress', '%s-%s${id}' % (domain_uid, managed_server_name_base_svc))
+  set('ListenAddress', 'unresolvable-dns-name')
+  set('PublicPort', server_port + 10)
+  set('ListenPort', server_port + 10)
+
   print('Done setting attributes for Server Template: %s' % templateName);
 
 

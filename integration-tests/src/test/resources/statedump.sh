@@ -60,6 +60,29 @@ function state_dump {
     done
   done
 
+  set +x
+  local ktype
+  local kobj
+  local fname
+  for namespace in $namespaces; do
+    for ktype in pod job deploy rs service pvc ingress cm serviceaccount role rolebinding secret domain; do
+      for kobj in `kubectl get $ktype -n $namespace -o=jsonpath='{range .items[*]}{" "}{.metadata.name}{end}'`; do
+        fname="${DUMP_DIR}/kubectl.describe.$ktype.$kobj.ns-$namespace"
+        echo "Generating $fname"
+        kubectl describe $ktype $kobj -n $namespace > $fname
+      done
+    done
+  done
+
+  for ktype in pv clusterroles clusterrolebindings; do
+    for kobj in `kubectl get $ktype -o=jsonpath='{range .items[*]}{" "}{.metadata.name}{end}'`; do
+      fname="${DUMP_DIR}/kubectl.describe.$ktype.$kobj"
+      echo "Generating $fname"
+      kubectl describe $ktype $kobj > $fname
+    done
+  done
+  set -x
+
   # use a job to archive PV, /scratch mounts to PV_ROOT in the K8S cluster
   echo "Archiving pv directory using a kubernetes job.  Look for it on k8s cluster in $PV_ROOT/acceptance_test_pv_archive"
   local outfile=${DUMP_DIR}/archive_pv_job.out
