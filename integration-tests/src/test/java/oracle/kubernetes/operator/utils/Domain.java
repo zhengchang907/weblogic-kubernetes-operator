@@ -857,6 +857,7 @@ public class Domain {
     if (!output.contains("Deployment State : completed")) {
       throw new RuntimeException("Failure: webapp deployment failed." + output);
     }
+    logger.info("Command to call kubectl sh file " + cmdKubectlSh + " result=" + output);
   }
 
   private void callWebAppAndWaitTillReady(String curlCmd) throws Exception {
