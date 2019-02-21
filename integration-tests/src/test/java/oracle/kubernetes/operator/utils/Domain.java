@@ -851,7 +851,13 @@ public class Domain {
     ExecResult result = ExecCommand.exec(cmdKubectlSh.toString());
     if (result.exitValue() != 0) {
       throw new RuntimeException(
-          "FAILURE: command " + cmdKubectlSh + " failed, returned stdout='" + result.stdout() + "' stderr='" + result.stderr() + "'");
+          "FAILURE: command "
+              + cmdKubectlSh
+              + " failed, returned stdout='"
+              + result.stdout()
+              + "' stderr='"
+              + result.stderr()
+              + "'");
     }
     String output = result.stdout().trim();
     if (!output.contains("Deployment State : completed")) {
