@@ -849,6 +849,18 @@ public class Domain {
         .append(clusterName);
     logger.info("Command to call kubectl sh file " + cmdKubectlSh);
     ExecResult result = ExecCommand.exec(cmdKubectlSh.toString());
+    logger.info(
+        "Command= '"
+            + cmdKubectlSh
+            + "'"
+            + " exitValue="
+            + result.exitValue()
+            + " stdout='"
+            + result.stdout()
+            + "'"
+            + " stderr='"
+            + result.stderr()
+            + "'");
     if (result.exitValue() != 0) {
       throw new RuntimeException(
           "FAILURE: command "
