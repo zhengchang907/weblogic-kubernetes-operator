@@ -851,13 +851,13 @@ public class Domain {
     ExecResult result = ExecCommand.exec(cmdKubectlSh.toString());
     if (result.exitValue() != 0) {
       throw new RuntimeException(
-          "FAILURE: command " + cmdKubectlSh + " failed, returned " + result.stderr());
+          "FAILURE: command " + cmdKubectlSh + " failed, returned stdout='" + result.stdout() + "' stderr='" + result.stderr() + "'");
     }
     String output = result.stdout().trim();
     if (!output.contains("Deployment State : completed")) {
       throw new RuntimeException("Failure: webapp deployment failed." + output);
     }
-    logger.info("Command to call kubectl sh file " + cmdKubectlSh + " result=" + output);
+    logger.info("Completed " + cmdKubectlSh + " result=" + output);
   }
 
   private void callWebAppAndWaitTillReady(String curlCmd) throws Exception {

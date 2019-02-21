@@ -65,7 +65,7 @@ function state_dump {
   local kobj
   local fname
   for namespace in $namespaces; do
-    for ktype in pod job deploy rs service pvc ingress cm serviceaccount role rolebinding secret domain; do
+    for ktype in pod job deploy rs service pvc ingress cm secret domain; do
       for kobj in `kubectl get $ktype -n $namespace -o=jsonpath='{range .items[*]}{" "}{.metadata.name}{end}'`; do
         fname="${DUMP_DIR}/kubectl.describe.$ktype.$kobj.ns-$namespace"
         echo "Generating $fname"
@@ -74,7 +74,7 @@ function state_dump {
     done
   done
 
-  for ktype in pv clusterroles clusterrolebindings; do
+  for ktype in pv; do
     for kobj in `kubectl get $ktype -o=jsonpath='{range .items[*]}{" "}{.metadata.name}{end}'`; do
       fname="${DUMP_DIR}/kubectl.describe.$ktype.$kobj"
       echo "Generating $fname"
