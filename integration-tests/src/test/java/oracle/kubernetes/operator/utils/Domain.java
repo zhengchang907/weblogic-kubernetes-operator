@@ -849,8 +849,7 @@ public class Domain {
         .append(clusterName);
     logger.info("Command to call kubectl sh file " + cmdKubectlSh);
     ExecResult result = ExecCommand.exec(cmdKubectlSh.toString());
-    logger.info(
-        "Command= '"
+    String resultStr= "Command= '"
             + cmdKubectlSh
             + "'"
             + " exitValue="
@@ -860,22 +859,9 @@ public class Domain {
             + "'"
             + " stderr='"
             + result.stderr()
-            + "'");
-    if (result.exitValue() != 0) {
-      throw new RuntimeException(
-          "FAILURE: command "
-              + cmdKubectlSh
-              + " failed, returned stdout='"
-              + result.stdout()
-              + "' stderr='"
-              + result.stderr()
-              + "'");
-    }
-    String output = result.stdout().trim();
-    if (!output.contains("Deployment State : completed")) {
-      throw new RuntimeException("Failure: webapp deployment failed." + output);
-    }
-    logger.info("Completed " + cmdKubectlSh + " result=" + output);
+            + "'";
+    if (result.exitValue() != 0 || !resultStr.contains("Deployment State : completed"))
+      throw new RuntimeException("FAILURE: webapp deploy failed - " + resultStr);
   }
 
   private void callWebAppAndWaitTillReady(String curlCmd) throws Exception {
