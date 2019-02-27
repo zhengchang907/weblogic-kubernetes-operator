@@ -853,12 +853,12 @@ public class Domain {
         "Command= '"
             + cmdKubectlSh
             + "'"
-            + " exitValue="
+            + ", exitValue="
             + result.exitValue()
-            + " stdout='"
+            + ", stdout='"
             + result.stdout()
             + "'"
-            + " stderr='"
+            + ", stderr='"
             + result.stderr()
             + "'";
     if (result.exitValue() != 0 || !resultStr.contains("Deployment State : completed"))
