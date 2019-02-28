@@ -108,7 +108,7 @@ public class DomainUpPlanTest {
             .and(not(hasChainWithStep("AdminServerStep"))));
   }
 
-  // @Test
+  @Test
   public void useSequenceBeforeAdminServerStep() {
     Step plan = DomainProcessorImpl.createDomainUpPlan(new DomainPresenceInfo(domain));
 
@@ -123,8 +123,8 @@ public class DomainUpPlanTest {
             // "ReadDomainIntrospectorPodStep",
             // "ReadDomainIntrospectorPodLogStep",
             // "SitConfigMapStep",
-            "AdminPodStep",
             "BeforeAdminServiceStep",
+            "AdminPodStep",
             "ForServerStep",
             "WatchPodReadyAdminStep",
             "ManagedServersUpStep",
