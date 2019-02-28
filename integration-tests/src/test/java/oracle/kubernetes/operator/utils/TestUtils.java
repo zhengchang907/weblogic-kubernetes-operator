@@ -306,7 +306,8 @@ public class TestUtils {
     cmd.append(podName)
         .append(" --namespace ")
         .append(namespace)
-        .append(" -o jsonpath='{.status.containerStatuses[" + pos).append("].restartCount}'");
+        .append(" -o jsonpath='{.status.containerStatuses[" + pos)
+        .append("].restartCount}'");
     result = ExecCommand.exec(cmd.toString());
     if (result.exitValue() != 0) {
       throw new RuntimeException(
@@ -906,7 +907,8 @@ public class TestUtils {
     return myKeyStore;
   }
 
-  private static void checkCmdInLoop(String cmd, String[] matchStrs, String k8sObjName) throws Exception {
+  private static void checkCmdInLoop(String cmd, String[] matchStrs, String k8sObjName)
+      throws Exception {
     int i = 0;
     while (i < BaseTest.getMaxIterationsPod()) {
       ExecResult result = ExecCommand.exec(cmd);
@@ -942,8 +944,7 @@ public class TestUtils {
 
   private static boolean match(String result, String[] matchStrs) {
     for (String str : matchStrs) {
-      if (result.contains(str))
-        return true;
+      if (result.contains(str)) return true;
     }
     return false;
   }
