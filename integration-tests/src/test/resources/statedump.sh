@@ -21,7 +21,6 @@ function state_dump {
         echo State dump exiting early.  RESULT_DIR \"$RESULT_DIR\" does not exist or is not a directory.
         return
      fi
-
   local DUMP_DIR=$RESULT_DIR/state-dump-logs
   echo Starting state dump.   Dumping state to directory ${DUMP_DIR}
 
@@ -55,7 +54,22 @@ function state_dump {
     for pod in $pods; do
       local logfile=${DUMP_DIR}/pod-log.${namespace}.${pod}
       local descfile=${DUMP_DIR}/pod-describe.${namespace}.${pod}
-      kubectl log $pod -n $namespace > $logfile
+      containers=`kubectl get pod $pod -n $namespace -o jsonpath='{.spec.containers[*].name}'`
+      if [[ $containers == *" "* ]]; then
+        container1=`echo $containers | awk ' {print $1; }'`
+        container2=`echo $containers | awk ' {print $2; }'`
+        if [[ $container1 == "istio-proxy" ]]; then
+          container=$container2;
+        elif [[ $container2 == "istio-proxy" ]]; then
+          container=$container1;
+        fi
+      fi
+      if [[ -z $container ]]; then
+        kubectl log $pod -n $namespace > $logfile
+      else
+        kubectl log $pod -n $namespace -c $container > $logfile
+      fi
+
       kubectl describe pod $pod -n $namespace > $descfile
     done
   done

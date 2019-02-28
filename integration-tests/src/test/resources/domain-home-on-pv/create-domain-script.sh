@@ -10,4 +10,7 @@ export DOMAIN_HOME=${DOMAIN_HOME_DIR}
 # Create the domain
 wlst.sh -skipWLSModuleScanning ${CREATE_DOMAIN_SCRIPT_DIR}/create-domain.py
 
+# Update the domain for Istio
+wlst.sh -skipWLSModuleScanning ${CREATE_DOMAIN_SCRIPT_DIR}/fix-domain.py
+
 
