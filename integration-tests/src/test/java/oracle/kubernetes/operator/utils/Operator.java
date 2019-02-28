@@ -409,6 +409,8 @@ public class Operator {
         logger.info("Creating domain namespace " + domainNS);
         ExecCommand.exec("kubectl create namespace " + domainNS);
       }
+      logger.info("Enable istio injection on domain namespace " + domainNS);
+      ExecCommand.exec("kubectl label namespace " + domainNS + " istio-injection=enabled");
     }
 
     if (System.getenv("IMAGE_PULL_SECRET_OPERATOR") != null) {
