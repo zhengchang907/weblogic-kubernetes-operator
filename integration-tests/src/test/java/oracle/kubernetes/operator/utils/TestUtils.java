@@ -281,13 +281,33 @@ public class TestUtils {
   }
 
   public static int getPodRestartCount(String podName, String namespace) throws Exception {
-    StringBuffer cmd = new StringBuffer("kubectl describe pod ");
+    StringBuffer cmd = new StringBuffer("kubectl get pod ");
     cmd.append(podName)
         .append(" --namespace ")
         .append(namespace)
-        .append(" | egrep Restart | awk '{print $3}'");
-
+        .append(" -o jsonpath='{.status.containerStatuses[*].name}'");
     ExecResult result = ExecCommand.exec(cmd.toString());
+    if (result.exitValue() != 0) {
+      throw new RuntimeException(
+          "FAIL: Couldn't find the pod " + podName + " in namespace " + namespace);
+    }
+
+    String containers = result.stdout().trim();
+    String[] all = containers.split(" ");
+    int pos = 0;
+    for (String name : all) {
+      if ("weblogic-server".equals(name)) {
+        break;
+      }
+      pos++;
+    }
+
+    cmd = new StringBuffer("kubectl get pod ");
+    cmd.append(podName)
+        .append(" --namespace ")
+        .append(namespace)
+        .append(" -o jsonpath='{.status.containerStatuses[" + pos).append("].restartCount}'");
+    result = ExecCommand.exec(cmd.toString());
     if (result.exitValue() != 0) {
       throw new RuntimeException(
           "FAIL: Couldn't find the pod " + podName + " in namespace " + namespace);
