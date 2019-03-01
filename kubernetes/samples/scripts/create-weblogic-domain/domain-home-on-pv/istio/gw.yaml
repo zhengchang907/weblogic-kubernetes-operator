@@ -23,14 +23,14 @@ spec:
   gateways:
   - default-gateway
   http:
-#  - match:
-#    - uri:
-#        prefix: /console
-#    route:
-#    - destination:
-#        host: domain1-admin-server.default.svc.cluster.local
-#        port:
-#          number: 7001
+  - match:
+    - uri:
+        prefix: /console
+    route:
+    - destination:
+        host: domain1-admin-server-external.default.svc.cluster.local
+        port:
+          number: 7001
   - route:
     - destination:
         host: domain1-cluster-cluster-1.default.svc.cluster.local

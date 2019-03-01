@@ -10,7 +10,7 @@ Make sure you can access istio ingressgateway. Follow [istio Control Ingress Tra
 $ export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT
 ```
 
-## Access testwebapp through istio ingressgateway
+## Access admin console and testwebapp through istio ingressgateway
 
 ### Create a gateway and a virtualservice
 
@@ -19,6 +19,16 @@ Create a gateway and a virtualservice to route traffic from istio ingressgateway
 ```
 $ kubectl create -f gw.yaml
 ```
+
+### Enable external adminService nodePort
+
+Enable external adminService nodePort by uncommenting the following settings in domain.xml, then restart the domain.
+
+
+### Access admin console through istio ingressgateway
+
+You can access http://$GATEWAY_URL/console using browser.
+
 
 ### Deploy testwebapp to weblogic cluster
 
