@@ -6,6 +6,7 @@ package oracle.kubernetes.operator.helpers;
 
 import static oracle.kubernetes.operator.LabelConstants.forDomainUid;
 import static oracle.kubernetes.operator.VersionConstants.DEFAULT_DOMAIN_VERSION;
+import static oracle.kubernetes.operator.VersionConstants.DOMAIN_V2;
 
 import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.models.V1Container;
@@ -606,6 +607,18 @@ public abstract class PodStepContext extends StepContextBase {
     return new V1Pod().metadata(createMetadata()).spec(createSpec(TuningParameters.getInstance()));
   }
 
+  private String getVersion() {
+    String wlsImage = getImageName();
+    LOGGER.info("wlsImage:   ", wlsImage);
+    String version = DOMAIN_V2;
+    if (wlsImage.indexOf(":") > 0) {
+      String[] versionArray = wlsImage.split(":");
+      version = versionArray[versionArray.length - 1];
+    }
+    LOGGER.info("wlsImage version:   ", version);
+    return version;
+  }
+
   protected V1ObjectMeta createMetadata() {
     V1ObjectMeta metadata = new V1ObjectMeta().name(getPodName()).namespace(getNamespace());
     metadata
@@ -619,7 +632,9 @@ public abstract class PodStepContext extends StepContextBase {
         .putLabelsItem(
             LabelConstants.CLUSTERRESTARTVERSION_LABEL, getServerSpec().getClusterRestartVersion())
         .putLabelsItem(
-            LabelConstants.SERVERRESTARTVERSION_LABEL, getServerSpec().getServerRestartVersion());
+            LabelConstants.SERVERRESTARTVERSION_LABEL, getServerSpec().getServerRestartVersion())
+        .putLabelsItem(LabelConstants.APP_LABEL, getServerName())
+        .putLabelsItem(LabelConstants.VERSION_LABEL, getVersion());
 
     // Add prometheus annotations. This will overwrite any custom annotations with same name.
     AnnotationHelper.annotateForPrometheus(metadata, getDefaultPort());
