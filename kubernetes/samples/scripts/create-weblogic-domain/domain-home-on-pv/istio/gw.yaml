@@ -35,5 +35,5 @@ spec:
     - destination:
         host: domain1-cluster-cluster-1.default.svc.cluster.local
         port:
-          number: 8001
+          number: 31111
 
