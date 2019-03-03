@@ -51,7 +51,7 @@ class Header extends Component {
                         <div className="row row-header">
                             <div className="col-12">
                                 <h1>Oracle WebLogic Server Kubernetes Operator</h1>
-                                <p>The world's <i>best</i> operator!</p>
+                                <p>One of the world's <i>great</i> operators!</p>
                             </div>
                         </div>
                     </div>

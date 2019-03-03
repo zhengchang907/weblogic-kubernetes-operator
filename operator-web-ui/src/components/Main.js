@@ -5,24 +5,8 @@ import { About } from './About'
 import { Home } from './Home'
 import Header from './Header'
 import { Switch, Route, Redirect, withRouter } from 'react-router-dom'
-import { fetchOperators } from '../redux/ActionCreators'
-import { connect } from 'react-redux'
-
-const mapStateToProps = state => {
-    return {
-        operators: state.Operators
-    }
-}
-
-const mapDispatchToProps = (dispatch) => ({
-    fetchOperators: () => { dispatch(fetchOperators()) }
-})
 
 class Main extends Component {
-    componentDidMount() {
-        this.props.fetchOperators()
-    }
-
     render() {
         const HomePage = () => {
             return (
@@ -43,4 +27,4 @@ class Main extends Component {
     }
 }
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Main));
+export default withRouter(Main);
