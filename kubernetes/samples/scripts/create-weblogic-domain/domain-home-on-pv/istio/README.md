@@ -24,6 +24,20 @@ $ kubectl create -f gw.yaml
 
 Enable external adminService nodePort by uncommenting the following settings in domain.xml, then restart the domain.
 
+```
+    adminService:
+      channels:
+        - channelName: default
+          nodePort: 30701
+```
+
+### Change external adminService to use ClusterIP
+
+Edit the external adminService to remove line `nodePort: 30701` and change the `type` from `NodePort` to `ClusterIP`.
+
+```
+$ kubectl edit service domain1-admin-server-external
+```
 
 ### Access admin console through istio ingressgateway
 
