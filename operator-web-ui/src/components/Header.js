@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react'
 import {
-    Navbar, NavbarBrand, Nav, NavbarToggler, Collapse, NavItem, Jumbotron, NavLink
+    Navbar, NavbarBrand, Nav, NavbarToggler, Collapse, NavItem, NavLink
 } from 'reactstrap'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
 
 export const Header = (props) => {
 
@@ -22,17 +24,17 @@ export const Header = (props) => {
                         <Nav navbar className="ml-auto">
                             <NavItem>
                                 <NavLink className="nav-link" href="/home">
-                                    <span className="fa fa-home fa-lg" /> Home
+                                    <FontAwesomeIcon icon="home" /> Home
                                     </NavLink>
                             </NavItem>
                             <NavItem>
                                 <NavLink className="nav-link" href="/domains">
-                                    <span className="fa fa-home fa-lg" /> Domains
+                                    <FontAwesomeIcon icon="globe" /> Domains
                                     </NavLink>
                             </NavItem>
                             <NavItem>
                                 <NavLink className="nav-link" href="/about">
-                                    <span className="fa fa-info fa-lg" /> About
+                                    <FontAwesomeIcon icon="info" /> About
                                     </NavLink>
                             </NavItem>
                         </Nav>

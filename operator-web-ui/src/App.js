@@ -3,7 +3,12 @@
 import React, { Component } from 'react'
 import Main from './components/Main'
 import './App.css'
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { fab, faGithub } from '@fortawesome/free-brands-svg-icons'
+import { faBookOpen, faInfo, faHome, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+
+library.add(fab, faBookOpen, faGithub, faInfo, faHome, faGlobe, faQuestionCircle)
 
 class App extends Component {
   render() {

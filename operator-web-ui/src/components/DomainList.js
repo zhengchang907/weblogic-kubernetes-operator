@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { REST_AUTH_HEADER, REST_ADDRESS } from '../shared/Rest'
-import { Card, CardBody, CardTitle, CardHeader } from 'reactstrap'
+import { Card, CardBody, CardTitle, CardHeader, Button } from 'reactstrap'
 import { Link } from 'react-router-dom'
 
 function RenderDomain({ domain }) {
@@ -72,6 +72,12 @@ export const DomainList = (props) => {
             </div>
             <div className="row">
                 {domainList}
+            </div>
+            <p>&nbsp;</p>
+            <div className="row align-items-start">
+                <div className="col-12 col-md m-1">
+                    <Button color="primary" size="sm">Create a new domain...</Button>
+                </div>
             </div>
         </div>
     )

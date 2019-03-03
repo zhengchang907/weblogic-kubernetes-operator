@@ -5,6 +5,7 @@ import axios from 'axios'
 import { REST_AUTH_HEADER, REST_ADDRESS } from '../shared/Rest'
 import { Card, CardBody, CardTitle, CardHeader, Button } from 'reactstrap'
 import { Link } from 'react-router-dom'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export const Home = (props) => {
 
@@ -46,7 +47,7 @@ export const Home = (props) => {
             <div className="row align-items-start">
                 <div className="col-12 col-md m-1">
                     <Card>
-                        <CardHeader>About the Operator</CardHeader>
+                        <CardHeader><FontAwesomeIcon icon="info" />&nbsp; About the Operator</CardHeader>
                         <CardBody>
                             <CardTitle>See details about this operator.</CardTitle>
                             <Link to="/about"><Button color="primary" size="sm">About...</Button></Link>
@@ -55,7 +56,7 @@ export const Home = (props) => {
                 </div>
                 <div className="col-12 col-md m-1">
                     <Card>
-                        <CardHeader>Domains</CardHeader>
+                        <CardHeader><FontAwesomeIcon icon="globe" />&nbsp; Domains</CardHeader>
                         <CardBody>
                             <CardTitle>View a list of domain that are being managed by the operator.</CardTitle>
                             <Link to="/domains"><Button color="primary" size="sm">View domains</Button></Link>
@@ -64,7 +65,7 @@ export const Home = (props) => {
                 </div>
                 <div className="col-12 col-md m-1">
                     <Card>
-                        <CardHeader>Documentation</CardHeader>
+                        <CardHeader><FontAwesomeIcon icon="book-open" />&nbsp; Documentation</CardHeader>
                         <CardBody>
                             <CardTitle>Read the documentation for the operator.</CardTitle>
                             <a href="https://oracle.github.io/weblogic-kubernetes-operator"><Button color="primary" size="sm">Read documentation</Button></a>
@@ -73,7 +74,7 @@ export const Home = (props) => {
                 </div>
                 <div className="col-12 col-md m-1">
                     <Card>
-                        <CardHeader>GitHub Project</CardHeader>
+                        <CardHeader><FontAwesomeIcon icon={['fab', 'github']} />&nbsp; GitHub Project</CardHeader>
                         <CardBody>
                             <CardTitle>Visit our project on GitHub to learn more about the operator.</CardTitle>
                             <a href="https://github.com/oracle/weblogic-kubernetes-operator"><Button color="primary" size="sm">Visit project</Button></a>
@@ -85,7 +86,7 @@ export const Home = (props) => {
             <div className="row align-items-start">
                 <div className="col-12 col-md m-1">
                     <Card>
-                        <CardHeader>Support</CardHeader>
+                        <CardHeader><FontAwesomeIcon icon="question-circle" />&nbsp; Support</CardHeader>
                         <CardBody>
                             <CardTitle>The Oracle WebLogic Server Kuberentes Operator is an open source project, but WebLogic Server customers
                                 with a support entitlement can call or visit My Oracle Support to log a Service Request.  If you prefer, you
