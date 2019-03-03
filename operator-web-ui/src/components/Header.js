@@ -17,7 +17,7 @@ export const Header = (props) => {
                 <div className="container">
                     <NavbarToggler onClick={() => setIsNavOpen(!isNavOpen)} />
                     <NavbarBrand className="mr-auto" href="/">
-                        <img src="assets/images/weblogic.png" height="90" width="90" alt="WebLogic" />
+                        <img src="/assets/images/weblogic.png" height="90" width="90" alt="WebLogic" />
                         Kubernetes Operator
                     </NavbarBrand>
                     <Collapse isOpen={isNavOpen} navbar>

@@ -1,45 +1,11 @@
 // Copyright 2019, Oracle Corporation and/or its affiliates. All rights reserved.
 
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { REST_AUTH_HEADER, REST_ADDRESS } from '../shared/Rest'
+import React from 'react'
 import { Card, CardBody, CardTitle, CardHeader, Button } from 'reactstrap'
 import { Link } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export const Home = (props) => {
-
-    //
-    //  Retrieve information about the operator itself
-    //
-    const [operators, setOperators] = useState([])
-    useEffect(() => {
-        axios(REST_ADDRESS + 'operator', {
-            method: 'get',
-            headers: {
-                'Authorization': REST_AUTH_HEADER,
-                'Accept': 'application/json'
-            },
-            withCredentials: false
-        })
-            .then(response => {
-                console.log(response)
-                if (response.status === 200) {
-                    return response
-                } else {
-                    var error = new Error('Error ' + response.status + ': ' + response.statusText)
-                    error.response = response
-                    throw error
-                }
-            }, error => {
-                var errmess = new Error(error.message)
-                throw errmess
-            })
-            .then(response => response.data.items[0])
-            .then(operators => setOperators(operators))
-            .catch(error => console.log(error.message))
-    }, [])
-
 
     return (
         <div className="container">
