@@ -98,10 +98,11 @@ export const Home = (props) => {
             <div className="row align-items-start">
                 <div className="col-12 col-md m-1">
                     <p>This operator support REST API version: {operators.version}</p>
-                    <p>&nbsp;</p>
                     <p>The following domains are being managed:</p>
-                    {domainList}
                 </div>
+            </div>
+            <div className="row">
+                {domainList}
             </div>
         </div>
     )
