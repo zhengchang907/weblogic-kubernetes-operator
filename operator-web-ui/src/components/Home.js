@@ -3,17 +3,17 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { REST_AUTH_HEADER, REST_ADDRESS } from '../shared/Rest'
-import { Card, CardImg, CardImgOverlay, CardTitle } from 'reactstrap'
+import { Card, CardBody, CardTitle, CardHeader } from 'reactstrap'
 import { Link } from 'react-router-dom'
 
 function RenderDomain({ domain }) {
     return (
         <Card>
+            <CardHeader>Domain</CardHeader>
             <Link to={`/domain/${domain.domainUID}`}>
-                <CardImg width="100%" />
-                <CardImgOverlay>
+                <CardBody>
                     <CardTitle>{domain.domainUID}</CardTitle>
-                </CardImgOverlay>
+                </CardBody>
             </Link>
         </Card>
     )
