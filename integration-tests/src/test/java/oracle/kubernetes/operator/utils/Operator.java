@@ -295,8 +295,14 @@ public class Operator {
     StringBuffer b = new StringBuffer();
     String line = null;
     try {
+      int curr = 0;
       while ((line = reader.readLine()) != null) {
-        if (!line.trim().isEmpty()) b.append(line);
+        if (!line.trim().isEmpty()) {
+          if (curr != 0)
+            b.append("\r");
+          b.append(line);
+          curr++;
+        }
       }
     } catch (Exception e) {
     } finally {
