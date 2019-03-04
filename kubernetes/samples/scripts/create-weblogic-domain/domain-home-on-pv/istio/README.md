@@ -66,3 +66,49 @@ sending 30 requests to slc09xwj.us.oracle.com:31380/testwebapp/ ...
 the access count of pod domain1-managed-server1 is 14
 the access count of pod domain1-managed-server2 is 16
 ```
+
+
+## Test istio traffic shifting on operator
+
+Refter to [istio traffic shifting](https://istio.io/docs/tasks/traffic-management/traffic-shifting/) for the feature.
+
+### Apply weight-based routing
+
+Deploy the destination rule for cluster-cluster-1 service, which defines separate subsets `ms1` and `ms2`.
+
+```
+$ kubectl create -f destination-rule-cluster1.yaml
+```
+
+Update the virtual service to route 80% of traffic from the istio ingressgateway to ms1 and 20% to ms2.
+
+```
+$ kubectl replace -f virtual-service-cluster-80-20.yaml
+```
+
+Run the following command to send requests:
+
+```
+$ sh run.sh
+sending 30 requests to slc09xwj.us.oracle.com:31380/testwebapp/ ...
+ 
+the access count of pod domain1-managed-server1 is 25
+the access count of pod domain1-managed-server2 is 5
+```
+
+### Route all the traffic to ms1
+
+
+```
+$ kubectl replace -f virtual-service-cluster-ms1.yaml
+```
+
+Run the following command to send requests:
+
+```
+$ sh run.sh 
+sending 30 requests to slc09xwj.us.oracle.com:31380/testwebapp/ ...
+ 
+the access count of pod domain1-managed-server1 is 30
+the access count of pod domain1-managed-server2 is 0
+```
