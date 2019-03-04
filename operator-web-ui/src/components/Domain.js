@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { REST_AUTH_HEADER, REST_ADDRESS } from '../shared/Rest'
-import { Card, CardBody, CardTitle, CardHeader, CardText } from 'reactstrap'
+import { Card, CardBody, CardHeader, CardText } from 'reactstrap'
 
 export const Domain = ({ domainUID }) => {
 
