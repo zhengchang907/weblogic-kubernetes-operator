@@ -289,6 +289,38 @@ public class Operator {
         Files.createDirectories(Paths.get(userProjectsDir + "/weblogic-operators/" + operatorNS));
     generatedInputYamlFile = parentDir + "/weblogic-operator-values.yaml";
     TestUtils.createInputFile(operatorMap, generatedInputYamlFile);
+
+    java.io.BufferedReader reader = new java.io.FileReader(generatedInputYamlFile);
+    StringBuffer b = new StringBuffer();
+    String line = null;
+    try {
+      while ((line = b.readLine()) != null) {
+        if (!line.trim().isEmpty()) b.append(line);
+      }
+    } catch (Exception e) {
+    } finally {
+      if (is != null) {
+        try {
+          is.close();
+        } catch (Exception e) {
+        }
+      }
+    }
+
+    java.io.OutputStream os = new java.io.FileOutputStream(generatedInputYamlFile);
+    try {
+      os.write(b.toString().getBytes());
+      os.flush();
+    } catch (Exception e) {
+    } finally {
+      if (os != null) {
+        try {
+          os.close();
+        } catch (Exception e) {
+        }
+      }
+    }
+
     StringBuilder sb = new StringBuilder(200);
     sb.append(BaseTest.getProjectRoot());
     switch (restCertType) {
