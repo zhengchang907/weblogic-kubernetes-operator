@@ -328,11 +328,11 @@ public class Operator {
       if (fis != null) {
         try {
           fis.close();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
       }
     }
     logger.info(strb.toString());
-    ExecCommand.exec("cat "+generatedInputYamlFile);
     logger.info("^^^^^^^^^^^^^^^^^^^");
     ExecCommand.exec(sb.toString());
   }
