@@ -290,18 +290,19 @@ public class Operator {
     generatedInputYamlFile = parentDir + "/weblogic-operator-values.yaml";
     TestUtils.createInputFile(operatorMap, generatedInputYamlFile);
 
-    java.io.BufferedReader reader = new java.io.FileReader(generatedInputYamlFile);
+    java.io.BufferedReader reader =
+        new java.io.BufferedReader(new java.io.FileReader(generatedInputYamlFile));
     StringBuffer b = new StringBuffer();
     String line = null;
     try {
-      while ((line = b.readLine()) != null) {
+      while ((line = reader.readLine()) != null) {
         if (!line.trim().isEmpty()) b.append(line);
       }
     } catch (Exception e) {
     } finally {
-      if (is != null) {
+      if (reader != null) {
         try {
-          is.close();
+          reader.close();
         } catch (Exception e) {
         }
       }
