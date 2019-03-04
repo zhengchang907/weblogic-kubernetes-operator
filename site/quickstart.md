@@ -37,7 +37,7 @@ $ docker login
 ```
 c.	Pull the operator image:
 ```
-$ docker pull oracle/weblogic-kubernetes-operator:2.0-rc2
+$ docker pull oracle/weblogic-kubernetes-operator:2.0
 ```
 d.	Pull the Traefik load balancer image:
 ```
@@ -99,7 +99,6 @@ c.  Use `helm` to install and start the operator from the directory you just clo
 $ helm install kubernetes/charts/weblogic-operator \
   --name sample-weblogic-operator \
   --namespace sample-weblogic-operator-ns \
-  --set image=oracle/weblogic-kubernetes-operator:2.0-rc2 \
   --set serviceAccount=sample-weblogic-operator-sa \
   --set "domainNamespaces={}" \
   --wait
@@ -183,7 +182,7 @@ respectively, as shown in the example.
 
 1. The secret that you create for the credentials.
 2. The properties files in the sample project you choose to create the Docker image from.
-3. The parameters you supply to the `createDomain.sh` script.
+3. The parameters you supply to the `create-domain.sh` script.
 
 If you specify the `-e` option, the script will generate the
 Kubernetes YAML files *and* apply them to your cluster.  If you omit the `-e` option, the

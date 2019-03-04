@@ -1,4 +1,4 @@
-// Copyright 2019 Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
 // Licensed under the Universal Permissive License v 1.0 as shown at
 // http://oss.oracle.com/licenses/upl.
 
@@ -29,7 +29,7 @@ public abstract class KubernetesExec {
   }
 
   /**
-   * Executes the command
+   * Executes the command.
    *
    * @param command the shell script command to run
    * @return the process which mediates the execution

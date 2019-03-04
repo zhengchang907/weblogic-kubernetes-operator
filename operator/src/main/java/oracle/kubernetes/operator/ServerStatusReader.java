@@ -1,4 +1,4 @@
-// Copyright 2018, 2019 Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright 2018, 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
 // Licensed under the Universal Permissive License v 1.0 as shown at
 // http://oss.oracle.com/licenses/upl.
 
@@ -37,7 +37,7 @@ import oracle.kubernetes.operator.work.Packet;
 import oracle.kubernetes.operator.work.Step;
 import oracle.kubernetes.weblogic.domain.v2.ServerHealth;
 
-/** Creates an asynchronous step to read the WebLogic server state from a particular pod */
+/** Creates an asynchronous step to read the WebLogic server state from a particular pod. */
 public class ServerStatusReader {
   private static final LoggingFacade LOGGER = LoggingFactory.getLogger("Operator", "Operator");
   private static KubernetesExecFactory EXEC_FACTORY = new KubernetesExecFactoryImpl();
@@ -72,7 +72,7 @@ public class ServerStatusReader {
       for (Map.Entry<String, ServerKubernetesObjects> entry : info.getServers().entrySet()) {
         String serverName = entry.getKey();
         ServerKubernetesObjects sko = entry.getValue();
-        if (sko != null) { // !! Impossible to have a null value in a concurrent map
+        if (sko != null) {
           V1Pod pod = sko.getPod().get();
           if (pod != null) {
             Packet p = packet.clone();
@@ -91,7 +91,7 @@ public class ServerStatusReader {
   }
 
   /**
-   * Creates asynchronous step to read WebLogic server state from a particular pod
+   * Creates asynchronous step to read WebLogic server state from a particular pod.
    *
    * @param sko Server objects
    * @param pod The pod

@@ -174,15 +174,26 @@ public class TestUtils {
     checkCmdInLoopForDelete(cmd.toString(), "\"" + domainUid + "\" not found", domainUid);
   }
 
-  public static void deletePVC(String pvcName, String namespace) throws Exception {
-    StringBuffer cmd = new StringBuffer("kubectl delete pvc ");
-    cmd.append(pvcName).append(" -n ").append(namespace);
-    logger.info("Deleting PVC " + cmd);
-    ExecResult result = ExecCommand.exec(cmd.toString());
+  public static void deletePVC(String pvcName, String namespace, String domainUid)
+      throws Exception {
+    StringBuffer cmdDelJob = new StringBuffer("kubectl delete job ");
+    cmdDelJob.append(domainUid).append("-create-weblogic-sample-domain-job -n ").append(namespace);
+    logger.info("Deleting job " + cmdDelJob);
+    exec(cmdDelJob.toString());
+
+    StringBuffer cmdDelPVC = new StringBuffer("kubectl delete pvc ");
+    cmdDelPVC.append(pvcName).append(" -n ").append(namespace);
+    logger.info("Deleting PVC " + cmdDelPVC);
+    exec(cmdDelPVC.toString());
+  }
+
+  public static ExecResult exec(String cmd) throws Exception {
+    ExecResult result = ExecCommand.exec(cmd);
     if (result.exitValue() != 0) {
       throw new RuntimeException(
-          "FAILURE: delete PVC failed with " + result.stderr() + " \n " + result.stdout());
+          "FAILURE: Command " + cmd + " failed with " + result.stderr() + " \n " + result.stdout());
     }
+    return result;
   }
 
   public static boolean checkPVReleased(String pvBaseName, String namespace) throws Exception {
@@ -209,6 +220,39 @@ public class TestUtils {
     }
     return true;
   }
+
+  /**
+   * NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) domain1-cluster-cluster-1 ClusterIP 10.105.146.61
+   * <none> 30032/TCP,8001/TCP domain1-managed-server1 ClusterIP None <none> 30032/TCP,8001/TCP
+   *
+   * @param service
+   * @param namespace
+   * @param protocol
+   * @param port
+   * @return
+   * @throws Exception
+   */
+  public static boolean checkHasServiceChannelPort(
+      String service, String namespace, String protocol, int port) throws Exception {
+    StringBuffer cmd = new StringBuffer("kubectl get services ");
+    cmd.append(" -n ").append(namespace);
+    logger.info(" Find services in namespage " + namespace + " with command: '" + cmd + "'");
+
+    ExecResult result = ExecCommand.exec(cmd.toString());
+    String stdout = result.stdout();
+    logger.info(" Services found: ");
+    logger.info(stdout);
+    String stdoutlines[] = stdout.split("\\r?\\n");
+    if (result.exitValue() == 0 && stdoutlines.length > 0) {
+      for (String stdoutline : stdoutlines) {
+        if (stdoutline.contains(service) && stdoutline.contains(port + "/" + protocol)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /**
    * First, kill the mgd server process in the container three times to cause the node manager to
    * mark the server 'failed not restartable'. This in turn is detected by the liveness probe, which
@@ -233,11 +277,15 @@ public class TestUtils {
     new File(filePath).setExecutable(true, false);
 
     // copy file to pod
-    kubectlcp(filePath, "/shared/killserver.sh", podName, namespace);
+    copyFileViaCat(filePath, "/shared/killserver.sh", podName, namespace);
 
     // kill server process 3 times
     for (int i = 0; i < 3; i++) {
-      ExecResult result = kubectlexecNoCheck(podName, namespace, "/shared/killserver.sh");
+      ExecResult result =
+          kubectlexecNoCheck(
+              podName,
+              namespace,
+              "-- bash -c 'chmod +x /shared/killserver.sh && /shared/killserver.sh'");
       logger.info("kill server process command exitValue " + result.exitValue());
       logger.info(
           "kill server process command result " + result.stdout() + " stderr " + result.stderr());
@@ -301,6 +349,14 @@ public class TestUtils {
     }
   }
 
+  public static void copyFileViaCat(
+      String srcFileOnHost, String destLocationInPod, String podName, String namespace)
+      throws Exception {
+
+    TestUtils.kubectlexec(
+        podName, namespace, " -- bash -c 'cat > " + destLocationInPod + "' < " + srcFileOnHost);
+  }
+
   public static ExecResult kubectlexecNoCheck(String podName, String namespace, String scriptPath)
       throws Exception {
 
@@ -312,8 +368,9 @@ public class TestUtils {
         .append(" ")
         .append(scriptPath);
 
-    ExecResult result = ExecCommand.exec("kubectl get pods -n " + namespace);
-    logger.info("get pods before killing the server " + result.stdout() + "\n " + result.stderr());
+    // ExecResult result = ExecCommand.exec("kubectl get pods -n " + namespace);
+    // logger.info("get pods before killing the server " + result.stdout() + "\n " +
+    // result.stderr());
     logger.info("Command to call kubectl sh file " + cmdKubectlSh);
     return ExecCommand.exec(cmdKubectlSh.toString());
   }
@@ -674,10 +731,11 @@ public class TestUtils {
         .append(namespace)
         .append(" exec -it ")
         .append(podName)
-        .append(" ")
+        .append(" -- bash -c 'chmod +x -R /shared && ")
         .append(scriptPath)
         .append(" ")
-        .append(arguments);
+        .append(arguments)
+        .append("'");
     logger.info("Command to call kubectl sh file " + cmdKubectlSh);
     ExecResult result = ExecCommand.exec(cmdKubectlSh.toString());
     if (result.exitValue() != 0) {
@@ -710,14 +768,14 @@ public class TestUtils {
       throws Exception {
 
     // copy wldf.py script tp pod
-    TestUtils.kubectlcp(
+    copyFileViaCat(
         BaseTest.getProjectRoot() + "/integration-tests/src/test/resources/wldf/wldf.py",
         "/shared/wldf.py",
         adminPodName,
         domainNS);
 
     // copy callpyscript.sh to pod
-    TestUtils.kubectlcp(
+    copyFileViaCat(
         BaseTest.getProjectRoot() + "/integration-tests/src/test/resources/callpyscript.sh",
         "/shared/callpyscript.sh",
         adminPodName,
