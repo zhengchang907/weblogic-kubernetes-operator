@@ -130,6 +130,18 @@ integration-test-java:
       helm version
       echo @@ "Helm is installed."
 
+      echo @@ "Istio installation starts"
+      export ISTIO_VERSION=${ISTIO_VERSION:-1.0.6}
+      curl -LO https://github.com/istio/istio/releases/download/${ISTIO_VERSION}/istio-${ISTIO_VERSION}-linux.tar.gz
+      mkdir /tmp/istio
+      tar xzf istio-${ISTIO_VERSION}-linux.tar.gz -C /tmp/istio
+      chmod +x /tmp/istio/bin/istioctl
+      export PATH=$PATH:/tmp/istio/bin
+      istioctl version
+      kubectl apply -f /tmp/istio/install/kubernetes/helm/istio/templates/crds.yaml
+      kubectl apply -f /tmp/istio/install/kubernetes/istio-demo.yaml
+      echo @@ "Istio is installed."
+
       # obtain an exclusive k8s cluster lease using the 'lease.sh' helper script
       #   - first set LEASE_ID to a unique value
       #   - then try obtain the lease, block up to 100 minutes (wercker pipeline should timeout before then)
