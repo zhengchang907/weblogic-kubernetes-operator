@@ -135,6 +135,8 @@ integration-test-java:
       curl -LO https://github.com/istio/istio/releases/download/${ISTIO_VERSION}/istio-${ISTIO_VERSION}-linux.tar.gz
       mkdir /tmp/istio
       tar xzf istio-${ISTIO_VERSION}-linux.tar.gz -C /tmp/istio
+      ls istio-${ISTIO_VERSION}-linux.tar.gz
+      ls /tmp/istio
       chmod +x /tmp/istio/bin/istioctl
       export PATH=$PATH:/tmp/istio/bin
       istioctl version
