@@ -43,6 +43,8 @@ EOF
 exit 1
 }
 
+echo "PATH=$PATH"
+
 if [ ! -x "$(command -v keytool)" ]; then
   echo "Can't find keytool.  Please add it to the path."
   exit 1
