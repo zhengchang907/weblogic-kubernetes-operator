@@ -112,6 +112,7 @@ integration-test-java:
       yum install -y apache-maven
       export M2_HOME="/usr/share/apache-maven"
       export PATH=$M2_HOME/bin:$PATH
+      echo ">>>>>>> PATH=$PATH"
 
       # install opensll
       yum install -y openssl
