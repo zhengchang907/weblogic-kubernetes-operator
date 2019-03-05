@@ -298,8 +298,7 @@ public class Operator {
       int curr = 0;
       while ((line = reader.readLine()) != null) {
         if (!line.trim().isEmpty()) {
-          if (curr != 0)
-            b.append("\r");
+          if (curr != 0) b.append("\r");
           b.append(line);
           curr++;
         }
