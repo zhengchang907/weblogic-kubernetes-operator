@@ -290,45 +290,6 @@ public class Operator {
     generatedInputYamlFile = parentDir + "/weblogic-operator-values.yaml";
     TestUtils.createInputFile(operatorMap, generatedInputYamlFile);
 
-    java.io.BufferedReader reader =
-        new java.io.BufferedReader(new java.io.FileReader(generatedInputYamlFile));
-    StringBuffer b = new StringBuffer();
-    String line = null;
-    try {
-      int curr = 0;
-      while ((line = reader.readLine()) != null) {
-        if (!line.trim().isEmpty()) {
-          if (curr != 0) b.append("\r\n");
-          b.append(line);
-          curr++;
-        }
-      }
-      b.append("\r\n");
-      b.append("externalRestIdentitySecret: weblogic-operator-external-rest-identity");
-    } catch (Exception e) {
-    } finally {
-      if (reader != null) {
-        try {
-          reader.close();
-        } catch (Exception e) {
-        }
-      }
-    }
-
-    java.io.OutputStream os = new java.io.FileOutputStream(generatedInputYamlFile);
-    try {
-      os.write(b.toString().getBytes());
-      os.flush();
-    } catch (Exception e) {
-    } finally {
-      if (os != null) {
-        try {
-          os.close();
-        } catch (Exception e) {
-        }
-      }
-    }
-
     StringBuilder sb = new StringBuilder(200);
     sb.append(BaseTest.getProjectRoot());
     switch (restCertType) {
@@ -353,6 +314,8 @@ public class Operator {
     sb.append(" >> ");
     sb.append(generatedInputYamlFile);
     logger.info("Invoking " + sb.toString());
+    ExecCommand.exec(sb.toString());
+
     logger.info("--------------------");
     java.io.InputStream fis = new java.io.FileInputStream(generatedInputYamlFile);
     byte[] buffer = new byte[256];
@@ -374,7 +337,6 @@ public class Operator {
     }
     logger.info(strb.toString());
     logger.info("^^^^^^^^^^^^^^^^^^^");
-    ExecCommand.exec(sb.toString());
   }
 
   private void runCommandInLoop(String command) throws Exception {
