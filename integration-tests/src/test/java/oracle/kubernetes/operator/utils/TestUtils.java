@@ -475,6 +475,7 @@ public class TestUtils {
                 + "/operator.cert.pem");
 
     StringBuffer opCertCmd;
+    logger.info(">>>>>>>>> certtype=" + operator.getRestCertType());
     if (RESTCertType.LEGACY == operator.getRestCertType()) {
       opCertCmd = new StringBuffer("kubectl get cm -n ");
       opCertCmd
@@ -493,9 +494,9 @@ public class TestUtils {
           "FAILED: command to get externalOperatorCert " + opCertCmd + " failed.");
     }
 
-    // logger.info("opCertCmd ="+opCertCmd);
+    logger.info("opCertCmd =" + opCertCmd);
     String opCert = result.stdout().trim();
-    // logger.info("opCert ="+opCert);
+    logger.info("opCert =" + opCert);
 
     StringBuffer opCertDecodeCmd = new StringBuffer("echo ");
     opCertDecodeCmd
