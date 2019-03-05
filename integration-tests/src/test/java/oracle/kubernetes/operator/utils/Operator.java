@@ -303,6 +303,8 @@ public class Operator {
           curr++;
         }
       }
+      b.append("\r\n");
+      b.append("externalRestIdentitySecret: weblogic-operator-external-rest-identity");
     } catch (Exception e) {
     } finally {
       if (reader != null) {
