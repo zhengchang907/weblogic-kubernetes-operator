@@ -43,10 +43,6 @@ EOF
 exit 1
 }
 
-echo "PATH=$PATH"
-echo `which java`
-echo `which keytool`
-
 if [ ! -x "$(command -v keytool)" ]; then
   echo "Can't find keytool.  Please add it to the path."
   exit 1
@@ -62,8 +58,6 @@ if [ ! -x "$(command -v base64)" ]; then
   exit 1
 fi
 
-echo "1111111"
-
 TEMP_DIR=`mktemp -d`
 if [ $? -ne 0 ]; then
   echo "$0: Can't create temp directory."
@@ -74,8 +68,6 @@ if [ -z $TEMP_DIR ]; then
   echo "Can't create temp directory."
   exit 1
 fi
-
-echo "2222222"
 
 function cleanup {
   rm -r $TEMP_DIR
@@ -137,8 +129,6 @@ then
   usage
 fi
 
-echo "3333333333"
-
 DAYS_VALID="3650"
 TEMP_PW="temp_password"
 OP_PREFIX="weblogic-operator"
@@ -165,8 +155,6 @@ keytool \
   -ext SAN="${SANS}" \
 2> /dev/null
 
-echo "444444444"
-
 # extract the cert to a pem file
 keytool \
   -exportcert \
@@ -175,8 +163,6 @@ keytool \
   -alias ${OP_ALIAS} \
   -rfc \
 > ${OP_CERT_PEM} 2> /dev/null
-
-echo "555555555"
 
 # convert the keystore to a pkcs12 file
 keytool \
@@ -189,8 +175,6 @@ keytool \
   -deststoretype PKCS12 \
 2> /dev/null
 
-echo "6666666666"
-
 # extract the private key from the pkcs12 file to a pem file
 openssl \
   pkcs12 \
@@ -201,8 +185,6 @@ openssl \
   -out ${OP_KEY_PEM} \
 2> /dev/null
 
-echo "77777777777777"
-
 set +e
 # Check if namespace exist
 kubectl get namespace $NAMESPACE >/dev/null 2>/dev/null
@@ -211,8 +193,6 @@ if [ $? -eq 1 ]; then
   exit 1
 fi
 kubectl get secret $SECRET_NAME -n $NAMESPACE >/dev/null 2>/dev/null
-
-echo "88888888888"
 
 if [ $? -eq 1 ]; then
   kubectl create secret tls "$SECRET_NAME" --cert=${OP_CERT_PEM} --key=${OP_KEY_PEM} -n $NAMESPACE >/dev/null
