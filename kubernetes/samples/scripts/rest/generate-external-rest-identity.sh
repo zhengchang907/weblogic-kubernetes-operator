@@ -44,6 +44,8 @@ exit 1
 }
 
 echo "PATH=$PATH"
+echo `which java`
+echo `which keytool`
 
 if [ ! -x "$(command -v keytool)" ]; then
   echo "Can't find keytool.  Please add it to the path."
