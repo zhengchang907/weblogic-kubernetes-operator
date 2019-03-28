@@ -120,6 +120,8 @@
                     <DOCKER_USERNAME>${DOCKER_USERNAME}</DOCKER_USERNAME>
                     <DOCKER_PASSWORD>${DOCKER_PASSWORD}</DOCKER_PASSWORD>
                     <DOCKER_EMAIL>${DOCKER_EMAIL}</DOCKER_EMAIL>
+                    <IMAGE_PULL_SECRET_WEBLOGIC>${IMAGE_PULL_SECRET_WEBLOGIC}</IMAGE_PULL_SECRET_WEBLOGIC>
+                    <IMAGE_PULL_SECRET_OPERATOR>${IMAGE_PULL_SECRET_OPERATOR}</IMAGE_PULL_SECRET_OPERATOR>
                   </environmentVariables>
 								</configuration>
 							</execution>
