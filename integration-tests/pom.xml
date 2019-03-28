@@ -117,6 +117,9 @@
                     <WERCKER>true</WERCKER>
                     <KUBECONFIG>${WORKSPACE}/kubeconfig</KUBECONFIG>
                     <IMAGE_PULL_SECRET_OPERATOR>${IMAGE_PULL_SECRET_OPERATOR}</IMAGE_PULL_SECRET_OPERATOR>
+                    <DOCKER_USERNAME>${DOCKER_USERNAME}</DOCKER_USERNAME>
+                    <DOCKER_PASSWORD>${DOCKER_PASSWORD</DOCKER_PASSWORD>
+                    <DOCKER_EMAIL>${DOCKER_EMAIL}</DOCKER_EMAIL>
                   </environmentVariables>
 								</configuration>
 							</execution>
