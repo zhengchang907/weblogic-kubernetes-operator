@@ -114,7 +114,7 @@
 								<configuration>
 									<executable>${resource-integration-test}/setupenv.sh</executable>
                   <environmentVariables>
-                    <WERCKER>$WERCKER</WERCKER>
+                    <WERCKER>true</WERCKER>
                   </environmentVariables>
 								</configuration>
 							</execution>
