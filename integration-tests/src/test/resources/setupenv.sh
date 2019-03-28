@@ -129,13 +129,14 @@ export JAR_VERSION="`grep -m1 "<version>" pom.xml | cut -f2 -d">" | cut -f1 -d "
 
 echo IMAGE_NAME_OPERATOR $IMAGE_NAME_OPERATOR IMAGE_TAG_OPERATOR $IMAGE_TAG_OPERATOR JAR_VERSION $JAR_VERSION
 
+echo 'MARK [debug]'
+env
+kubectl version
+
 if [ "$WERCKER" == "true" ]; then 
 
   echo "Test Suite is running locally on Wercker and k8s is running on remote nodes."
   
-  echo "MARK [debug]" 
-  env
-  kubectl version
 
   export IMAGE_PULL_SECRET_OPERATOR=$IMAGE_PULL_SECRET_OPERATOR
   export IMAGE_PULL_SECRET_WEBLOGIC=$IMAGE_PULL_SECRET_WEBLOGIC
