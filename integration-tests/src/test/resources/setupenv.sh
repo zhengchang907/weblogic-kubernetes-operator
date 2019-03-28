@@ -203,6 +203,8 @@ elif [ "$JENKINS" = "true" ]; then
   
   get_wlthint3client_from_image
 else
+  echo 'was not WERCKER or JENKINS'
+
   pull_tag_images
     
   #docker rmi -f $(docker images -q -f dangling=true)
