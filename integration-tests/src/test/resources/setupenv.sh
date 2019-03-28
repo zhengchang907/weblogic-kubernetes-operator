@@ -132,6 +132,10 @@ echo IMAGE_NAME_OPERATOR $IMAGE_NAME_OPERATOR IMAGE_TAG_OPERATOR $IMAGE_TAG_OPER
 if [ "$WERCKER" = "true" ]; then 
 
   echo "Test Suite is running locally on Wercker and k8s is running on remote nodes."
+  
+  echo "MARK [debug]" 
+  env
+  kubectl version
 
   export IMAGE_PULL_SECRET_OPERATOR=$IMAGE_PULL_SECRET_OPERATOR
   export IMAGE_PULL_SECRET_WEBLOGIC=$IMAGE_PULL_SECRET_WEBLOGIC
