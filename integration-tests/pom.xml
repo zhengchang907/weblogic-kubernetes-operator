@@ -115,6 +115,7 @@
 									<executable>${resource-integration-test}/setupenv.sh</executable>
                   <environmentVariables>
                     <WERCKER>true</WERCKER>
+                    <KUBECONFIG>${WORKSPACE}/kubeconfig</KUBECONFIG>
                   </environmentVariables>
 								</configuration>
 							</execution>
