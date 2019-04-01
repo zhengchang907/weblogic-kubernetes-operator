@@ -9,7 +9,7 @@
 # Pull base image
 # From the Docker store
 # -------------------------
-FROM store/oracle/serverjre:8
+FROM oracle/graalvm-ce:1.0.0-rc14
 RUN yum -y install openssl && yum clean all
 
 # Maintainer
