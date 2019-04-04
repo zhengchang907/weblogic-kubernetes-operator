@@ -378,8 +378,17 @@ public class Operator {
         sb.append(operatorNS);
         break;
     }
-    sb.append(" DNS:");
-    sb.append(TestUtils.getHostName());
+    // MARK: added this if logic to make test run well on machines where we have an IP address,
+    //       not a host name...
+    // here we are assuming that if the "host name" starts with a digit, then it is actually
+    // an IP address, and so we need to use the "IP" prefix in the SANS.
+    if (Character.isDigit(TestUtils.getHostName().charAt(0))) {
+      sb.append(" IP:");
+      sb.append(TestUtils.getHostName());
+    } else {
+      sb.append(" DNS:");
+      sb.append(TestUtils.getHostName());
+    }
     sb.append(" >> ");
     sb.append(generatedInputYamlFile);
     logger.info("Invoking " + sb.toString());
