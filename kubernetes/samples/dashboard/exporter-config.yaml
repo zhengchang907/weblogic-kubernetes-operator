@@ -32,6 +32,9 @@ queries:
     key: name
     values: [executeThreadTotalCount, queueLength, stuckThreadCount, hoggingThreadCount]
 - JMSRuntime:
+    key: name
+    keyName: jmsruntime
+    prefix: wls_jmsruntime_
     JMSServers:
       prefix: wls_jms_
       key: name
