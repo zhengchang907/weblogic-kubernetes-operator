@@ -34,8 +34,9 @@ public class ClusterHelper {
 
     String instanceName = "ephemeral-kubernetes-" + lease.getId();
     String compartmentId = System.getenv("CLUSTER_MANAGER_COMPARTMENT_OCID");
+    String vcnId = System.getenv("CLUSTER_MANAGER_VCN_OCID");
     String sshPublicKey = System.getenv("CLUSTER_MANAGER_SSH_PUBLIC_KEY");
-    String subnetName = "Public Subnet VPGL:" + lease.getRegion();
+    String subnetName = "Public Subnet " + lease.getRegion();
     String imageName = "Oracle-Linux-7.6-2019.01.17-0";
 
     ComputeClient computeClient = new ComputeClient(provider);
@@ -65,7 +66,7 @@ public class ClusterHelper {
     // get the subnet object
     List<Subnet> subnets = null;
     try {
-      subnets = getSubnets(vcnClient, compartmentId);
+      subnets = getSubnets(vcnClient, compartmentId, vcnId);
     } catch (Exception e) {
       System.err.println("could not get subnets");
       System.exit(1);
@@ -148,6 +149,11 @@ public class ClusterHelper {
       System.exit(1);
     }
 
+    // need to get the kubeconfig now
+
+
+
+
     System.out.println("Instance is provisioned.");
   }
 
@@ -187,10 +193,10 @@ public class ClusterHelper {
     return response.getItems();
   }
 
-  private static List<Subnet> getSubnets(VirtualNetworkClient vcnClient, String compartmentId) {
+  private static List<Subnet> getSubnets(VirtualNetworkClient vcnClient, String compartmentId, String vcnId) {
 
     ListSubnetsResponse response =
-        vcnClient.listSubnets(ListSubnetsRequest.builder().compartmentId(compartmentId).build());
+        vcnClient.listSubnets(ListSubnetsRequest.builder().vcnId(vcnId).compartmentId(compartmentId).build());
 
     return response.getItems();
   }
@@ -213,7 +219,7 @@ public class ClusterHelper {
     try {
       // TODO pick the right file
       byte[] fileContent =
-          FileUtils.readFileToByteArray(new File("src/main/cloud-init/olcs-19.sh"));
+          FileUtils.readFileToByteArray(new File("src/main/cloud-init/olcs-1.9.sh"));
       encodedString = Base64.getEncoder().encodeToString(fileContent);
     } catch (Exception e) {
       System.err.println("could not base64 encode the cloud-init script");

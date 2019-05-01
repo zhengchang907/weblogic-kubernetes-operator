@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.Supplier;
+
+import oracle.kubernetes.clustermanager.helpers.ClusterHelper;
 import oracle.kubernetes.clustermanager.helpers.LeaseManager;
 import oracle.kubernetes.clustermanager.types.Lease;
 
@@ -65,5 +67,12 @@ public class Main {
 
     // try to acquire lease
     Lease myLease = LeaseManager.acquireLease(client, "mark", 1);
+
+    // try to create a cluster
+
+    System.out.println("Trying to create a cluster...");
+    ClusterHelper.createCluster(provider, myLease, null);
+
+
   }
 }

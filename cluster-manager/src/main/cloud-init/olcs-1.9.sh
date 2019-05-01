@@ -20,8 +20,7 @@ systemctl start docker
 
 # authenticate to container registry
 echo 'Authenticating to container registry...'
-docker login container-registry.oracle.com/kubernetes_developer -u XX_USERNAME_XX -p XX_PASSWORD_XX
-export KUBE_REPO_PREFIX=container-registry.oracle.com/kubernetes_developer
+docker login container-registry.oracle.com -u weblogicx_ww@oracle.com -p Env1r0nm3nt
 
 # setup firewall
 echo 'Configuring firewall...'
