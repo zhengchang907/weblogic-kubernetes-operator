@@ -22,8 +22,6 @@ import oracle.kubernetes.operator.LabelConstants;
 import oracle.kubernetes.operator.ProcessingConstants;
 import oracle.kubernetes.operator.VersionConstants;
 import oracle.kubernetes.operator.calls.CallResponse;
-import oracle.kubernetes.operator.logging.LoggingFacade;
-import oracle.kubernetes.operator.logging.LoggingFactory;
 import oracle.kubernetes.operator.steps.DefaultResponseStep;
 import oracle.kubernetes.operator.wlsconfig.NetworkAccessPoint;
 import oracle.kubernetes.operator.wlsconfig.WlsClusterConfig;
@@ -40,6 +38,7 @@ import oracle.kubernetes.weblogic.domain.model.Domain;
 import oracle.kubernetes.weblogic.domain.model.ServerSpec;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
+import static oracle.kubernetes.operator.logging.LoggingFacade.LOGGER;
 import static oracle.kubernetes.operator.logging.MessageKeys.ADMIN_SERVICE_CREATED;
 import static oracle.kubernetes.operator.logging.MessageKeys.ADMIN_SERVICE_EXISTS;
 import static oracle.kubernetes.operator.logging.MessageKeys.ADMIN_SERVICE_REPLACED;
@@ -56,7 +55,6 @@ import static oracle.kubernetes.operator.logging.MessageKeys.MANAGED_SERVICE_REP
 public class ServiceHelper {
   public static final String CLUSTER_IP_TYPE = "ClusterIP";
   public static final String NODE_PORT_TYPE = "NodePort";
-  private static final LoggingFacade LOGGER = LoggingFactory.getLogger("Operator", "Operator");
 
   private ServiceHelper() {
   }
@@ -92,10 +90,6 @@ public class ServiceHelper {
 
   public static void updatePresenceFromEvent(DomainPresenceInfo info, V1Service service) {
     OperatorServiceType.getType(service).updateFromEvent(info, service);
-  }
-
-  public static V1Service[] getServerServices(DomainPresenceInfo info) {
-    return OperatorServiceType.SERVER.getServices(info);
   }
 
   public static boolean isServerService(V1Service service) {
@@ -347,6 +341,26 @@ public class ServiceHelper {
     }
   }
 
+  private static boolean testNodePort(List<V1ServicePort> ports, Integer port) {
+    if (ports == null) return true;
+    for (V1ServicePort servicePort : ports) {
+      if (port.equals(servicePort.getPort())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean testNodePort(Map<String, V1ServicePort> ports, Integer port) {
+    if (ports == null) return true;
+    for (V1ServicePort servicePort : ports.values()) {
+      if (port.equals(servicePort.getPort())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private abstract static class ServiceStepContext {
     private final Step conflictStep;
     protected List<V1ServicePort> ports;
@@ -395,7 +409,10 @@ public class ServiceHelper {
 
     void addPort(V1ServicePort port) {
       if (ports == null) ports = new ArrayList<>();
-      ports.add(port);
+
+      if (testNodePort(ports, port.getPort())) {
+        ports.add(port);
+      }
     }
 
     void addNapServicePort(NetworkAccessPoint nap) {
@@ -663,7 +680,7 @@ public class ServiceHelper {
     }
 
     void addServicePortIfNeeded(String portName, Integer port) {
-      if (port != null) {
+      if (port != null && testNodePort(ports, port)) {
         ports.putIfAbsent(portName, createServicePort(portName, port));
       }
     }
@@ -829,9 +846,11 @@ public class ServiceHelper {
       Channel channel = getChannel(channelName);
       if (channel == null || internalPort == null) return;
 
-      addPort(
-          createServicePort(channelName, internalPort)
-              .nodePort(Optional.ofNullable(channel.getNodePort()).orElse(internalPort)));
+      if (testNodePort(ports, internalPort)) {
+        addPort(
+            createServicePort(channelName, internalPort)
+                .nodePort(Optional.ofNullable(channel.getNodePort()).orElse(internalPort)));
+      }
     }
 
     private Channel getChannel(String channelName) {
