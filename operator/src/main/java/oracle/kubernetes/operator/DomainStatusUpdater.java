@@ -146,6 +146,8 @@ public class DomainStatusUpdater {
                   public NextAction onSuccess(Packet packet, CallResponse<Domain> callResponse) {
                     // Update info only if using replaceDomain
                     // Skip, if we switch to using replaceDomainStatus
+                    LOGGER.info(MessageKeys.EXIT_METHOD, "doDomainUpdate(): response domain =" 
+                                + callResponse.getResult());
                     info.setDomain(callResponse.getResult());
                     return doNext(packet);
                   }
@@ -163,6 +165,8 @@ public class DomainStatusUpdater {
             new DefaultResponseStep<Domain>(next) {
               @Override
               public NextAction onSuccess(Packet packet, CallResponse<Domain> callResponse) {
+                LOGGER.info(MessageKeys.EXIT_METHOD, "getRereadDomainConflictStep(): response domain =" 
+                            + callResponse.getResult());
                 info.setDomain(callResponse.getResult());
                 return doNext(packet);
               }

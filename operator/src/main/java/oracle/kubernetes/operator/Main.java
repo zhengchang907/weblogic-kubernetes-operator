@@ -221,6 +221,7 @@ public class Main {
         stopping.set(true);
       }
       isNamespaceStarted.remove(ns);
+      domainWatchers.remove(ns);
     }
   }
 
@@ -245,6 +246,7 @@ public class Main {
     return () -> {
       Collection<String> targetNamespaces = getTargetNamespaces();
 
+
       // Check for removed namespaces
       Set<String> namespacesToStop = new TreeSet<>(isNamespaceStopping.keySet());
       namespacesToStop.removeAll(targetNamespaces);
@@ -263,10 +265,14 @@ public class Main {
       if (!namespacesToStart.isEmpty()) {
         runSteps(new StartNamespacesStep(namespacesToStart));
       }
+      
+      LOGGER.info(MessageKeys.RECHECK_DOMAIN, targetNamespaces, isNamespaceStopping.keySet(), 
+                  namespacesToStop, namespacesToStart, isNamespaceStarted.keySet());
     };
   }
 
   static Step readExistingResources(String operatorNamespace, String ns) {
+    LOGGER.info(MessageKeys.ENTER_METHOD, "readExistingResources: no exiting log", "namespace: " + ns);
     return Step.chain(
         new ReadExistingResourcesBeforeStep(),
         ConfigMapHelper.createScriptConfigMapStep(operatorNamespace, ns),
@@ -278,29 +284,33 @@ public class Main {
   }
 
   private static Step readExistingDomains(String ns) {
-    LOGGER.fine(MessageKeys.LISTING_DOMAINS);
+    LOGGER.info(MessageKeys.LISTING_DOMAINS);
     return callBuilderFactory.create().listDomainAsync(ns, new DomainListStep(ns));
   }
 
   private static Step readExistingServices(String ns) {
+    LOGGER.info(MessageKeys.ENTER_METHOD, "readExistingServices: no exiting log", "namespace: " + ns);
     return new CallBuilder()
         .withLabelSelectors(LabelConstants.DOMAINUID_LABEL, LabelConstants.CREATEDBYOPERATOR_LABEL)
         .listServiceAsync(ns, new ServiceListStep(ns));
   }
 
   private static Step readExistingEvents(String ns) {
+    LOGGER.info(MessageKeys.ENTER_METHOD, "readExistingEvents: no exiting log", "namespace: " + ns);
     return new CallBuilder()
         .withFieldSelector(Main.READINESS_PROBE_FAILURE_EVENT_FILTER)
         .listEventAsync(ns, new EventListStep(ns));
   }
 
   private static Step readExistingPods(String ns) {
+    LOGGER.info(MessageKeys.ENTER_METHOD, "readExistingPods: no exiting log", "namespace: " + ns);
     return new CallBuilder()
         .withLabelSelectors(LabelConstants.DOMAINUID_LABEL, LabelConstants.CREATEDBYOPERATOR_LABEL)
         .listPodAsync(ns, new PodListStep(ns));
   }
 
   private static ConfigMapAfterStep createConfigMapStep(String ns) {
+    LOGGER.info(MessageKeys.ENTER_METHOD, "createConfigMapStep: no exiting log", "namespace: " + ns);
     return new ConfigMapAfterStep(
         ns,
         configMapWatchers,
@@ -522,6 +532,8 @@ public class Main {
       DomainProcessor x = packet.getSpi(DomainProcessor.class);
       DomainProcessor dp = x != null ? x : processor;
 
+      LOGGER.info(MessageKeys.ADD_DOMAIN_WATCHER, ns, domainWatchers, callResponse.getResult());
+
       Set<String> domainUids = new HashSet<>();
       if (callResponse.getResult() != null) {
         for (Domain dom : callResponse.getResult().getItems()) {
@@ -532,13 +544,22 @@ public class Main {
                   domainUid,
                   (k, v) -> {
                     if (v == null) {
-                      return new DomainPresenceInfo(dom);
+                      DomainPresenceInfo newInfo =
+                          new DomainPresenceInfo(dom);
+                      LOGGER.info(MessageKeys.EXIT_METHOD, "DomainListStep.onSuccess()", 
+                                  " created a new info in namespace= " + ns);
+                      return newInfo;
+                      // return new DomainPresenceInfo(dom);
                     }
                     v.setDomain(dom);
+                    LOGGER.info(MessageKeys.EXIT_METHOD, "DomainListStep.onSuccess()", 
+                                " found an info in namespace= " + ns);
                     return v;
                   });
           info.setPopulated(true);
           dp.makeRightDomainPresence(info, true, false, false);
+          LOGGER.info(MessageKeys.EXIT_METHOD, "DomainListStep.onSuccess()", 
+                                " after makeRightDomainPresence in namespace= " + ns);
         }
       }
 
@@ -549,8 +570,11 @@ public class Main {
               value.setDeleting(true);
               value.setPopulated(true);
               dp.makeRightDomainPresence(value, true, true, false);
+              LOGGER.info(MessageKeys.EXIT_METHOD, "DomainListStep.onSuccess()", 
+                     " after makeRightDomainPresence for a stranded domain in namespace= " + ns);
             }
           });
+
 
       if (!domainWatchers.containsKey(ns)) {
         domainWatchers.put(

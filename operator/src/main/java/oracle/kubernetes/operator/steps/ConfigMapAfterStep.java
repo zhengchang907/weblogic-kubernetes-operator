@@ -12,6 +12,9 @@ import io.kubernetes.client.models.V1ConfigMap;
 import oracle.kubernetes.operator.ConfigMapWatcher;
 import oracle.kubernetes.operator.ProcessingConstants;
 import oracle.kubernetes.operator.TuningParameters.WatchTuning;
+import oracle.kubernetes.operator.logging.LoggingFacade;
+import oracle.kubernetes.operator.logging.LoggingFactory;
+import oracle.kubernetes.operator.logging.MessageKeys;
 import oracle.kubernetes.operator.watcher.WatchListener;
 import oracle.kubernetes.operator.work.ContainerResolver;
 import oracle.kubernetes.operator.work.NextAction;
@@ -19,6 +22,8 @@ import oracle.kubernetes.operator.work.Packet;
 import oracle.kubernetes.operator.work.Step;
 
 public class ConfigMapAfterStep extends Step {
+  private static final LoggingFacade LOGGER = LoggingFactory.getLogger("Operator", "Operator");
+
   private final String ns;
   private final Map<String, ConfigMapWatcher> configMapWatchers;
   private final WatchTuning tuning;
@@ -41,6 +46,10 @@ public class ConfigMapAfterStep extends Step {
   @Override
   public NextAction apply(Packet packet) {
     V1ConfigMap result = (V1ConfigMap) packet.get(ProcessingConstants.SCRIPT_CONFIG_MAP);
+    LOGGER.info(MessageKeys.ENTER_METHOD, "ConfigMapAfterStep.apply(): no exiting log", 
+                "namespace: " + ns + " result =" 
+                + result + " createnewwatcher? " + !configMapWatchers.containsKey(ns));
+
     if (!configMapWatchers.containsKey(ns)) {
       configMapWatchers.put(
           ns,

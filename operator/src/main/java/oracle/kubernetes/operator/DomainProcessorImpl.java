@@ -336,6 +336,8 @@ public class DomainProcessorImpl implements DomainProcessor {
    * @param item An item received from a Watch response.
    */
   public void dispatchDomainWatch(Watch.Response<Domain> item) {
+    LOGGER.info(MessageKeys.ENTER_METHOD, "dispatchDomainWatch", 
+                "type= " + item.type + " object=" + item.object);
     Domain d;
     String domainUid;
     switch (item.type) {
@@ -791,6 +793,21 @@ public class DomainProcessorImpl implements DomainProcessor {
     }
 
     private V1ContainerStatus getMatchingContainerStatus(V1Pod pod, String domainUid) {
+      String msg = " domainUid =" + domainUid + "pod = " + pod;
+      if (pod != null) {
+        msg += " podStatus =" + pod.getStatus();
+        if (pod.getStatus() != null) {
+          msg += " containStatus = " + pod.getStatus().getContainerStatuses(); 
+        }
+      }
+
+      LOGGER.info(MessageKeys.ENTER_METHOD, "getMatchingContainerStatus" + msg);
+
+      if (pod == null || pod.getStatus() == null 
+          || pod.getStatus().getContainerStatuses() == null) {
+        return null;
+      }
+
       return pod.getStatus().getContainerStatuses().stream()
             .filter(s -> toJobIntrospectorName(domainUid).equals(s.getName()))
             .findFirst()
