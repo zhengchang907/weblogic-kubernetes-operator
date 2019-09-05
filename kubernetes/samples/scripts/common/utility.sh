@@ -339,8 +339,11 @@ function createFiles {
     cp ${domainPropertiesInput} ${domainPropertiesOutput}
     sed -i -e "s:%DOMAIN_NAME%:${domainName}:g" ${domainPropertiesOutput}
     sed -i -e "s:%ADMIN_PORT%:${adminPort}:g" ${domainPropertiesOutput}
+    sed -i -e "s:%ADMIN_SSL_PORT%:${adminSslPort}:g" ${domainPropertiesOutput}
     sed -i -e "s:%ADMIN_SERVER_NAME%:${adminServerName}:g" ${domainPropertiesOutput}
     sed -i -e "s:%MANAGED_SERVER_PORT%:${managedServerPort}:g" ${domainPropertiesOutput}
+    sed -i -e "s:%MANAGED_SERVER_SSL_PORT%:${managedServerSslPort}:g" ${domainPropertiesOutput}
+    sed -i -e "s:%USE_KSS_FOR_DEMO%:${useKSSForDemo}:g" ${domainPropertiesOutput}
     sed -i -e "s:%MANAGED_SERVER_NAME_BASE%:${managedServerNameBase}:g" ${domainPropertiesOutput}
     sed -i -e "s:%CONFIGURED_MANAGED_SERVER_COUNT%:${configuredManagedServerCount}:g" ${domainPropertiesOutput}
     sed -i -e "s:%CLUSTER_NAME%:${clusterName}:g" ${domainPropertiesOutput}
@@ -399,16 +402,19 @@ function createFiles {
     sed -i -e "s:%ADMIN_SERVER_NAME%:${adminServerName}:g" ${createJobOutput}
     sed -i -e "s:%ADMIN_SERVER_NAME_SVC%:${adminServerNameSVC}:g" ${createJobOutput}
     sed -i -e "s:%ADMIN_PORT%:${adminPort}:g" ${createJobOutput}
+    sed -i -e "s:%ADMIN_SSL_PORT%:${adminSslPort}:g" ${createJobOutput}
     sed -i -e "s:%CONFIGURED_MANAGED_SERVER_COUNT%:${configuredManagedServerCount}:g" ${createJobOutput}
     sed -i -e "s:%MANAGED_SERVER_NAME_BASE%:${managedServerNameBase}:g" ${createJobOutput}
     sed -i -e "s:%MANAGED_SERVER_NAME_BASE_SVC%:${managedServerNameBaseSVC}:g" ${createJobOutput}
     sed -i -e "s:%MANAGED_SERVER_PORT%:${managedServerPort}:g" ${createJobOutput}
+    sed -i -e "s:%MANAGED_SERVER_SSL_PORT%:${managedServerSslPort}:g" ${createJobOutput}
     sed -i -e "s:%T3_CHANNEL_PORT%:${t3ChannelPort}:g" ${createJobOutput}
     sed -i -e "s:%T3_PUBLIC_ADDRESS%:${t3PublicAddress}:g" ${createJobOutput}
     sed -i -e "s:%CLUSTER_NAME%:${clusterName}:g" ${createJobOutput}
     sed -i -e "s:%CLUSTER_TYPE%:${clusterType}:g" ${createJobOutput}
     sed -i -e "s:%DOMAIN_PVC_NAME%:${persistentVolumeClaimName}:g" ${createJobOutput}
     sed -i -e "s:%DOMAIN_ROOT_DIR%:${domainPVMountPath}:g" ${createJobOutput}
+    sed -i -e "s:%USE_KSS_FOR_DEMO%:${useKSSForDemo}:g" ${createJobOutput}
     sed -i -e "s:%CREATE_DOMAIN_SCRIPT_DIR%:${createDomainScriptsMountPath}:g" ${createJobOutput}
     sed -i -e "s:%CREATE_DOMAIN_SCRIPT%:${createDomainScriptName}:g" ${createJobOutput}
     # extra entries for FMW Infra domains
@@ -561,118 +567,4 @@ function createDomain {
 
   # Print a summary
   printSummary
-}
-
-# checks if a given pod in a NameSpace has been deleted
-function checkPodDelete(){
-
- pod=$1
- ns=$2
- status="Terminating"
-
- if [ -z ${1} ]; then 
-  echo "No Pod name provided "
-  exit -1 
- fi
-
- if [ -z ${2} ]; then 
-  echo "No NameSpace provided "
-  exit -2 
- fi
-
- echo "Checking Status for Pod [$pod] in namesapce [${ns}]"
- max=10
- count=1
- while [ $count -le $max ] ; do
-  sleep 5 
-  pod=`kubectl get po/$1 -n ${ns} | grep -v NAME | awk '{print $1}'`
-  if [ -z ${pod} ]; then 
-    status="Terminated"
-    echo "Pod [$1] removed from nameSpace [${ns}]"
-    break;
-  fi
-  count=`expr $count + 1`
-  echo "Pod [$pod] Status [${status}]"
- done
-
- if [ $count -gt $max ] ; then
-   echo "[ERROR] The Pod[$1] in NameSpace [$ns] could not be deleted in 50s"; 
-   exit 1
- fi 
-}
-
-# Checks if all container(s) in a pod are running state based on READY column 
-#NAME                READY     STATUS    RESTARTS   AGE
-#domain1-adminserver 1/1       Running   0          4m
-
-function checkPodState(){
-
- status="NotReady"
- max=60
- count=1
-
- pod=$1
- ns=$2
- state=${3:-1/1}
-
- echo "Checking Pod READY column for State [$state]"
- pname=`kubectl get po -n ${ns} | grep -w ${pod} | awk '{print $1}'`
- if [ -z ${pname} ]; then 
-  echo "No such pod [$pod] exists in NameSpace [$ns] "
-  exit -1
- fi 
-
- rcode=`kubectl get po ${pname} -n ${ns} | grep -w ${pod} | awk '{print $2}'`
- [[ ${rcode} -eq "${state}"  ]] && status="Ready"
-
- while [ ${status} != "Ready" -a $count -le $max ] ; do
-  sleep 5 
-  rcode=`kubectl get po/$pod -n ${ns} | grep -v NAME | awk '{print $2}'`
-  [[ ${rcode} -eq "1/1"  ]] && status="Ready"
-  echo "Pod [$1] Status is ${status} Iter [$count/$max]"
-  count=`expr $count + 1`
- done
- if [ $count -gt $max ] ; then
-   echo "[ERROR] Unable to start the Pod [$pod] after 300s "; 
-   exit 1
- fi 
-
- pname=`kubectl get po -n ${ns} | grep -w ${pod} | awk '{print $1}'`
- kubectl -n ${ns} get po ${pname}
-}
-
-# Checks if a pod is available in a given namesapce 
-function checkPod(){
-
- max=20
- count=1
-
- pod=$1
- ns=$2
-
- pname=`kubectl get po -n ${ns} | grep -w ${pod} | awk '{print $1}'`
- if [ -z ${pname} ]; then 
-  echo "No such pod [$pod] exists in NameSpace [$ns]"
-  sleep 10
- fi 
-
- rcode=`kubectl get po -n ${ns} | grep -w ${pod} | awk '{print $1}'`
- if [ ! -z ${rcode} ]; then 
-  echo "[$pod] already initialized .. "
-  return 0
- fi
-
- echo "The POD [${pod}] has not been initialized ..."
- while [ -z ${rcode} ]; do
-  [[ $count -gt $max ]] && break
-  echo "Pod[$pod] is being initialized ..."
-  sleep 5
-  rcode=`kubectl get po -n ${ns} | grep $pod | awk '{print $1}'`
-  count=`expr $count + 1`
- done
-
- if [ $count -gt $max ] ; then
-  echo "[ERROR] Could not find Pod [$pod] after 120s";
-  exit 1
- fi
 }
