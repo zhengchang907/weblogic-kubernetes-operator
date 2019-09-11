@@ -66,6 +66,10 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
     return JOB_WATCHERS.computeIfAbsent(getNamespace(domain), n -> factory.createFor(domain));
   }
 
+  public static void removeNamespace(String ns) {
+    JOB_WATCHERS.remove(ns);
+  }
+
   private static String getNamespace(Domain domain) {
     return domain.getMetadata().getNamespace();
   }
@@ -231,6 +235,7 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
 
     @Override
     public NextAction apply(Packet packet) {
+      LOGGER.info(MessageKeys.ENTER_METHOD, "WaitForJobReadyStep.apply" + " isComplete = " + isComplete(job));
       if (isComplete(job)) {
         return doNext(packet);
       }
@@ -244,6 +249,9 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
           (fiber) -> {
             Complete complete =
                 (V1Job job, boolean isJobFailed) -> {
+                  LOGGER.info(MessageKeys.ENTER_METHOD, "WaitForJobReadyStep.apply" 
+                              + " shouldProcessJob = " + shouldProcessJob(job)
+                              + " isJobFailed = " + isJobFailed);
                   if (!shouldProcessJob(job)) {
                     return;
                   }
@@ -278,6 +286,9 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
                                   ApiException e,
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
+                                LOGGER.info(MessageKeys.ENTER_METHOD, "ResponseStep.onFailure" 
+                                            + " statusCode = " + statusCode
+                                            + " e = " + e);
                                 return super.onFailure(packet, e, statusCode, responseHeaders);
                               }
 
@@ -287,6 +298,9 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job> {
                                   V1Job result,
                                   int statusCode,
                                   Map<String, List<String>> responseHeaders) {
+                                LOGGER.info(MessageKeys.ENTER_METHOD, "ResponseStep.onSuccess" 
+                                            + " statusCode = " + statusCode
+                                            + " result = " + result);
                                 if (result != null && isComplete(result) /*isReady(result)*/) {
                                   if (didResume.compareAndSet(false, true)) {
                                     completeCallbackRegistrations.remove(
