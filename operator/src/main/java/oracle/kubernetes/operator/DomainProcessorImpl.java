@@ -799,7 +799,9 @@ public class DomainProcessorImpl implements DomainProcessor {
     }
 
     private void updateStatus(String reason, String message) {
-      DomainStatusPatch.updateDomainStatus(domain, reason, message);
+      if (reason == null || message == null) return;
+      
+      DomainStatusPatch.updateSynchronously(domain, reason, message);
     }
 
     private V1ContainerStatus getMatchingContainerStatus() {
