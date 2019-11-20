@@ -174,16 +174,16 @@
                    <!--Added the following lines so we could toggle between parallel and 
                        sequential runs, but it doesn't work yet. The tests run in parallel
                        by default-->
-                   <properties>
+                   <!--properties>
                         <configurationParameters>
                             junit.jupiter.execution.parallel.enabled = true
                             junit.jupiter.execution.parallel.mode.default = same_thread
                             junit.jupiter.execution.parallel.mode.classes.default = concurrent
                         </configurationParameters>
-                    </properties>
+                    </properties-->
                     <skipTests>true</skipTests>
                 </configuration>
-                <dependencies>
+                <!--dependencies>
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
                         <artifactId>junit-jupiter-engine</artifactId>
@@ -194,7 +194,7 @@
                         <artifactId>junit-platform-surefire-provider</artifactId>
                         <version>${junit.platform.surefire.version}</version>
                     </dependency>
-                </dependencies>
+                </dependencies-->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
