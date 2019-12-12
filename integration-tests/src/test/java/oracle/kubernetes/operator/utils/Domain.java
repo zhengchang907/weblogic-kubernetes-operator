@@ -1728,6 +1728,7 @@ public class Domain {
       } else {
         domainMap.put("imagePullSecretName", "docker-store");
       }
+      domainMap.put("imagePullPolicy", "Always");
     } else {
       // use default image attibute value for JENKINS and standalone runs and for SHARED_CLUSTER use
       // below
