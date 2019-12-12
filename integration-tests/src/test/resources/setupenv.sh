@@ -100,7 +100,6 @@ export BRANCH_NAME="${BRANCH_NAME:-$SHARED_CLUSTER_GIT_BRANCH}"
 export IMAGE_TAG_WEBLOGIC="${IMAGE_TAG_WEBLOGIC:-12.2.1.3}"
 export SKIP_BUILD_OPERATOR="${SKIP_BUILD_OPERATOR:-false}"
 export OPENSHIFT=${OPENSHIFT:-false}
-export FAST_DELETE="--grace-period=1 --timeout=1"
 
 if [ "$JRF_ENABLED" = true ] ; then
   export FMWINFRA_IMAGE_URI=/middleware/fmw-infrastructure
