@@ -248,16 +248,17 @@
                             <executable>${resource-integration-test}/setupenv.sh</executable>
                         </configuration>
                     </execution>
-                    <execution>
+                    <!-- execution>
                         <id>cleanup</id>
                         <phase>post-integration-test</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
+	 		<skip>${skipITs}</skip>
                         <configuration>
                             <executable>${resource-integration-test}/cleanup_success.sh</executable>
                         </configuration>
-                    </execution>
+                    </execution -->
                 </executions>
             </plugin>
             <plugin>
