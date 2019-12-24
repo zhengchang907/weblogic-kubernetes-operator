@@ -895,6 +895,14 @@ class SitConfigGenerator(Generator):
         self.writeListenAddress("force a replace",listen_address)
         self.undent()
         self.writeln("</d:network-access-point>")
+    else:
+      self.writeln("<d:network-access-point>")
+      self.indent()
+      self.writeln("<d:name>" + nap_name + "</d:name>")
+      self.writeln("<d:public-address f:combine-mode=\"replace\">${env:HOST_IP}</d:public-address>")
+      self.writeln("<d:outbound-enabled f:combine-mode=\"replace\">true</d:outbound-enabled>")
+      self.undent()
+      self.writeln("</d:network-access-point>")
 
   def getLogOrNone(self,server):
     try:

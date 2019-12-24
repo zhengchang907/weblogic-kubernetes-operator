@@ -23,7 +23,7 @@ function copyIfChanged() {
   [ ! -f "${1?}" ] && trace SEVERE "File '$1' not found." && exit 1
   if [ ! -f "${2?}" ] || [ ! -z "`diff $1 $2 2>&1`" ]; then
     trace "Copying '$1' to '$2'."
-    cp $1 $2
+    sed "s|\${env:HOST_IP}|$HOST_IP|g" $1 > $2
     [ $? -ne 0 ] && trace SEVERE "failed cp $1 $2" && exitOrLoop
     chmod 750 $2 
     [ $? -ne 0 ] && trace SEVERE "failed chmod 750 $2" && exitOrLoop

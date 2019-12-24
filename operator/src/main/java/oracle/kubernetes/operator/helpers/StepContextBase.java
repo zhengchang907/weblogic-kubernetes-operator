@@ -13,6 +13,8 @@ import java.util.Map;
 
 import io.kubernetes.client.models.V1Container;
 import io.kubernetes.client.models.V1EnvVar;
+import io.kubernetes.client.models.V1EnvVarSource;
+import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1Toleration;
@@ -215,6 +217,11 @@ public abstract class StepContextBase implements StepContextConstants {
 
   protected void addEnvVar(List<V1EnvVar> vars, String name, String value) {
     vars.add(new V1EnvVar().name(name).value(value));
+  }
+
+  protected void addFieldRefEnvVar(List<V1EnvVar> vars, String name, String fieldPath) {
+    vars.add(new V1EnvVar().name(name).valueFrom(
+        new V1EnvVarSource().fieldRef(new V1ObjectFieldSelector().fieldPath(fieldPath))));
   }
 
   protected boolean hasEnvVar(List<V1EnvVar> vars, String name) {

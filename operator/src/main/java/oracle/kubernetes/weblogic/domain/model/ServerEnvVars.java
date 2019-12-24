@@ -49,10 +49,13 @@ public class ServerEnvVars {
   /** 'true' or 'false' to indicate whether the server output should be included in the pod log. */
   public static final String SERVER_OUT_IN_POD_LOG = "SERVER_OUT_IN_POD_LOG";
 
+  /** Name of the kubernetes node that the server pod is running on (status.hostIP) */
+  public static final String HOST_IP = "HOST_IP";
+
   private static final List<String> RESERVED_NAMES = Arrays.asList(
         DOMAIN_UID, DOMAIN_NAME, DOMAIN_HOME, NODEMGR_HOME, SERVER_NAME, SERVICE_NAME,
         ADMIN_NAME, AS_SERVICE_NAME, ADMIN_PORT, ADMIN_PORT_SECURE,
-        LOG_HOME, SERVER_OUT_IN_POD_LOG);
+        LOG_HOME, SERVER_OUT_IN_POD_LOG, HOST_IP);
 
   static boolean isReserved(String name) {
     return RESERVED_NAMES.contains(name);

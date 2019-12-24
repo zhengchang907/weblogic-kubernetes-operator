@@ -597,6 +597,7 @@ public abstract class PodStepContext extends BasePodStepContext {
     if (dataHome != null && !dataHome.isEmpty()) {
       addEnvVar(vars, ServerEnvVars.DATA_HOME, dataHome);
     }
+    addFieldRefEnvVar(vars, ServerEnvVars.HOST_IP, "status.hostIP");
     if (mockWls()) {
       addEnvVar(vars, "MOCK_WLS", "true");
     }
