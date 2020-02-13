@@ -1,3 +1,11 @@
+#!/bin/bash
+# Copyright (c) 2019,2020 Oracle Corporation and/or its affiliates. All rights reserved.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+#
+# This is a helper script for obtaining and pretty-printing operator logs.
+#
+# Usage:  ./oplog.sh -?
+
 function usage() {
     cat <<EOF
 Usage:  
