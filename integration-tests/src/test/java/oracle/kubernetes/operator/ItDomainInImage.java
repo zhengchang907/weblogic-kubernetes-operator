@@ -1,10 +1,9 @@
-// Copyright (c) 2018, 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2018, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -42,6 +41,7 @@ public class ItDomainInImage extends BaseTest {
    */
   @BeforeAll
   public static void staticPrepare() throws Exception {
+    namespaceList = new StringBuffer();
     testClassName = new Object() {
     }.getClass().getEnclosingClass().getSimpleName();
     // initialize test properties and create the directories
@@ -66,7 +66,7 @@ public class ItDomainInImage extends BaseTest {
       operator1 = TestUtils.createOperator(operatorMap, RestCertType.SELF_SIGNED);
       Assertions.assertNotNull(operator1);
       domainNS1 = ((ArrayList<String>) operatorMap.get("domainNamespaces")).get(0);
-      namespaceList = new StringBuffer((String)operatorMap.get("namespace"));
+      namespaceList.append((String)operatorMap.get("namespace"));
       namespaceList.append(" ").append(domainNS1);
     }
   }
@@ -116,6 +116,9 @@ public class ItDomainInImage extends BaseTest {
       if (domain != null && (JENKINS || testCompletedSuccessfully)) {
         TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
       }
+      if (domain != null) {
+        domain.deleteImage();
+      }
     }
     LoggerHelper.getLocal().log(Level.INFO, "SUCCESS - " + testMethodName);
   }
@@ -158,6 +161,9 @@ public class ItDomainInImage extends BaseTest {
       if (domain != null && testCompletedSuccessfully) {
         TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
         TestUtils.verifyAfterDeletion(domain);
+      }
+      if (domain != null) {
+        domain.deleteImage();
       }
     }
     LoggerHelper.getLocal().log(Level.INFO, "SUCCESS - " + testMethodName);

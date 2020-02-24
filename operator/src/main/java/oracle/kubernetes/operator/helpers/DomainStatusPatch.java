@@ -1,4 +1,4 @@
-// Copyright (c) 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2019, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator.helpers;
@@ -7,8 +7,8 @@ import javax.json.Json;
 import javax.json.JsonPatchBuilder;
 import javax.json.JsonValue;
 
-import io.kubernetes.client.ApiException;
 import io.kubernetes.client.custom.V1Patch;
+import io.kubernetes.client.openapi.ApiException;
 import oracle.kubernetes.weblogic.domain.model.Domain;
 
 public class DomainStatusPatch {
@@ -17,7 +17,7 @@ public class DomainStatusPatch {
 
   private final String name;
   private final String namespace;
-  private JsonPatchBuilder patchBuilder;
+  private final JsonPatchBuilder patchBuilder;
 
   /**
    * Update the domain status synchronously. This may involve either replacing the current status or adding to it.
@@ -49,10 +49,11 @@ public class DomainStatusPatch {
   }
 
   private static void setSubField(JsonPatchBuilder patchBuilder, String path, String oldValue, String newValue) {
-    if (oldValue == null)
+    if (oldValue == null) {
       patchBuilder.add(path, newValue);
-    else
+    } else {
       patchBuilder.replace(path, newValue);
+    }
   }
 
   private void update() {

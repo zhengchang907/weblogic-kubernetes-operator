@@ -1,4 +1,4 @@
-// Copyright (c) 2017, 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2017, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator;
@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -26,16 +27,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-
 import javax.annotation.Nonnull;
 
-import io.kubernetes.client.models.V1EventList;
-import io.kubernetes.client.models.V1Namespace;
-import io.kubernetes.client.models.V1NamespaceList;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodList;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServiceList;
+import io.kubernetes.client.openapi.models.V1EventList;
+import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1NamespaceList;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServiceList;
+import io.kubernetes.client.openapi.models.V1SubjectRulesReviewStatus;
 import io.kubernetes.client.util.Watch;
 import oracle.kubernetes.operator.calls.CallResponse;
 import oracle.kubernetes.operator.helpers.CallBuilder;
@@ -83,8 +84,8 @@ public class Main {
       Engine.wrappedExecutorService("operator", container);
   private static final TuningParameters tuningAndConfig;
   private static final CallBuilderFactory callBuilderFactory = new CallBuilderFactory();
-  private static final Map<String, AtomicBoolean> isNamespaceStarted = new ConcurrentHashMap<>();
-  private static final Map<String, AtomicBoolean> isNamespaceStopping = new ConcurrentHashMap<>();
+  private static Map<String, NamespaceStatus> namespaceStatuses = new ConcurrentHashMap<>();
+  private static Map<String, AtomicBoolean> isNamespaceStopping = new ConcurrentHashMap<>();
   private static final Map<String, ConfigMapWatcher> configMapWatchers = new ConcurrentHashMap<>();
   private static final Map<String, DomainWatcher> domainWatchers = new ConcurrentHashMap<>();
   private static final Map<String, EventWatcher> eventWatchers = new ConcurrentHashMap<>();
@@ -100,7 +101,7 @@ public class Main {
   private static final String READINESS_PROBE_FAILURE_EVENT_FILTER =
       "reason=Unhealthy,type=Warning,involvedObject.fieldPath=spec.containers{weblogic-server}";
   private static final Semaphore shutdownSignal = new Semaphore(0);
-  private static Engine engine = new Engine(wrappedExecutorService);
+  private static final Engine engine = new Engine(wrappedExecutorService);
   private static String principal;
   private static KubernetesVersion version = null;
 
@@ -188,11 +189,16 @@ public class Main {
     try {
       version = HealthCheckHelper.performK8sVersionCheck();
 
+      Step strategy = Step.chain(
+          new InitializeNamespacesSecurityStep(targetNamespaces),
+          new NamespaceRulesReviewStep(),
+          CrdHelper.createDomainCrdStep(version,
+              new StartNamespacesStep(targetNamespaces)));
+      if (!isDedicated()) {
+        strategy = Step.chain(strategy, readExistingNamespaces());
+      }
       runSteps(
-          Step.chain(
-              CrdHelper.createDomainCrdStep(version, 
-                  new StartNamespacesStep(targetNamespaces)),
-              readExistingNamespaces()), 
+          strategy,
           Main::completeBegin);
     } catch (Throwable e) {
       LOGGER.warning(MessageKeys.EXCEPTION, e);
@@ -224,22 +230,23 @@ public class Main {
 
   private static void stopNamespace(String ns, boolean remove) {
     processor.stopNamespace(ns);
-    AtomicBoolean stopping = 
+    AtomicBoolean stopping =
         remove ? isNamespaceStopping.remove(ns) : isNamespaceStopping.get(ns);
 
     if (stopping != null) {
       stopping.set(true);
     }
-    isNamespaceStarted.remove(ns);
+    namespaceStatuses.remove(ns);
     domainWatchers.remove(ns);
     eventWatchers.remove(ns);
     podWatchers.remove(ns);
     serviceWatchers.remove(ns);
+    configMapWatchers.remove(ns);
     JobWatcher.removeNamespace(ns);
   }
 
-  private static void stopNamespaces(Collection<String> targetNamespaces, 
-      Collection<String> namespacesToStop) {
+  private static void stopNamespaces(Collection<String> targetNamespaces,
+                                     Collection<String> namespacesToStop) {
     for (String ns : namespacesToStop) {
       stopNamespace(ns, (! targetNamespaces.contains(ns)));
     }
@@ -267,10 +274,10 @@ public class Main {
       Collection<String> targetNamespaces = getTargetNamespaces();
 
       // Check for namespaces that are removed from the operator's
-      // targetNamespaces list, or that are deleted from the Kubernetes cluster. 
+      // targetNamespaces list, or that are deleted from the Kubernetes cluster.
       Set<String> namespacesToStop = new TreeSet<>(isNamespaceStopping.keySet());
       for (String ns : targetNamespaces) {
-        // the active namespaces are the ones that willnot be stopped
+        // the active namespaces are the ones that will not be stopped
         if (delegate.isNamespaceRunning(ns)) {
           namespacesToStop.remove(ns);
         }
@@ -285,7 +292,7 @@ public class Main {
       } else {
         // check for namespaces that need to be started
         namespacesToStart = new TreeSet<>(targetNamespaces);
-        namespacesToStart.removeAll(isNamespaceStarted.keySet());
+        namespacesToStart.removeAll(namespaceStatuses.keySet());
         for (String ns : targetNamespaces) {
           if (namespacesToStop.contains(ns)) {
             namespacesToStart.remove(ns);
@@ -334,8 +341,7 @@ public class Main {
   }
 
   private static Step readExistingNamespaces() {
-    return new CallBuilder()
-        .listNamespaceAsync(new NamespaceListStep());
+    return new CallBuilder().listNamespaceAsync(new NamespaceListStep());
   }
 
   private static ConfigMapAfterStep createConfigMapStep(String ns) {
@@ -372,10 +378,15 @@ public class Main {
   }
 
   private static Collection<String> getTargetNamespaces() {
-    return getTargetNamespaces(
-        Optional.ofNullable(getHelmVariable.apply("OPERATOR_TARGET_NAMESPACES"))
-            .orElse(tuningAndConfig.get("targetNamespaces")),
-        operatorNamespace);
+    return isDedicated()
+        ? Collections.singleton(operatorNamespace)
+        : getTargetNamespaces(Optional.ofNullable(getHelmVariable.apply("OPERATOR_TARGET_NAMESPACES"))
+            .orElse(tuningAndConfig.get("targetNamespaces")), operatorNamespace);
+  }
+
+  public static boolean isDedicated() {
+    return "true".equalsIgnoreCase(Optional.ofNullable(getHelmVariable.apply("OPERATOR_DEDICATED"))
+        .orElse(tuningAndConfig.get("dedicated")));
   }
 
   private static void startRestServer(String principal, Collection<String> targetNamespaces)
@@ -481,7 +492,9 @@ public class Main {
       String ns = c.getMetadata().getName();
 
       // We only care about namespaces that are in our targetNamespaces
-      if (!targetNamespaces.contains(ns)) return;
+      if (!targetNamespaces.contains(ns)) {
+        return;
+      }
 
       switch (item.type) {
         case "ADDED":
@@ -498,12 +511,12 @@ public class Main {
           break;
 
         case "DELETED":
-          // Mark the namespace as isStopping, which will cause the namespace be stopped 
+          // Mark the namespace as isStopping, which will cause the namespace be stopped
           // the next time when recheckDomains is triggered
           if (delegate.isNamespaceRunning(ns)) {
             isNamespaceStopping.put(ns, new AtomicBoolean(true));
           }
-     
+
           break;
 
         case "MODIFIED":
@@ -526,10 +539,10 @@ public class Main {
     }
   }
 
-  private static class StartNamespacesStep extends Step {
+  private abstract static class ForEachNamespaceStep extends Step {
     private final Collection<String> targetNamespaces;
 
-    StartNamespacesStep(Collection<String> targetNamespaces) {
+    ForEachNamespaceStep(Collection<String> targetNamespaces) {
       this.targetNamespaces = targetNamespaces;
     }
 
@@ -537,6 +550,8 @@ public class Main {
     protected String getDetail() {
       return String.join(",", targetNamespaces);
     }
+
+    protected abstract Step action(String ns);
 
     @Override
     public NextAction apply(Packet packet) {
@@ -546,11 +561,24 @@ public class Main {
       for (String ns : targetNamespaces) {
         startDetails.add(
             new StepAndPacket(
-                Step.chain(
-                    new StartNamespaceBeforeStep(ns), readExistingResources(operatorNamespace, ns)),
+                action(ns),
                 packet.clone()));
       }
       return doForkJoin(getNext(), packet, startDetails);
+    }
+  }
+
+  private static class StartNamespacesStep extends ForEachNamespaceStep {
+    StartNamespacesStep(Collection<String> targetNamespaces) {
+      super(targetNamespaces);
+    }
+
+    @Override
+    protected Step action(String ns) {
+      return Step.chain(
+          new NamespaceRulesReviewStep(ns),
+          new StartNamespaceBeforeStep(ns),
+          readExistingResources(operatorNamespace, ns));
     }
   }
 
@@ -563,17 +591,61 @@ public class Main {
 
     @Override
     public NextAction apply(Packet packet) {
-      AtomicBoolean a = isNamespaceStarted.computeIfAbsent(ns, (key) -> new AtomicBoolean(false));
-      if (!a.getAndSet(true)) {
-        try {
-          HealthCheckHelper.performSecurityChecks(version, operatorNamespace, ns);
-        } catch (Throwable e) {
-          LOGGER.warning(MessageKeys.EXCEPTION, e);
-        }
-
+      NamespaceStatus nss = namespaceStatuses.computeIfAbsent(ns, (key) -> new NamespaceStatus());
+      if (!nss.isNamespaceStarting().getAndSet(true)) {
         return doNext(packet);
       }
       return doEnd(packet);
+    }
+  }
+
+  private static class InitializeNamespacesSecurityStep extends ForEachNamespaceStep {
+    InitializeNamespacesSecurityStep(Collection<String> targetNamespaces) {
+      super(targetNamespaces);
+    }
+
+    @Override
+    protected Step action(String ns) {
+      return new NamespaceRulesReviewStep(ns);
+    }
+  }
+
+  private static class NamespaceRulesReviewStep extends Step {
+    private final String ns;
+
+    NamespaceRulesReviewStep() {
+      this(null);
+    }
+
+    NamespaceRulesReviewStep(String ns) {
+      this.ns = ns;
+    }
+
+    @Override
+    public NextAction apply(Packet packet) {
+      // Looking up namespace status.  If ns is null, then this step will check the status of the
+      // operator's own namespace.  If the namespace status is missing, then generate it with
+      // the health check helper.
+      NamespaceStatus nss = namespaceStatuses.computeIfAbsent(
+          ns != null ? ns : operatorNamespace, (key) -> new NamespaceStatus());
+      V1SubjectRulesReviewStatus srrs = nss.getRulesReviewStatus().updateAndGet(prev -> {
+        if (prev != null) {
+          return prev;
+        }
+
+        try {
+          return HealthCheckHelper.performSecurityChecks(version, operatorNamespace, ns);
+        } catch (Throwable e) {
+          LOGGER.warning(MessageKeys.EXCEPTION, e);
+        }
+        return null;
+      });
+
+      packet.getComponents().put(
+          NamespaceRulesReviewStep.class.getName(),
+          Component.createFor(V1SubjectRulesReviewStatus.class, srrs));
+
+      return doNext(packet);
     }
   }
 
@@ -776,6 +848,12 @@ public class Main {
     }
 
     @Override
+    protected NextAction onFailureNoRetry(Packet packet, CallResponse<V1NamespaceList> callResponse) {
+      return isNotAuthorizedOrForbidden(callResponse)
+          ? doNext(packet) : super.onFailureNoRetry(packet, callResponse);
+    }
+
+    @Override
     public NextAction onSuccess(Packet packet, CallResponse<V1NamespaceList> callResponse) {
       V1NamespaceList result = callResponse.getResult();
       // don't bother processing pre-existing events
@@ -792,7 +870,7 @@ public class Main {
   }
 
   private static class NullCompletionCallback implements CompletionCallback {
-    private Runnable completionAction;
+    private final Runnable completionAction;
 
     NullCompletionCallback(Runnable completionAction) {
       this.completionAction = completionAction;
@@ -824,7 +902,16 @@ public class Main {
     }
 
     @Override
+    public V1SubjectRulesReviewStatus getSubjectRulesReviewStatus(String namespace) {
+      NamespaceStatus namespaceStatus = namespaceStatuses.get(namespace);
+      return namespaceStatus != null ? namespaceStatus.getRulesReviewStatus().get() : null;
+    }
+
+    @Override
     public boolean isNamespaceRunning(String namespace) {
+      // make sure the map entry is initialized the value to "false" if absent
+      isNamespaceStopping(namespace);
+
       return !isNamespaceStopping.get(namespace).get();
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2018, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator.utils;
@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.jms.ConnectionFactory;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
@@ -100,6 +99,13 @@ public class Domain {
     this(inputDomainMap, true, createLoadBalancer);
   }
 
+  /**
+   * Construct domain.
+   * @param inputDomainMap input domain map
+   * @param createDomainResource create domain resource flag
+   * @param createLoadBalancer create load balancer flag
+   * @throws Exception on failure
+   */
   public Domain(Map<String, Object> inputDomainMap,
                 boolean createDomainResource, boolean createLoadBalancer)
       throws Exception {
@@ -718,6 +724,19 @@ public class Domain {
     LoggerHelper.getLocal().log(Level.INFO,
         "command to delete domain " + cmd + " \n returned " + output);
     verifyDomainDeleted(replicas);
+
+  }
+
+  /**
+   * Delete the domain in image.
+   * @throws Exception on failure
+   */
+  public void deleteImage() throws Exception {
+    // delete domain image
+    if (domainMap.containsKey("image")) {
+      String cmd = "docker rmi -f " + domainMap.get("image");
+      TestUtils.exec(cmd, true);
+    }
   }
 
   /**
@@ -815,6 +834,11 @@ public class Domain {
     deletePvcAndCheckPvReleased("create-weblogic-sample-domain-job");
   }
 
+  /**
+   * delete PVC and check PV status.
+   * @param jobName job name
+   * @throws Exception on failure
+   */
   public void deletePvcAndCheckPvReleased(String jobName) throws Exception {
     StringBuffer cmd = new StringBuffer("kubectl get pv ");
     String pvBaseName = (String) pvMap.get("baseName");
@@ -861,7 +885,12 @@ public class Domain {
               + "\"";
       LoggerHelper.getLocal().log(Level.INFO,
           "making sure the domain directory exists by running " + cmd);
-      ExecResult result = TestUtils.exec(cmd);
+      // Looking for servers directory as sometimes krun.sh exits with non-zero
+      // even though the domain directory exists
+      ExecResult result = ExecCommand.exec(cmd);
+      if (!result.stdout().contains("servers")) {
+        throw new RuntimeException("Domain directory doesn't exist");
+      }
       LoggerHelper.getLocal().log(Level.INFO, "Run the script to create domain");
     } else {
       String domainStoragePath = domainMap.get("weblogicDomainStoragePath").toString();
@@ -1161,13 +1190,13 @@ public class Domain {
     LoggerHelper.getLocal().log(Level.INFO,
         "Inside testDomainServerPodRestart domainYamlWithChangedProperty");
 
-    String newDomainYamlFile =
+    final String newDomainYamlFile =
         userProjectsDir + "/weblogic-domains/" + domainUid + "/domain_new.yaml";
-    String domainYamlFile =
+    final String domainYamlFile =
         userProjectsDir + "/weblogic-domains/" + domainUid + "/domain.yaml";
-    String changedDomainYamlFile =
+    final String changedDomainYamlFile =
         userProjectsDir + "/weblogic-domains/" + domainUid + "/domain_change.yaml";
-    String fileWithChangedProperty =
+    final String fileWithChangedProperty =
         BaseTest.getProjectRoot()
             + "/integration-tests/src/test/resources/"
             + fileNameWithChangedProperty;
@@ -1387,13 +1416,13 @@ public class Domain {
     if (ocrserver == null) {
       ocrserver = "container-registry.oracle.com";
     }
-    
+
     TestUtils.createDockerRegistrySecret(
         secret,
         ocrserver,
         System.getenv("OCR_USERNAME"),
         System.getenv("OCR_PASSWORD"),
-        null,
+        System.getenv("OCR_USERNAME") + "@oracle.com",
         domainNS);
   }
 
@@ -1542,9 +1571,9 @@ public class Domain {
 
   private void callWebAppAndWaitTillReady(String curlCmd) throws Exception {
     for (int i = 0; i < maxIterations; i++) {
-      ExecResult result = TestUtils.exec(curlCmd, true);
+      ExecResult result = ExecCommand.exec(curlCmd);
       String responseCode = result.stdout().trim();
-      if (!responseCode.equals("200")) {
+      if (result.exitValue() != 0 || !responseCode.equals("200")) {
         LoggerHelper.getLocal().log(Level.INFO,
             "callWebApp did not return 200 status code, got "
                 + responseCode
@@ -1561,7 +1590,7 @@ public class Domain {
         } catch (InterruptedException ignore) {
           // no-op
         }
-      } else {
+      } else if (responseCode.equals("200")) {
         LoggerHelper.getLocal().log(Level.INFO,
             "callWebApp returned 200 response code, iteration " + i);
         break;
@@ -1720,7 +1749,9 @@ public class Domain {
       LoggerHelper.getLocal().log(Level.INFO, "IMAGE_TAG_WEBLOGIC " + imageTag);
     }
     domainMap.put("logHome", "/shared/logs/" + domainUid);
-    if (!domainMap.containsKey("domainHomeImageBase")) {
+    if (domainMap.containsKey("weblogicImageTagWIT")) {
+      domainMap.put("image", domainMap.get("weblogicImageTagWIT"));
+    } else if (!domainMap.containsKey("domainHomeImageBase")) {
       domainMap.put("domainHome", "/shared/domains/" + domainUid);
       domainMap.put("image", imageName + ":" + imageTag);
       if (System.getenv("IMAGE_PULL_SECRET_WEBLOGIC") != null) {
@@ -1761,7 +1792,7 @@ public class Domain {
     // create config map and secret for custom sit config
     createConfigMapAndSecretForSitConfig();
     
-    if (BaseTest.SHARED_CLUSTER && !domainMap.containsKey("domainHomeImageBase")) {
+    if (!domainMap.containsKey("domainHomeImageBase")) {
       createDockerRegistrySecret();
     }
   }
@@ -1890,6 +1921,11 @@ public class Domain {
     LoggerHelper.getLocal().log(Level.INFO, "Command returned " + result.stdout().trim());
   }
 
+  /**
+   * hostname for curl.
+   * @return hostname
+   * @throws Exception on failure
+   */
   public String getHostNameForCurl() throws Exception {
     if (System.getenv("K8S_NODEPORT_HOST") != null) {
       return System.getenv("K8S_NODEPORT_HOST");
@@ -2035,6 +2071,10 @@ public class Domain {
 
   public int getLoadBalancerWebPort() {
     return loadBalancerWebPort;
+  }
+
+  public String getLoadBalancerName() {
+    return loadBalancer;
   }
 
   /**

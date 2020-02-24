@@ -1,4 +1,4 @@
-// Copyright (c) 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2019, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator;
@@ -7,7 +7,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.logging.Level;
@@ -68,6 +67,7 @@ public class ItElasticLogging extends BaseTest {
   @BeforeAll
   public static void staticPrepare() throws Exception {
     if (FULLTEST) {
+      namespaceList = new StringBuffer();
       testClassName = new Object() {
       }.getClass().getEnclosingClass().getSimpleName();
       initialize(APP_PROPS_FILE, testClassName);
@@ -117,7 +117,7 @@ public class ItElasticLogging extends BaseTest {
         }
         operator = TestUtils.createOperator(operatorMap, "2/2", Operator.RestCertType.SELF_SIGNED);
         domainNS = ((ArrayList<String>) operatorMap.get("domainNamespaces")).get(0);
-        namespaceList = new StringBuffer((String)operatorMap.get("namespace"));
+        namespaceList.append((String)operatorMap.get("namespace"));
         namespaceList.append(" ").append(domainNS);
 
         // Get Elasticsearch host and port from yaml file and build Elasticsearch URL
@@ -668,12 +668,12 @@ public class ItElasticLogging extends BaseTest {
     cmdLisDir.setLength(0);
     cmdLisDir = new StringBuffer("kubectl -n ");
     cmdLisDir
-      .append(domainNS)
-      .append(" exec -it ")
-      .append(podName)
-      .append(" -- bash -c 'ls -l /shared/domains/")
-      .append(domainUid)
-      .append("/lib/'");
+        .append(domainNS)
+        .append(" exec -it ")
+        .append(podName)
+        .append(" -- bash -c 'ls -l /shared/domains/")
+        .append(domainUid)
+        .append("/lib/'");
     LoggerHelper.getLocal().log(Level.INFO, "Executing cmd " + cmdLisDir.toString());
     result = TestUtils.exec(cmdLisDir.toString());
     LoggerHelper.getLocal().log(Level.INFO, "exit code: " + result.exitValue());

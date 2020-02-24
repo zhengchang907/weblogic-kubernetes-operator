@@ -1,4 +1,4 @@
-// Copyright (c) 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2019, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator;
@@ -56,6 +56,7 @@ public class ItStickySession extends BaseTest {
   @BeforeAll
   public static void staticPrepare() throws Exception {
     if (FULLTEST) {
+      namespaceList = new StringBuffer();
       testClassName = new Object() {
       }.getClass().getEnclosingClass().getSimpleName();
       initialize(APP_PROPS_FILE, testClassName);
@@ -85,7 +86,7 @@ public class ItStickySession extends BaseTest {
         operator = TestUtils.createOperator(operatorMap, Operator.RestCertType.SELF_SIGNED);
         Assertions.assertNotNull(operator);
         domainNS = ((ArrayList<String>) operatorMap.get("domainNamespaces")).get(0);
-        namespaceList = new StringBuffer((String)operatorMap.get("namespace"));
+        namespaceList.append((String)operatorMap.get("namespace"));
         namespaceList.append(" ").append(domainNS);
       }
       

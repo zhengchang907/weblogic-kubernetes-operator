@@ -1,21 +1,13 @@
-// Copyright (c) 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2019, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
 import oracle.kubernetes.operator.utils.DbUtils;
-import oracle.kubernetes.operator.utils.DomainCrd;
-import oracle.kubernetes.operator.utils.ExecResult;
 import oracle.kubernetes.operator.utils.JrfDomain;
 import oracle.kubernetes.operator.utils.LoggerHelper;
 import oracle.kubernetes.operator.utils.Operator;
@@ -23,7 +15,6 @@ import oracle.kubernetes.operator.utils.TestUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
@@ -52,12 +43,17 @@ public class ItJrfPvWlst extends BaseTest {
   */
   @BeforeAll
   public static void staticPrepare() throws Exception {
+    namespaceList = new StringBuffer();
     testClassName = new Object() {
     }.getClass().getEnclosingClass().getSimpleName();
     // initialize test properties 
     initialize(APP_PROPS_FILE, testClassName);  
   }
-  
+
+  /**
+   * Prepare test.
+   * @throws Exception on failure
+   */
   @BeforeEach
   public void prepare() throws Exception {
     if (QUICKTEST) {
@@ -69,7 +65,10 @@ public class ItJrfPvWlst extends BaseTest {
           + "/kubernetes/samples/scripts " 
           + getResultDir(),
           true);
-   
+      //delete leftover pods caused by test being aborted
+      DbUtils.deleteRcuPod(getResultDir());
+      DbUtils.stopOracleDB(getResultDir());
+       
       DbUtils.startOracleDB(getResultDir());
       DbUtils.createRcuSchema(getResultDir(),rcuSchemaPrefix);
     
@@ -80,7 +79,7 @@ public class ItJrfPvWlst extends BaseTest {
         operator1 = TestUtils.createOperator(operatorMap, Operator.RestCertType.SELF_SIGNED);
         Assertions.assertNotNull(operator1);
         domainNS = ((ArrayList<String>) operatorMap.get("domainNamespaces")).get(0);
-        namespaceList = new StringBuffer((String)operatorMap.get("namespace"));
+        namespaceList.append((String)operatorMap.get("namespace"));
         namespaceList.append(" ").append(domainNS);
       }
     }  

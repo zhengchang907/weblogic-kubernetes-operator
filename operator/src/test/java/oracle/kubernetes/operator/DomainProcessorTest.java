@@ -1,4 +1,4 @@
-// Copyright (c) 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+// Copyright (c) 2019, 2020, Oracle Corporation and/or its affiliates.
 // Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 package oracle.kubernetes.operator;
@@ -14,12 +14,12 @@ import java.util.stream.Stream;
 
 import com.meterware.simplestub.Memento;
 import com.meterware.simplestub.StaticStubSupport;
-import io.kubernetes.client.models.V1ObjectMeta;
-import io.kubernetes.client.models.V1Pod;
-import io.kubernetes.client.models.V1PodSpec;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServicePort;
-import io.kubernetes.client.models.V1ServiceSpec;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodSpec;
+import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServicePort;
+import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import oracle.kubernetes.operator.helpers.AnnotationHelper;
 import oracle.kubernetes.operator.helpers.DomainPresenceInfo;
 import oracle.kubernetes.operator.helpers.KubernetesTestSupport;
@@ -88,6 +88,10 @@ public class DomainProcessorTest {
         .withCluster(clusterConfig);
   }
 
+  /**
+   * Setup test environment.
+   * @throws Exception if StaticStubSupport fails to install
+   */
   @Before
   public void setUp() throws Exception {
     mementos.add(TestUtils.silenceOperatorLogger());
@@ -101,11 +105,17 @@ public class DomainProcessorTest {
     domainConfigurator = DomainConfiguratorFactory.forDomain(domain);
     testSupport.defineResources(domain);
     new DomainProcessorTestSetup(testSupport).defineKubernetesResources(createDomainConfig());
+    DomainProcessorTestSetup.defineRequiredResources(testSupport);
   }
 
+  /**
+   * Cleanup test environment.
+   */
   @After
   public void tearDown() {
-    for (Memento memento : mementos) memento.revert();
+    for (Memento memento : mementos) {
+      memento.revert();
+    }
   }
 
   @Test
@@ -116,8 +126,9 @@ public class DomainProcessorTest {
     processor.makeRightDomainPresence(info, true, false, false);
 
     assertServerPodAndServicePresent(info, ADMIN_NAME);
-    for (String serverName : MANAGED_SERVER_NAMES)
+    for (String serverName : MANAGED_SERVER_NAMES) {
       assertServerPodAndServicePresent(info, serverName);
+    }
 
     assertThat(info.getClusterService(CLUSTER), notNullValue());
   }
@@ -281,8 +292,9 @@ public class DomainProcessorTest {
     processor.makeRightDomainPresence(info, true, false, false);
 
     assertServerPodAndServiceNotPresent(info, ADMIN_NAME);
-    for (String serverName : MANAGED_SERVER_NAMES)
+    for (String serverName : MANAGED_SERVER_NAMES) {
       assertServerPodAndServiceNotPresent(info, serverName);
+    }
   }
 
   private void assertServerPodAndServiceNotPresent(DomainPresenceInfo info, String serverName) {

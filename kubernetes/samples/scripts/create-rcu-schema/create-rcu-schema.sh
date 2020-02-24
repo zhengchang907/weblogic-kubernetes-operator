@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2019, Oracle Corporation and/or its affiliates.  All rights reserved.
+# Copyright (c) 2019, 2020, Oracle Corporation and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
 # Configure RCU schema based on schemaPreifix and rcuDatabaseURL
@@ -83,8 +83,8 @@ kubectl get po/rcu
 echo "Oradoc_db1" > pwd.txt
 echo "Oradoc_db1" >> pwd.txt
 
-kubectl cp ${scriptDir}/common/createRepository.sh  rcu:/u01/oracle
-kubectl cp pwd.txt rcu:/u01/oracle
+kubectl exec -i rcu -- bash -c 'cat > /u01/oracle/createRepository.sh' < ${scriptDir}/common/createRepository.sh 
+kubectl exec -i rcu -- bash -c 'cat > /u01/oracle/pwd.txt' < pwd.txt 
 rm -rf createRepository.sh pwd.txt
 
 kubectl exec -it rcu /bin/bash /u01/oracle/createRepository.sh ${dburl} ${schemaPrefix} ${rcuType}
