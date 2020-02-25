@@ -8,6 +8,9 @@ function setup_shared_cluster {
   kubectl create serviceaccount --namespace kube-system tiller
   kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
   
+  echo "MARK - temporary hack to use helm 3"
+  alias helm='/var/lib/jenkins/bin/helm-3.0.3 '
+
   # Note: helm init --wait would wait until tiller is ready, and requires helm 2.8.2 or above 
   helm init --service-account=tiller --wait
   
