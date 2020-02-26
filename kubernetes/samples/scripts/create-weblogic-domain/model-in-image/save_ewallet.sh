@@ -31,3 +31,8 @@ kubectl -n ${namespace} delete secret ${secret} --ignore-not-found
 kubectl -n ${namespace} \
   create secret generic ${secret} \
   --from-file=ewallet.p12 
+kubectl -n ${namespace} \
+  label secret ${secret} \
+  weblogic.domainUID=${domainuid}
+
+

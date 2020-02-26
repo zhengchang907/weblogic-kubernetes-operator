@@ -272,13 +272,17 @@ class ModelDiffer:
 
         if model.has_key('domainInfo'):
             if model['domainInfo'].has_key('AdminUserName') or model['domainInfo'].has_key('AdminPassword') or model['domainInfo'].has_key('WLSRoles'):
-                return UNSAFE_SECURITY_UPDATE
+                changed_items.append(UNSAFE_SECURITY_UPDATE)
+
+            if model['domainInfo'].has_key('RCUDBInfo'):
+                if model['domainInfo']['RCUDBInfo'].has_key('rcu_schema_password'):
+                    changed_items.append(RCU_PASSWORD_CHANGED)
 
         # filter out any appDeployments for now. It is possible to support app but
         # case to handle include deletion, redeploy...
         #
         if model.has_key('appDeployments'):
-            return UNSAFE_ONLINE_UPDATE
+            changed_items.append(UNSAFE_ONLINE_UPDATE)
 
         # if nothing changed
         if not model or not bool(model):
@@ -514,6 +518,7 @@ if __name__ == "__main__":
     all_changes = []
     all_added = []
     all_removed = []
+    changed_items = []
     main()
 
 
