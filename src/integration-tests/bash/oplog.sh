@@ -1,28 +1,23 @@
-#!/bin/bash
-# Copyright (c) 2019,2020 Oracle Corporation and/or its affiliates. All rights reserved.
-# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
-#
-# This is a helper script for obtaining and pretty-printing operator logs.
-#
-# Usage:  ./oplog.sh -?
-
 function usage() {
     cat <<EOF
 Usage:  
-  Pretty prints a WebLogic Kubernetes Operator 2.0 pod log.
+  Pretty prints a WebLogic Kubernetes Operator 2.5 or 3.0 pod log.
 
-  `basename $0` [-?] [-ll severity] [-s] [-v] [-raw] [-n namespace] [-f file|-]
+  `basename $0` [-ll severity] [-s] [-v] [-raw] [-n namespace] [-k 'args']
+  `basename $0` [-ll severity] [-s] [-v] [-raw] [-f file|-]
+  `basename $0` -?
 
   -?            Show this usage message.
 
   -ll SEVERE|WARNING|INFO|CONFIG|FINE|FINER|FINEST
                 Logging level. Default is WARNING, which includes SEVERE.
 
-  -f logfile|-  Get log from the given log file instead of from a running
-                operator. If the file is '-' then read log from stdin.
+  -f logfile|-  Read log from the given log file instead of from a
+                kubectl log command. The file must be an a raw 
+                (not pretty printed) format. If '-' then read from stdin.
 
   -n name-space Operator's namespace. Not needed if there's only one
-                operator in your k8s cluster. Ignored if '-f' set.
+                operator in your k8s cluster. Illegal if '-f' set.
 
   -s            Use a single line per log message instead of converting
                 '\n' and '\t' to newlines and tabs.
@@ -34,18 +29,32 @@ Usage:
 
   -k 'args'     Extra parms to add to kubectl log command. For example, 
                 -k '-f' streams the log and -k '--tail=10' only looks
-                at the last 10 logs. Ignored if '-f' set.
+                at the last 10 logs. Illegal if '-f' set.
+
 Examples:
+
   Last 10 log messages from a k8s cluster with a single running operator:
     ./`basename $0` -ll FINEST -k "--tail=10"
 
   SEVERE+WARNING logs from an operator running in a particular namespace:
     ./`basename $0` -n my-operator-ns
 
-  SEVERE+WARNING logs from a pipelined operator log:
-    kubectl -n my-operator-ns logs deployment/weblogic-operator \\
+  SEVERE+WARNING logs from the last 10000 lines of a pipelined operator log:
+    kubectl -n my-operator-ns logs deployment/weblogic-operator -k "--tail=10000" \\
             | ./`basename $0` -f -
+
+Logging Level Note:
+
+  By default, an operator will only log SEVERE, WARNING, and INFO 
+  messages. To generate finer grained logging pass 
+  '--set "javaLoggingLevel=FINEST"' when first using 'helm install'
+  with the operator, or pass the same using 'helm upgrade' for an
+  already installed operator. Be aware that FINEST level logging
+  is extremely verbose and may not be appropriate for production
+  usage - it can generate gigabytes of logs within a few hours.
+
 EOF
+
 }
 
 k_args=''
@@ -53,7 +62,7 @@ raw_mode='false'
 newline_conversion='s/\\n/\'$'\n''/g'
 tab_conversion='s/\\t/\'$'\t''/g'
 log_filter='FINEST|FINER|FINE|CONFIG|INFO'
-ns="--all-namespaces=true"
+ns=""
 fields_brief='{ print "XXX1" $1 "XXX4\"" $4 "XXX5\"" $5 "XXX9\"" $9 "XXX10\"" $10}'
 fields_verbose='{ print "XXX1" $1 "XXX2\"" $2 "XXX3\"" $3 "XXX4\"" $4 "XXX5\"" $5 "XXX6\"" $6 "XXX7\"" $7 "XXX8\"" $8 "XXX9\"" $9 "XXX10\"" $10 "XXX11\"" $11 "XXX12\"" $12 }' 
 fields="$fields_brief"
@@ -63,22 +72,24 @@ while [ ! -z "$1" ]; do
   case "$1" in
     "-?") usage; exit 1; ;;
 
+    "'-?'") usage; exit 1; ;;
+
     "-n") shift
-          ns='-n $1'
+          ns="$1"
           if [ -z "$1" ]; then
-            echo "@@ Error, no namespace specified"
-            usage; exit 1
+            echo "@@ Error, no namespace specified. Pass '-?' for usage."
+            exit 1
           fi
           ;;
 
     "-f") shift
           input_file="$1"
           if [ -z "$1" ]; then
-            echo "@@ Error, no input file specified"
-            usage; exit 1
+            echo "@@ Error, no input file specified. Pass '-?' for usage."
+            exit 1
           fi
           if [ ! "$1" = "-" ] && [ ! -f "$1" ]; then
-            echo "@@ Error, input file '$1' not found"
+            echo "@@ Error, input file '$1' not found. Pass '-?' for usage."
             exit 1
           fi
           ;;
@@ -92,7 +103,7 @@ while [ ! -z "$1" ]; do
             INFO)    log_filter='FINEST|FINER|FINE|CONFIG' ;;
             WARNING) log_filter='FINEST|FINER|FINE|CONFIG|INFO' ;;
             SEVERE)  log_filter='FINEST|FINER|FINE|CONFIG|INFO|WARNING' ;;
-            *)       echo "@@ Error, unrecognized log level '$1'"; usage; exit 1 ;;
+            *)       echo "@@ Error, unrecognized log level '$1'. Pass '-? for usage."; exit 1 ;;
           esac
           ;;
 
@@ -107,15 +118,25 @@ while [ ! -z "$1" ]; do
     "-k") shift
           k_args="$1"
           if [ -z "$1" ]; then
-            echo "@@ Error, no -k params specified"
-            usage; exit 1
+            echo "@@ Error, no -k params specified. Pass '-?' for usage."
+            exit 1
           fi
           ;;
 
-    *)    echo "@@ Error, unrecognized parameter '$1'"; usage; exit 1 ;;
+    *)    echo "@@ Error, unrecognized parameter '$1'. Pass '-?' for usage."; exit 1 ;;
   esac
   shift
 done
+
+if [ ! -z "$input_file" ] && [ ! -z "$k_args" ]; then
+  echo "@@ Error, '-f' and '-k' are not compatible in the same command line. Pass '-?' for usage."
+  exit 1 
+fi
+
+if [ ! -z "$input_file" ] && [ ! -z "$ns" ]; then
+  echo "@@ Error, '-f' and '-ns' are not compatible in the same command line. Pass '-?' for usage."
+  exit 1 
+fi
 
 if [ "$input_file" = "-" ]; then
   # input is from stdin (a pipe)
@@ -134,12 +155,12 @@ elif [ ! -z "$input_file" ]; then
 else
   # we need to get the pod log from a running operator
 
-  # First, we find the operator pod(s)
+  # First, we find all possible operator pod(s)
 
   tfile=$(mktemp /tmp/`basename $0`.XXXXXXXXX)
 
   kubectl get pod \
-    $ns \
+    --all-namespaces=true \
     -l app=weblogic-operator \
     -o=jsonpath='{range .items[*]}{.kind}{" "}{.metadata.name}{" -n "}{.metadata.namespace}{"\n"}{end}' \
     | grep "^Pod " \
@@ -153,25 +174,43 @@ else
     exit 1
   fi
 
-  count=`grep -c '^' $tfile`
+  # Now we filter out the pod we want
+
+  tfile2=${tfile}.2
+
+  if [ "$ns" = "" ]; then
+    cp $tfile $tfile2
+  else
+    grep ".* -n ${ns}$" $tfile > $tfile2
+  fi
+
+  count=`grep -c '^' $tfile2`
 
   if [ $count -eq 0 ]; then
-    echo "@@ error: no operator pod found in namespace '$ns'."
-    rm -f $tfile
-    usage
+    if [ "$ns" = "" ]; then
+      echo "@@ error: no operator pod found in any namespace"
+    else
+      echo "@@ error: no operator pod found in namespace '$ns'. known operator pods:"
+      cat $tfile
+    fi
+    rm -f $tfile $tfile2
     exit 1
   fi
 
   if [ $count -gt 1 ]; then
-    echo "@@ error: more than one operator pod matches namespace '$ns':"
+    if [ "$ns" = "" ]; then
+      echo "@@ error: more than one operator found, use '-n' to specify a specific namespace. known operator pods:"
+    else
+      # it shouldn't be possible to get here given that only one operator can run in a ns, but just in case
+      echo "@@ error: more than one operator pod matches namespace '$ns':"
+    fi
     cat $tfile
-    rm -f $tfile
-    usage
+    rm -f $tfile $tfile2
     exit 1
   fi
 
-  op_pod="`cat $tfile`"
-  rm -f $tfile
+  op_pod="`cat $tfile2`"
+  rm -f $tfile $tfile2
 
   command="kubectl logs $op_pod $k_args"
 
