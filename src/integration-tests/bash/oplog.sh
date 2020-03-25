@@ -27,20 +27,24 @@ Usage:
   -raw          Disable 'pretty print'. Print log messages in their
                 entirety and original form, using a single line for each.  
 
-  -k 'args'     Extra parms to add to kubectl log command. For example, 
-                -k '-f' streams the log and -k '--tail=10' only looks
-                at the last 10 logs. Illegal if '-f' set.
+  -k 'args'     Extra parms to add to the kubectl log command. 
+                See 'kubectl log -?' for options. For example, 
+                -k '-f' streams the log, -k '--tail=10' only looks
+                at the last 10 logs, and -k '--since=10m' only looks
+                at the last 10 minutes of the log.
+                Illegal if '-f' is also set.
 
 Examples:
 
-  Last 10 log messages from a k8s cluster with a single running operator:
-    ./`basename $0` -ll FINEST -k "--tail=10"
+  Look at the last 10 minutes of log messages from a k8s cluster with a single
+  running operator:
+    ./`basename $0` -ll FINEST -k "--since=10m"
 
   SEVERE+WARNING logs from an operator running in a particular namespace:
     ./`basename $0` -n my-operator-ns
 
-  SEVERE+WARNING logs from the last 10000 lines of a pipelined operator log:
-    kubectl -n my-operator-ns logs deployment/weblogic-operator -k "--tail=10000" \\
+  SEVERE+WARNING logs from the last hour of a pipelined operator log:
+    kubectl -n my-operator-ns logs deployment/weblogic-operator -k "--since=1h" \\
             | ./`basename $0` -f -
 
 Logging Level Note:
