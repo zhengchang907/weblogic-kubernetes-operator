@@ -6,6 +6,7 @@ package oracle.weblogic.kubernetes;
 import oracle.weblogic.kubernetes.extensions.LoggedTest;
 import oracle.weblogic.kubernetes.extensions.Timing;
 import oracle.weblogic.kubernetes.extensions.tags.Slow;
+import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,15 +39,17 @@ class ItSimpleDomainValidation implements LoggedTest {
         boolean success = createDomainCustomResource(domainUID, namespace, domainYAML);
         assertEquals(true, success);
 
-        // wait for the domain to exist
-        with().pollDelay(30, SECONDS)
+        // we can create standard, reusbale retry/backoff policies like this:
+        ConditionFactory withStandardRetryPolicy = with().pollDelay(30, SECONDS)
                 .and().with().pollInterval(10, SECONDS)
+                .atMost(5, MINUTES).await();
+
+        // wait for the domain to exist
+        withStandardRetryPolicy
                 .conditionEvaluationListener(
                         condition -> logger.info(() -> String.format("Waiting for domain to be running (elapsed time %dms, remaining time %dms)",
                                 condition.getElapsedTimeInMS(),
                                 condition.getRemainingTimeInMS())))
-                // and here we can set the maximum time we are prepared to wait
-                .await().atMost(5, MINUTES)
                 // operatorIsRunning() is one of our custom, reusable assertions
                 .until(domainExists(domainUID, namespace));
 
