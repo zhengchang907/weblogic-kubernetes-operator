@@ -540,7 +540,7 @@ if [ -x "$(command -v helm)" ]; then
     if [ ! "$DRY_RUN" = "true" ]; then
     (
       set -x
-      helm list --all-namespaces | grep -v NAME | awk '{system("helm uninstall " $1 " --namespace " $2)}'
+      helm list --all-namespaces | grep -v NAME | awk '{system("set -x; helm uninstall " $1 " --namespace " $2)}'
     )
     else 
       echo @@ `timestamp` Info: DRYRUN: helm uninstall 
