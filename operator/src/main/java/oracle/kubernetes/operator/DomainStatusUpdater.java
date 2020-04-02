@@ -184,10 +184,11 @@ public class DomainStatusUpdater {
             context.getDomainName(),
             context.getNamespace(),
             new V1Patch(builder.build().toString()),
-            createResponseStep(context, getNext()));
+            createResponseStep(context, getNext())
+                  .withContext(context.getStatus(), builder));
     }
 
-    private ResponseStep<Domain> createResponseStep(DomainStatusUpdaterContext context, Step next) {
+    private PatchResponseStep createResponseStep(DomainStatusUpdaterContext context, Step next) {
       return new PatchResponseStep(this, context, next);
     }
   }
@@ -195,6 +196,8 @@ public class DomainStatusUpdater {
   static class PatchResponseStep extends DefaultResponseStep<Domain> {
     private final DomainStatusUpdaterStep updaterStep;
     private final DomainStatusUpdaterContext context;
+    private DomainStatus initialStatus;
+    private JsonPatchBuilder builder;
 
     public PatchResponseStep(DomainStatusUpdaterStep updaterStep, DomainStatusUpdaterContext context, Step nextStep) {
       super(nextStep);
@@ -205,10 +208,17 @@ public class DomainStatusUpdater {
     @Override
     public NextAction onFailure(Packet packet, CallResponse<Domain> callResponse) {
       if (!isPatchFailure(callResponse)) {
+        LOGGER.info(String.format("Patch %s rejected for status %s ", builder.toString(), initialStatus));
         return super.onFailure(packet, callResponse);
       }
 
       return doNext(createRetry(context, getNext()), packet);
+    }
+
+    PatchResponseStep withContext(DomainStatus initialStatus, JsonPatchBuilder builder) {
+      this.initialStatus = initialStatus;
+      this.builder = builder;
+      return this;
     }
 
     public Step createRetry(DomainStatusUpdaterContext context, Step next) {
