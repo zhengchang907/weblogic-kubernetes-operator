@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Simple JUnit test file used for testing Operator.
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * <p>This test is used for testing pods being restarted by some properties change.
  */
 @TestMethodOrder(Alphanumeric.class)
+@ExtendWith(Telemetry.class)
 public class ItPodsRestart extends BaseTest {
   private static Domain domain = null;
   private static Operator operator1;

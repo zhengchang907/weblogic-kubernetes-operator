@@ -24,10 +24,12 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(Telemetry.class)
 public class ItManagedCoherence extends BaseTest {
 
   private static final String COHERENCE_CLUSTER_SCRIPT = "create-domain-coherence-cluster.py";

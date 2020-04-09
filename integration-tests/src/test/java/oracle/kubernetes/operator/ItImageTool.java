@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Simple JUnit test file used for testing Operator.
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * WebLogic Docker image is created by WebLogic Image Tool
  */
 @TestMethodOrder(Alphanumeric.class)
+@ExtendWith(Telemetry.class)
 public class ItImageTool extends BaseTest {
   private static final String TEST_RESOURCE_LOC = "integration-tests/src/test/resources";
   private static String weblogicImageVersionWIT;

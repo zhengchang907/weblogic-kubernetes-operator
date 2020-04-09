@@ -18,10 +18,12 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * JUnit test class used for testing configuration override use cases for Domain In Image.
  */
+@ExtendWith(Telemetry.class)
 public class ItSitConfigDomainInImage extends SitConfig {
 
   private static String testClassName;

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 
 /**
@@ -26,7 +27,7 @@ import org.junit.jupiter.api.Test;
  * <p>This test is used for creating Operator(s) and multiple domains which are managed by the
  * Operator(s).
  */
-
+@ExtendWith(Telemetry.class)
 public class ItOperatorTwoDomains extends BaseTest {
   private static Operator operator1;
   private static String domainNS1;

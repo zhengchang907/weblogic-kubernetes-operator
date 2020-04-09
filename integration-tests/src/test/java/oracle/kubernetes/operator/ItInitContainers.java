@@ -26,11 +26,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Integration tests for testing the init container for WebLogic server pods.
  */
 @TestMethodOrder(Alphanumeric.class)
+@ExtendWith(Telemetry.class)
 public class ItInitContainers extends BaseTest {
 
   private static Domain domain = null;

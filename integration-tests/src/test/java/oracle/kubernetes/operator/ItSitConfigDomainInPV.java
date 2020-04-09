@@ -18,10 +18,12 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * JUnit test class used for testing configuration override use cases for domain in pv WLS.
  */
+@ExtendWith(Telemetry.class)
 public class ItSitConfigDomainInPV extends SitConfig {
   private static String testClassName;
   private static int testNumber;

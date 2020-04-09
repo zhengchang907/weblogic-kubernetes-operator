@@ -25,11 +25,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Operator upgrade JUnit test file testing the operator upgrade from older releases to develop.
  */
 @TestMethodOrder(Alphanumeric.class)
+@ExtendWith(Telemetry.class)
 public class ItOperatorUpgrade extends BaseTest {
   private static String OP_TARGET_RELEASE = "weblogic-kubernetes-operator:latest";
   private static String OP_NS = "";

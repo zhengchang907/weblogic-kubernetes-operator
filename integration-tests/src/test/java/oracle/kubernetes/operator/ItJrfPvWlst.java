@@ -20,9 +20,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 @TestMethodOrder(Alphanumeric.class)
-
+@ExtendWith(Telemetry.class)
 public class ItJrfPvWlst extends BaseTest {
   private static String rcuSchemaPrefix = "jrfdomain";
   private static Operator operator1;

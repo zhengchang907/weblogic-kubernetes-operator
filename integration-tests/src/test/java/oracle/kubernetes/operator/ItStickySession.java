@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Simple JUnit test file used for testing Operator.
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * duration of a HTTP session created by Voyager load balancer.
  */
 @TestMethodOrder(Alphanumeric.class)
+@ExtendWith(Telemetry.class)
 public class ItStickySession extends BaseTest {
   private static final String testAppName = "stickysessionapp";
   private static final String testAppPath = testAppName + "/StickySessionCounterServlet";

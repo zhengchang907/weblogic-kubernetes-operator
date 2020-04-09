@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Simple JUnit test file used for testing domain pod templates.
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * <p>This test is used for creating Operator(s) and domain which uses pod templates.
  */
 @TestMethodOrder(Alphanumeric.class)
+@ExtendWith(Telemetry.class)
 public class ItPodTemplates extends BaseTest {
 
   private static Operator operator1;

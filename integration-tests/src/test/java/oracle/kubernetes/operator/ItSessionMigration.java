@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Simple JUnit test file used for testing Operator.
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * And to test WLS Session Migration feature
  */
 @TestMethodOrder(Alphanumeric.class)
+@ExtendWith(Telemetry.class)
 public class ItSessionMigration extends BaseTest {
   private static final String testAppName = "httpsessionreptestapp";
   private static final String scriptName = "buildDeployAppInPod.sh";
