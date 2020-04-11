@@ -380,7 +380,7 @@ public class ConfigMapHelper {
         ScanCache.INSTANCE.registerScan(
             info.getNamespace(), info.getDomainUid(), new Scan(wlsDomainConfig, new DateTime()));
         packet.put(ProcessingConstants.DOMAIN_TOPOLOGY, wlsDomainConfig);
-        LOGGER.info(
+        LOGGER.fine(
             MessageKeys.WLS_CONFIGURATION_READ,
             (System.currentTimeMillis() - ((Long) packet.get(JobHelper.START_TIME))),
             wlsDomainConfig);
@@ -547,7 +547,7 @@ public class ConfigMapHelper {
     }
 
     protected void logConfigMapDeleted() {
-      LOGGER.info(getConfigMapDeletedMessageKey());
+      LOGGER.fine(getConfigMapDeletedMessageKey());
     }
 
     private Step deleteSitConfigMap(Step next) {
