@@ -18,6 +18,7 @@ spec:
     scale:
       specReplicasPath: .spec.replicas
       statusReplicasPath: .status.replicas
+    status: {}
   validation:
     openAPIV3Schema:
       type: object

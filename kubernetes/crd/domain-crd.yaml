@@ -21171,6 +21171,7 @@ spec:
       scale:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
+      status: {}
   - name: v2
     schema:
       openAPIV3Schema:
@@ -24234,6 +24235,7 @@ spec:
       scale:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
+      status: {}
   - name: v3
     schema:
       openAPIV3Schema:
@@ -30733,6 +30735,7 @@ spec:
       scale:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
+      status: {}
   - name: v4
     schema:
       openAPIV3Schema:
@@ -37340,6 +37343,7 @@ spec:
       scale:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
+      status: {}
   - name: v5
     schema:
       openAPIV3Schema:
@@ -45073,6 +45077,7 @@ spec:
       scale:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
+      status: {}
   - name: v6
     schema:
       openAPIV3Schema:
@@ -53259,3 +53264,4 @@ spec:
       scale:
         specReplicasPath: .spec.replicas
         statusReplicasPath: .status.replicas
+      status: {}
