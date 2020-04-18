@@ -338,9 +338,41 @@ public class DbUtils {
    */
   public static void createNamespace(String namespace) throws Exception {
     if (!namespace.equalsIgnoreCase("default")) {
-      String command = "kubectl create ns " + namespace;
-      logger.info("Running " + command);
-      TestUtils.exec(command);
+      String cmd1 = "kubectl delete ns " + namespace + " --ignore-not-found";
+      logger.info("Running " + cmd1);
+      TestUtils.exec(cmd1, true);
+      String cmd2 = "kubectl create ns " + namespace;
+      logger.info("Running " + cmd2);
+      TestUtils.exec(cmd2, true);
+    }
+  }
+  
+  /**
+   * create Oracle rcu pod and load database schema in the k8s cluster default namespace.
+   * @param scriptDir script dir
+   * @param dbPort NodePort of DB
+   * @param dbUrl URL of DB
+   * @param rcuSchemaPrefix rcu SchemaPrefixe
+   * @param dbNamespace namesspace that DB instance is going to start
+   * @throws Exception - if any error occurs when creating Oracle rcu pod
+   */
+  public static void createDbRcu(String scriptDir, int dbPort, String dbUrl, String rcuSchemaPrefix,
+      String dbNamespace) throws Exception {  
+    
+    try {  
+      //delete leftover pods caused by test being aborted
+      deleteRcuPod(scriptDir);
+      deleteDbPod(scriptDir);
+         
+      //dbNamespace = "db" + String.valueOf(BaseTest.getNewSuffixCount());
+      //createNamespace(dbNamespace);
+      
+      DbUtils.createDockerRegistrySecret(dbNamespace);
+      DbUtils.startOracleDB(scriptDir, String.valueOf(dbPort), dbNamespace);
+      DbUtils.createRcuSchema(scriptDir,rcuSchemaPrefix, dbUrl, dbNamespace);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      Assertions.fail("Failed to start DB and create RCU schema.\n", ex.getCause());
     }
   }
 }
