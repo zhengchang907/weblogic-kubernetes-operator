@@ -30,8 +30,8 @@ if [ -z "$BRANCH_NAME" ]; then
     exit 1
   fi
 fi
-export IMAGE_TAG_OPERATOR=${IMAGE_TAG_OPERATOR:-`echo "test_${BRANCH_NAME}" | sed "s#/#_#g"`}
-export IMAGE_NAME_OPERATOR=${IMAGE_NAME_OPERATOR:-weblogic-kubernetes-operator}
+export IMAGE_TAG_OPERATOR=${IMAGE_TAG_OPERATOR:-3.0.0}
+export IMAGE_NAME_OPERATOR=${IMAGE_NAME_OPERATOR:-oracle/weblogic-kubernetes-operator}
 
 cd $PROJECT_ROOT
 if [ ! "$?" = "0" ] ; then
