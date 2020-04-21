@@ -44,9 +44,9 @@ if [ -z "$REPO_REGISTRY" ] || [ -z "$REPO_USERNAME" ] || [ -z "$REPO_PASSWORD" ]
   exit 1
 fi
 
-mvn install
+mvn clean install
 if [ ! "$?" = "0" ] ; then
-  echo "mvn install failed"
+  echo "mvn clean install failed"
   exit 1
 fi
 
