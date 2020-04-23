@@ -112,10 +112,10 @@ public class ItManagedCoherence extends BaseTest {
   public static void staticUnPrepare() throws Exception {
     if (FULLTEST) {
       if (operator1 != null && (JENKINS || testCompletedSuccessfully)) {
-        operator1.destroy();
+        //operator1.destroy();
       }
-      tearDown(new Object() {}.getClass()
-          .getEnclosingClass().getSimpleName(), namespaceList.toString());
+      //tearDown(new Object() {}.getClass()
+      //    .getEnclosingClass().getSimpleName(), namespaceList.toString());
     }
   }
 
@@ -174,6 +174,12 @@ public class ItManagedCoherence extends BaseTest {
           + "-Dweblogic.debug.DebugDeploymentServiceTransport=true");
 
       createDomainAndDeployApp(domainMap, DOMAINUID);
+
+      LoggerHelper.getLocal().log(Level.INFO, " Checking INGRESS is running before accessing app");
+      ExecResult result  = ExecCommand.exec("kubectl get ingress -n " + domain.getDomainNs() + " -o wide");
+      LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
+            + "\n stderr = " + result.stderr());
+
       coherenceCacheTest();
 
       testCompletedSuccessfully = true;
@@ -182,7 +188,7 @@ public class ItManagedCoherence extends BaseTest {
         domain.logServerPods();
       }
       if (domain != null && (JENKINS || testCompletedSuccessfully)) {
-        TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
+        //TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
       }
     }
     LoggerHelper.getLocal().log(Level.INFO, "SUCCESS - " + testMethodName);
@@ -221,11 +227,17 @@ public class ItManagedCoherence extends BaseTest {
           "integration-tests/src/test/resources/" + COHERENCE_CLUSTER_IN_IMAGE_SCRIPT);
 
       createDomainAndDeployApp(domainMap, DOMAINUID1);
+
+      LoggerHelper.getLocal().log(Level.INFO, " Checking INGRESS is running before accessing app");
+      ExecResult result  = ExecCommand.exec("kubectl get ingress -n " + domain.getDomainNs() + " -o wide");
+      LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
+            + "\n stderr = " + result.stderr());
+
       coherenceCacheTest();
       testCompletedSuccessfully = true;
     } finally {
       if (domain != null && (JENKINS || testCompletedSuccessfully)) {
-        TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
+        //TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
       }
       if (domain != null) {
         domain.deleteImage();
@@ -256,6 +268,16 @@ public class ItManagedCoherence extends BaseTest {
     
     LoggerHelper.getLocal().log(Level.INFO, " Printing the pods in the doamin");
     ExecResult result  = ExecCommand.exec("kubectl get pods -n " + domain.getDomainNs() + " -o wide");
+    LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
+            + "\n stderr = " + result.stderr());
+
+    LoggerHelper.getLocal().log(Level.INFO, " Printing the INGRESS for the doamin");
+    result  = ExecCommand.exec("kubectl get ingress -n " + domain.getDomainNs() + " -o wide");
+    LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
+            + "\n stderr = " + result.stderr());
+
+    LoggerHelper.getLocal().log(Level.INFO, " Describe the INGRESS for the doamin");
+    result  = ExecCommand.exec("kubectl describe ingress " + domainUid + "-traefik -n " + domain.getDomainNs());
     LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
             + "\n stderr = " + result.stderr());
 
