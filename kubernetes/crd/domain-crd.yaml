@@ -16,7 +16,7 @@ spec:
   preserveUnknownFields: false
   scope: Namespaced
   versions:
-  - name: v7
+  - name: v6
     schema:
       openAPIV3Schema:
         type: object

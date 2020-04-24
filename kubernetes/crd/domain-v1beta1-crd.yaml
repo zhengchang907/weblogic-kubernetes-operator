@@ -20839,7 +20839,7 @@ spec:
                     type: number
                     minimum: 0.0
   versions:
-  - name: v7
+  - name: v6
     served: true
     storage: true
   - name: v2

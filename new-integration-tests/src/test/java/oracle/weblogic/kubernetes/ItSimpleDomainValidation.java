@@ -140,7 +140,7 @@ class ItSimpleDomainValidation implements LoggedTest {
         .image("store/oracle/weblogic:12.2.1.3")
         .imagePullPolicy("IfNotPresent");
     Domain domain = new Domain()
-        .apiVersion("weblogic.oracle/v7")
+        .apiVersion("weblogic.oracle/v6")
         .kind("Domain")
         .metadata(metadata)
         .spec(domainSpec);
@@ -162,7 +162,7 @@ class ItSimpleDomainValidation implements LoggedTest {
         // and here we can set the maximum time we are prepared to wait
         .await().atMost(5, MINUTES)
         // operatorIsRunning() is one of our custom, reusable assertions
-        .until(domainExists(domainUid, "v7", namespace));
+        .until(domainExists(domainUid, "v6", namespace));
   }
 
   /**
