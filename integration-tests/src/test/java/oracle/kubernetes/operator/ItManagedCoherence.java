@@ -114,8 +114,8 @@ public class ItManagedCoherence extends BaseTest {
       if (operator1 != null && (JENKINS || testCompletedSuccessfully)) {
         //operator1.destroy();
       }
-      //tearDown(new Object() {}.getClass()
-      //    .getEnclosingClass().getSimpleName(), namespaceList.toString());
+      tearDown(new Object() {}.getClass()
+          .getEnclosingClass().getSimpleName(), namespaceList.toString());
     }
   }
 
@@ -188,7 +188,7 @@ public class ItManagedCoherence extends BaseTest {
         domain.logServerPods();
       }
       if (domain != null && (JENKINS || testCompletedSuccessfully)) {
-        //TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
+        TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
       }
     }
     LoggerHelper.getLocal().log(Level.INFO, "SUCCESS - " + testMethodName);
@@ -237,7 +237,7 @@ public class ItManagedCoherence extends BaseTest {
       testCompletedSuccessfully = true;
     } finally {
       if (domain != null && (JENKINS || testCompletedSuccessfully)) {
-        //TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
+        TestUtils.deleteWeblogicDomainResources(domain.getDomainUid());
       }
       if (domain != null) {
         domain.deleteImage();
