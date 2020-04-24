@@ -112,7 +112,7 @@ public class ItManagedCoherence extends BaseTest {
   public static void staticUnPrepare() throws Exception {
     if (FULLTEST) {
       if (operator1 != null && (JENKINS || testCompletedSuccessfully)) {
-        //operator1.destroy();
+        operator1.destroy();
       }
       tearDown(new Object() {}.getClass()
           .getEnclosingClass().getSimpleName(), namespaceList.toString());
@@ -277,6 +277,8 @@ public class ItManagedCoherence extends BaseTest {
             + "\n stderr = " + result.stderr());
 
     LoggerHelper.getLocal().log(Level.INFO, " Describe the INGRESS for the doamin");
+    LoggerHelper.getLocal().log(Level.INFO, "Command - kubectl describe ingress " + domainUid + "-traefik -n "
+            + domain.getDomainNs());
     result  = ExecCommand.exec("kubectl describe ingress " + domainUid + "-traefik -n " + domain.getDomainNs());
     LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
             + "\n stderr = " + result.stderr());

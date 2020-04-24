@@ -50,6 +50,13 @@ public class LoadBalancer {
       } else {
         LoggerHelper.getLocal().log(Level.INFO, "Is going to createTraefikIngressPerDomain");
         createTraefikIngressPerDomain();
+        LoggerHelper.getLocal().log(Level.INFO, " Describe the INGRESS for the doamin");
+        LoggerHelper.getLocal().log(Level.INFO, "Command - kubectl describe ingress " + lbMap.get("domainUID") 
+                + "-traefik -n " + lbMap.get("namespace"));
+        result  = ExecCommand.exec("kubectl describe ingress " + lbMap.get("domainUID") + "-traefik -n " 
+                + lbMap.get("namespace"));
+        LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
+                + "\n stderr = " + result.stderr());
       }
     }
 
@@ -215,10 +222,16 @@ public class LoadBalancer {
        .append(" --set ")
        .append("traefik.hostname=")
        .append(lbMap.get("domainUID"))
-        .append(".org");
+        .append(".org")
+       .append(" --timeout 1m")
+        .append(" --wait");
 
     LoggerHelper.getLocal().log(Level.INFO, "createTraefikIngress() Running " + cmd.toString());
     ExecResult result = ExecCommand.exec(cmd.toString());
+    LoggerHelper.getLocal().log(Level.INFO, "Printing creating Ingress results: ");
+    LoggerHelper.getLocal().log(Level.INFO, "result exitValue: " + result.exitValue());
+    LoggerHelper.getLocal().log(Level.INFO, "result output" + result.stdout().trim());
+    LoggerHelper.getLocal().log(Level.INFO, "result err " + result.stderr().trim());
     if (result.exitValue() != 0) {
       reportHelmInstallFailure(cmd.toString(), result);
     }
