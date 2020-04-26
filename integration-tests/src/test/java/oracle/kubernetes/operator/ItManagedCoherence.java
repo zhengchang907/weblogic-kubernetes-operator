@@ -171,8 +171,11 @@ public class ItManagedCoherence extends BaseTest {
           "javaOptions",
           "-Dweblogic.debug.DebugDeploymentService=true -Dweblogic.debug.DebugDeploymentServiceTransport=true " 
           + "-Dweblogic.debug.DebugDeploymentServiceInternal=true "
-          + "-Dweblogic.debug.DebugDeploymentServiceTransport=true");
+          + "-Dweblogic.debug.DebugDeploymentServiceTransportHttp=true");
 
+      System.out.println("Printing the doaminMap");
+      domainMap.forEach((k,v) -> System.out.println("Key = "
+                + k + ", Value = " + v)); 
       createDomainAndDeployApp(domainMap, DOMAINUID);
       coherenceCacheTest();
 
@@ -219,6 +222,11 @@ public class ItManagedCoherence extends BaseTest {
       domainMap.put(
           "createDomainPyScript",
           "integration-tests/src/test/resources/" + COHERENCE_CLUSTER_IN_IMAGE_SCRIPT);
+      domainMap.put(
+          "javaOptions",
+          "-Dweblogic.debug.DebugDeploymentService=true -Dweblogic.debug.DebugDeploymentServiceTransport=true " 
+          + "-Dweblogic.debug.DebugDeploymentServiceInternal=true "
+          + "-Dweblogic.debug.DebugDeploymentServiceTransportHttp=true");
 
       createDomainAndDeployApp(domainMap, DOMAINUID1);
       coherenceCacheTest();
