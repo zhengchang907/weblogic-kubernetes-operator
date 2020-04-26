@@ -175,10 +175,12 @@ public class ItManagedCoherence extends BaseTest {
 
       createDomainAndDeployApp(domainMap, DOMAINUID);
 
+      /*
       LoggerHelper.getLocal().log(Level.INFO, " Checking INGRESS is running before accessing app");
       ExecResult result  = ExecCommand.exec("kubectl get ingress -n " + domain.getDomainNs() + " -o wide");
       LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
             + "\n stderr = " + result.stderr());
+      */
 
       coherenceCacheTest();
 
@@ -228,10 +230,12 @@ public class ItManagedCoherence extends BaseTest {
 
       createDomainAndDeployApp(domainMap, DOMAINUID1);
 
+      /*
       LoggerHelper.getLocal().log(Level.INFO, " Checking INGRESS is running before accessing app");
       ExecResult result  = ExecCommand.exec("kubectl get ingress -n " + domain.getDomainNs() + " -o wide");
       LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
             + "\n stderr = " + result.stderr());
+      */
 
       coherenceCacheTest();
       testCompletedSuccessfully = true;

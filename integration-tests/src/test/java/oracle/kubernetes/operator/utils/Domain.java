@@ -2592,6 +2592,12 @@ public class Domain {
     // Run the script to build WAR, EAR or JAR file and deploy the App in the admin pod
     callShellScriptToBuildDeployAppInPod(
         appName, scriptName, username, password, infoDirName, archiveExt);
+
+    LoggerHelper.getLocal().log(Level.INFO, " Checking INGRESS is running before accessing app");
+    ExecResult result  = ExecCommand.exec("kubectl get ingress -n " + domainNS + " -o wide");
+    LoggerHelper.getLocal().log(Level.INFO, "stdout = " + result.stdout()
+            + "\n stderr = " + result.stderr());
+
   }
 
   /**
