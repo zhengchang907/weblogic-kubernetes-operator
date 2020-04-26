@@ -136,6 +136,19 @@ public class DomainCrd {
       ((ObjectNode) adminServerNode).put(entry.getKey(), entry.getValue());
     }
   }
+  
+  /**
+   * A utility method to add attributes to OPSS node in domain.yaml.
+   * 
+   *@param attributes A Map of key value pairs
+   */
+  public void addObjectNodeToOpss(Map<String, String> attributes) {
+
+    JsonNode opssNode = getOpssNode();
+    for (Map.Entry<String, String> entry : attributes.entrySet()) {
+      ((ObjectNode) opssNode).put(entry.getKey(), entry.getValue());
+    }
+  }
 
   /**
    * A utility method to add attributes to cluster node in domain.yaml.
@@ -348,6 +361,42 @@ public class DomainCrd {
     String jsonString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(myNode);
     System.out.println(jsonString);
   }
+  
+  /**
+   * Utility method to replace name of domain in domain.yaml
+   *
+   * @param domain new domain name
+   * @throws JsonProcessingException when domain name not available
+   */
+  public void changeDomainName(String domain) throws JsonProcessingException {
+    ObjectNode metadataNode = (ObjectNode) getMetadataNode();
+    metadataNode.remove("name");
+    ((ObjectNode) metadataNode).put("name", domain);
+  }
+  
+  /**
+   * Utility method to replace domainUID in domain.yaml
+   *
+   * @param domainUID new domainUID 
+   * @throws JsonProcessingException when domainUID not available
+   */
+  public void changeDomainUID(String domainUID) throws JsonProcessingException {
+    ObjectNode metadataLabelsNode = (ObjectNode) getMetadataLabelsNode();
+    metadataLabelsNode.remove("weblogic.domainUID");
+    ((ObjectNode) metadataLabelsNode).put("weblogic.domainUID", domainUID);
+  }
+  
+  /**
+   * Utility method to replace domainHome in domain.yaml
+   *
+   * @param domainHome new domainHome 
+   * @throws JsonProcessingException when domainHome not available
+   */
+  public void changeDomainHome(String domainHome) throws JsonProcessingException {
+    ObjectNode specNode = (ObjectNode) getSpecNode();
+    specNode.remove("domainHome");
+    ((ObjectNode) specNode).put("domainHome", domainHome);
+  }
 
   /**
    * Utility method to replace runtimeEncryptionSecret in domain.yaml
@@ -383,6 +432,16 @@ public class DomainCrd {
   private JsonNode getAdminServerNode() {
     return root.path("spec").path("adminServer");
   }
+  
+  /**
+   * Gets the OPSS node entry from Domain CRD JSON tree.
+   *
+   * @return OPSS node
+   */
+  private JsonNode getOpssNode() {
+    return root.path("spec").path("configuration").path("opss");
+  }
+
 
   /**
    * Gets the cluster node entry from Domain CRD JSON tree for the given cluster name.
@@ -442,7 +501,26 @@ public class DomainCrd {
     }
     return managedserverNode;
   }
+  
+  /**
+   * Gets the labels object node.
+   *
+   * @return JsonNode labels object
+   */
+  private JsonNode getMetadataLabelsNode() {
+    return root.path("metadata").path("labels");
+  }
 
+  
+  /**
+   * Gets the metadata object node.
+   *
+   * @return JsonNode matadata object
+   */
+  private JsonNode getMetadataNode() {
+    return root.path("metadata");
+  }
+  
   /**
    * Gets the object node entry from the server pod of the given parent node in Domain CRD JSON
    * tree.

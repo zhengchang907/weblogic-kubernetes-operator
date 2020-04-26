@@ -11,26 +11,29 @@ domainInfo:
         rcu_db_conn_string: '@@SECRET:@@ENV:DOMAIN_UID@@-rcu-access:rcu_db_conn_string@@'
 
 topology:
+    AdminServerName: 'admin-server'
     Name: domain1
-    AdminServerName: "admin-server"
     Cluster:
-        "cluster-1":
-            DynamicServers:
-                ServerTemplate:  "cluster-1-template"
-                ServerNamePrefix: "managed-server"
-                DynamicClusterSize: 5
-                MaxDynamicClusterSize: 5
-                CalculatedListenPorts: false
+        'cluster-1':
     Server:
-        "admin-server":
+        'admin-server':
             ListenPort: 7001
-    ServerTemplate:
-        "cluster-1-template":
-            Cluster: "cluster-1"
-            ListenPort : '@@PROP:MANSVR_PORT@@'
+        'managed-server1':
+            Cluster: 'cluster-1'
+            ListenPort: '@@PROP:MANSVR_PORT@@'
+         'managed-server2':
+            Cluster: 'cluster-1'
+            ListenPort: '@@PROP:MANSVR_PORT@@'
+         'managed-server3':
+            Cluster: 'cluster-1'
+            ListenPort: '@@PROP:MANSVR_PORT@@'
+         'managed-server4':
+            Cluster: 'cluster-1'
+            ListenPort: '@@PROP:MANSVR_PORT@@'
+           
 appDeployments:
     Application:
         myear:
             SourcePath: wlsdeploy/applications/sample_app.ear
             ModuleType: ear
-            Target: 'cluster-1'
+            Target: 'cluster-1'            

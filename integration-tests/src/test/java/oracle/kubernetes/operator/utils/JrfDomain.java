@@ -61,16 +61,17 @@ public class JrfDomain extends Domain {
    */
   private void updateDomainMapForJrf(boolean adminPortEnabled) throws Exception {
     // jrf specific input parameter
-    domainMap.put(
-        "image",
-        BaseTest.getfmwImageName() + ":" + BaseTest.getfmwImageTag());
-
-    if (System.getenv("IMAGE_PULL_SECRET_FMWINFRA") != null) {
-      domainMap.put("imagePullSecretName", System.getenv("IMAGE_PULL_SECRET_FMWINFRA"));
-    } else {
-      domainMap.put("imagePullSecretName", "docker-store");
+    if (domainMap.containsKey("domainHomeSourceType")) {
+      if (((String) domainMap.get("domainHomeSourceType"))
+          .equalsIgnoreCase("PersistentVolume")) {
+        domainMap.put(
+            "image",
+            BaseTest.getfmwImageName() + ":" + BaseTest.getfmwImageTag());
+      }  
     }
-
+   
+    LoggerHelper.getLocal().log(Level.INFO,
+        "JRF domain image: " + (String)domainMap.get("image"));
     // update create-domain-script.sh if adminPortEnabled is true
     if (adminPortEnabled) {
       String createDomainScript =
