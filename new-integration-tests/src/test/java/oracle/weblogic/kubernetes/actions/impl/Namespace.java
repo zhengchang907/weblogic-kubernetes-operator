@@ -50,7 +50,7 @@ public class Namespace {
   }
 
   /**
-   * List of namespaces in Kubernetes cluster
+   * List of namespaces in Kubernetes cluster.
    *
    * @return List of names of all namespaces in Kubernetes cluster
    * @throws ApiException if Kubernetes client API call fails
@@ -64,9 +64,8 @@ public class Namespace {
    *
    * @param namespace name of namespace
    * @return true if successful, false otherwise
-   * @throws ApiException if Kubernetes request fails
    */
-  public static boolean delete(String namespace) throws ApiException {
+  public static boolean delete(String namespace) {
     return Kubernetes.deleteNamespace(namespace);
   }
 

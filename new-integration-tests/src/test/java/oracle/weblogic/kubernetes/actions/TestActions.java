@@ -5,7 +5,10 @@ package oracle.weblogic.kubernetes.actions;
 
 import java.util.List;
 
+import com.google.gson.JsonObject;
+import io.kubernetes.client.custom.V1Patch;
 import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1PersistentVolume;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaim;
@@ -15,6 +18,7 @@ import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import oracle.weblogic.domain.DomainList;
 import oracle.weblogic.kubernetes.actions.impl.AppBuilder;
 import oracle.weblogic.kubernetes.actions.impl.AppParams;
+import oracle.weblogic.kubernetes.actions.impl.ClusterRoleBinding;
 import oracle.weblogic.kubernetes.actions.impl.ConfigMap;
 import oracle.weblogic.kubernetes.actions.impl.Domain;
 import oracle.weblogic.kubernetes.actions.impl.Namespace;
@@ -27,11 +31,11 @@ import oracle.weblogic.kubernetes.actions.impl.Service;
 import oracle.weblogic.kubernetes.actions.impl.ServiceAccount;
 import oracle.weblogic.kubernetes.actions.impl.Traefik;
 import oracle.weblogic.kubernetes.actions.impl.TraefikParams;
+import oracle.weblogic.kubernetes.actions.impl.primitive.Docker;
 import oracle.weblogic.kubernetes.actions.impl.primitive.Helm;
 import oracle.weblogic.kubernetes.actions.impl.primitive.HelmParams;
-import oracle.weblogic.kubernetes.actions.impl.primitive.WITParams;
 import oracle.weblogic.kubernetes.actions.impl.primitive.WebLogicImageTool;
-
+import oracle.weblogic.kubernetes.actions.impl.primitive.WitParams;
 
 // this class essentially delegates to the impl classes, and "hides" all of the
 // detail impl classes - tests would only ever call methods in here, never
@@ -63,13 +67,13 @@ public class TestActions {
   /**
    * Makes a REST call to the Operator to scale the domain.
    *
-   * @param domainUID domainUid of the domain
+   * @param domainUid domainUid of the domain
    * @param clusterName cluster in the domain to scale
    * @param numOfServers number of servers to scale upto.
    * @return true on success, false otherwise
    */
-  public static boolean scaleDomain(String domainUID, String clusterName, int numOfServers) {
-    return Operator.scaleDomain(domainUID, clusterName, numOfServers);
+  public static boolean scaleDomain(String domainUid, String clusterName, int numOfServers) {
+    return Operator.scaleDomain(domainUid, clusterName, numOfServers);
   }
 
   /**
@@ -83,6 +87,23 @@ public class TestActions {
     return Operator.uninstall(params);
   }
 
+  /**
+   * Image Name for the Operator. Uses branch name for image tag in local runs
+   * and branch name, build id for image tag in Jenkins runs.
+   * @return image name
+   */
+  public static String getOperatorImageName() {
+    return Operator.getImageName();
+  }
+
+  /**
+   * Builds a Docker Image for the Oracle WebLogic Kubernetes Operator.
+   * @param image image name and tag in 'name:tag' format
+   * @return true on success
+   */
+  public static boolean buildOperatorImage(String image) {
+    return Operator.buildImage(image);
+  }
   // ----------------------   domain  -----------------------------------
 
   /**
@@ -109,49 +130,62 @@ public class TestActions {
   /**
    * Get the Domain Custom Resource.
    *
-   * @param domainUID unique domain identifier
+   * @param domainUid unique domain identifier
    * @param namespace name of namespace
    * @return Domain Custom Resource or null if Domain does not exist
    * @throws ApiException if Kubernetes client API call fails
    */
-  public static oracle.weblogic.domain.Domain getDomainCustomResource(String domainUID,
+  public static oracle.weblogic.domain.Domain getDomainCustomResource(String domainUid,
       String namespace) throws ApiException {
-    return Domain.getDomainCustomResource(domainUID, namespace);
+    return Domain.getDomainCustomResource(domainUid, namespace);
   }
 
   /**
    * Shutdown the domain.
    *
-   * @param domainUID unique domain identifier
+   * @param domainUid unique domain identifier
    * @param namespace name of namespace
    * @return true on success, false otherwise
    */
-  public static boolean shutdown(String domainUID, String namespace) {
-    return Domain.shutdown(domainUID, namespace);
+  public static boolean shutdown(String domainUid, String namespace) {
+    return Domain.shutdown(domainUid, namespace);
   }
 
   /**
    * Restart the domain.
    *
-   * @param domainUID unique domain identifier
+   * @param domainUid unique domain identifier
    * @param namespace name of namespace
    * @return true on success, false otherwise
    */
-  public static boolean restart(String domainUID, String namespace) {
-    return Domain.restart(domainUID, namespace);
+  public static boolean restart(String domainUid, String namespace) {
+    return Domain.restart(domainUid, namespace);
   }
 
   /**
    * Delete a Domain Custom Resource.
    *
-   * @param domainUID unique domain identifier
+   * @param domainUid unique domain identifier
    * @param namespace name of namespace
    * @return true on success, false otherwise
-   * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deleteDomainCustomResource(String domainUID, String namespace)
-      throws ApiException {
-    return Domain.deleteDomainCustomResource(domainUID, namespace);
+  public static boolean deleteDomainCustomResource(String domainUid, String namespace) {
+    return Domain.deleteDomainCustomResource(domainUid, namespace);
+  }
+
+  /**
+   * Patch the Domain Custom Resource.
+   *
+   * @param domainUid unique domain identifier
+   * @param namespace name of namespace
+   * @param patch patch data in format matching the specified media type
+   * @param patchFormat one of the following types used to identify patch document:
+   *     "application/json-patch+json", "application/merge-patch+json",
+   * @return true if successful, false otherwise
+   */
+  public static boolean patchDomainCustomResource(String domainUid, String namespace, V1Patch patch,
+      String patchFormat) {
+    return Domain.patchDomainCustomResource(domainUid, namespace, patch, patchFormat);
   }
 
   // ------------------------   ingress controller ----------------------
@@ -216,9 +250,8 @@ public class TestActions {
    *
    * @param namespace name of namespace
    * @return true if successful, false otherwise
-   * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deleteNamespace(String namespace) throws ApiException {
+  public static boolean deleteNamespace(String namespace) {
     return Namespace.delete(namespace);
   }
 
@@ -229,9 +262,9 @@ public class TestActions {
    *
    * @return an instance of WITParams that contains the default values
    */
-  public static WITParams defaultWITParams() {
+  public static WitParams defaultWitParams() {
     return
-        WebLogicImageTool.defaultWITParams();
+        WebLogicImageTool.defaultWitParams();
   }
 
   /**
@@ -240,7 +273,7 @@ public class TestActions {
    * @param params - the parameters for creating a model-in-image Docker image
    * @return true if the operation succeeds
    */
-  public static boolean createMIIImage(WITParams params) {
+  public static boolean createMiiImage(WitParams params) {
     return
         WebLogicImageTool
             .withParams(params)
@@ -266,10 +299,8 @@ public class TestActions {
    *
    * @param name name of the Persistent Volume
    * @return true if successful, false otherwise
-   * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deletePersistentVolume(String name)
-      throws ApiException {
+  public static boolean deletePersistentVolume(String name) {
     return PersistentVolume.delete(name);
   }
 
@@ -292,10 +323,8 @@ public class TestActions {
    * @param name name of the Persistent Volume Claim
    * @param namespace name of the namespace
    * @return true if successful, false otherwise
-   * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deletePersistentVolumeClaim(String name, String namespace)
-      throws ApiException {
+  public static boolean deletePersistentVolumeClaim(String name, String namespace) {
     return PersistentVolumeClaim.delete(name, namespace);
   }
 
@@ -318,9 +347,8 @@ public class TestActions {
    * @param name name of the Secret
    * @param namespace name of namespace
    * @return true if successful, false otherwise
-   * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deleteSecret(String name, String namespace) throws ApiException {
+  public static boolean deleteSecret(String name, String namespace) {
     return Secret.delete(name, namespace);
   }
 
@@ -344,9 +372,8 @@ public class TestActions {
    * @param name name of the Config Map
    * @param namespace name of namespace
    * @return true if successful, false otherwise
-   * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deleteConfigMap(String name, String namespace) throws ApiException {
+  public static boolean deleteConfigMap(String name, String namespace) {
     return ConfigMap.delete(name, namespace);
   }
 
@@ -369,9 +396,8 @@ public class TestActions {
    * @param name name of the Service
    * @param namespace name of namespace
    * @return true if successful
-   * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deleteService(String name, String namespace) throws ApiException {
+  public static boolean deleteService(String name, String namespace) {
     return Service.delete(name, namespace);
   }
 
@@ -394,10 +420,34 @@ public class TestActions {
    * @param name name of the Service Account
    * @param namespace name of namespace
    * @return true if successful, false otherwise
+   */
+  public static boolean deleteServiceAccount(String name, String namespace) {
+    return ServiceAccount.delete(name, namespace);
+  }
+
+  // ----------------------- Role-based access control (RBAC)   ---------------------------
+
+  /**
+   * Create a Cluster Role Binding.
+   *
+   * @param clusterRoleBinding V1ClusterRoleBinding object containing role binding configuration
+   *     data
+   * @return true if successful
    * @throws ApiException if Kubernetes client API call fails
    */
-  public static boolean deleteServiceAccount(String name, String namespace) throws ApiException {
-    return ServiceAccount.delete(name, namespace);
+  public static boolean createClusterRoleBinding(V1ClusterRoleBinding clusterRoleBinding)
+      throws ApiException {
+    return ClusterRoleBinding.create(clusterRoleBinding);
+  }
+
+  /**
+   * Delete Cluster Role Binding.
+   *
+   * @param name name of cluster role binding
+   * @return true if successful, false otherwise
+   */
+  public static boolean deleteClusterRoleBinding(String name) {
+    return ClusterRoleBinding.delete(name);
   }
 
   // ----------------------- helm -----------------------------------
@@ -411,7 +461,7 @@ public class TestActions {
   public static boolean helmList(HelmParams params) {
     return Helm.list(params);
   }
-  
+
   // ------------------------ Application Builder  -------------------------
 
   /**
@@ -436,6 +486,49 @@ public class TestActions {
         AppBuilder
             .withParams(params)
             .build();
+  }
+
+  // ------------------------ Docker --------------------------------------
+
+  /**
+   * Log in to a Docker registry.
+   * @param registryName registry name
+   * @param username user
+   * @param password password
+   * @return true if successfull
+   */
+  public static boolean dockerLogin(String registryName, String username, String password) {
+    return Docker.login(registryName, username, password);
+  }
+
+  /**
+   * Push an image to a registry.
+   * @param image fully qualified docker image, image name:image tag
+   * @return true if successfull
+   */
+  public static boolean dockerPush(String image) {
+    return Docker.push(image);
+  }
+
+  /**
+   * Delete docker image.
+   * @param image image name:image tag
+   * @return true if delete image is successful
+   */
+  public static boolean deleteImage(String image) {
+    return Docker.deleteImage(image);
+  }
+
+  /**
+   * Create Docker registry configuration in json object.
+   * @param username username for the Docker registry
+   * @param password password for the Docker registry
+   * @param email email for the Docker registry
+   * @param registry Docker registry name
+   * @return json object for the Docker registry configuration
+   */
+  public static JsonObject createDockerConfigJson(String username, String password, String email, String registry) {
+    return Docker.createDockerConfigJson(username, password, email, registry);
   }
 
   // ------------------------ where does this go  -------------------------

@@ -13,9 +13,10 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.joda.time.DateTime;
 
-@ApiModel(description =
-    "DomainStatus represents information about the status of a domain. "
-        + "Status may trail the actual state of a system.")
+@ApiModel(
+    description =
+        "DomainStatus represents information about the status of a domain. "
+            + "Status may trail the actual state of a system.")
 public class DomainStatus {
 
   @ApiModelProperty("Current service state of domain.")
@@ -42,9 +43,10 @@ public class DomainStatus {
   private DateTime startTime;
 
   @ApiModelProperty(
-      value = "The number of running Managed Servers in the WebLogic cluster if there is "
-          + "only one cluster in the domain and where the cluster does not explicitly "
-          + "configure its replicas in a cluster specification.",
+      value =
+          "The number of running Managed Servers in the WebLogic cluster if there is "
+              + "only one cluster in the domain and where the cluster does not explicitly "
+              + "configure its replicas in a cluster specification.",
       allowableValues = "range[0,infinity]")
   private Integer replicas;
 
@@ -57,12 +59,25 @@ public class DomainStatus {
     return conditions;
   }
 
+  /**
+   * Adds condition item.
+   * @param conditionsItem Condition
+   * @return this
+   */
   public DomainStatus addConditionsItem(DomainCondition conditionsItem) {
     if (conditions == null) {
       conditions = new ArrayList<>();
     }
     conditions.add(conditionsItem);
     return this;
+  }
+
+  public List<DomainCondition> getConditions() {
+    return conditions;
+  }
+
+  public void setConditions(List<DomainCondition> conditions) {
+    this.conditions = conditions;
   }
 
   public DomainStatus message(String message) {
@@ -74,6 +89,14 @@ public class DomainStatus {
     return message;
   }
 
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
+  }
+
   public DomainStatus reason(String reason) {
     this.reason = reason;
     return this;
@@ -81,6 +104,14 @@ public class DomainStatus {
 
   public String reason() {
     return reason;
+  }
+
+  public String getReason() {
+    return reason;
+  }
+
+  public void setReason(String reason) {
+    this.reason = reason;
   }
 
   public DomainStatus servers(List<ServerStatus> servers) {
@@ -92,12 +123,25 @@ public class DomainStatus {
     return servers;
   }
 
+  /**
+   * Adds servers item.
+   * @param serversItem Server
+   * @return this
+   */
   public DomainStatus addServersItem(ServerStatus serversItem) {
     if (servers == null) {
       servers = new ArrayList<>();
     }
     servers.add(serversItem);
     return this;
+  }
+
+  public List<ServerStatus> getServers() {
+    return servers;
+  }
+
+  public void setServers(List<ServerStatus> servers) {
+    this.servers = servers;
   }
 
   public DomainStatus clusters(List<ClusterStatus> clusters) {
@@ -109,12 +153,25 @@ public class DomainStatus {
     return clusters;
   }
 
+  /**
+   * Adds clusters item.
+   * @param clustersItem Cluster
+   * @return this
+   */
   public DomainStatus addClustersItem(ClusterStatus clustersItem) {
     if (clusters == null) {
       clusters = new ArrayList<>();
     }
     clusters.add(clustersItem);
     return this;
+  }
+
+  public List<ClusterStatus> getClusters() {
+    return clusters;
+  }
+
+  public void setClusters(List<ClusterStatus> clusters) {
+    this.clusters = clusters;
   }
 
   public DomainStatus startTime(DateTime startTime) {
@@ -126,6 +183,14 @@ public class DomainStatus {
     return startTime;
   }
 
+  public DateTime getStartTime() {
+    return startTime;
+  }
+
+  public void setStartTime(DateTime startTime) {
+    this.startTime = startTime;
+  }
+
   public DomainStatus replicas(Integer replicas) {
     this.replicas = replicas;
     return this;
@@ -133,6 +198,14 @@ public class DomainStatus {
 
   public Integer replicas() {
     return this.replicas;
+  }
+
+  public Integer getReplicas() {
+    return replicas;
+  }
+
+  public void setReplicas(Integer replicas) {
+    this.replicas = replicas;
   }
 
   @Override
@@ -181,5 +254,4 @@ public class DomainStatus {
         .append(replicas, rhs.replicas)
         .isEquals();
   }
-
 }

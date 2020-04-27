@@ -53,7 +53,6 @@ public class Kubernetes {
    */
   public static boolean doesPodExist(String namespace, String domainUid, String podName) throws ApiException {
     boolean podExist = false;
-    logger.info("Checking if the pod exists in namespace");
     String labelSelector = null;
     if (domainUid != null) {
       labelSelector = String.format("weblogic.domainUID in (%s)", domainUid);
@@ -75,7 +74,6 @@ public class Kubernetes {
    */
   public static boolean isPodRunning(String namespace, String domainUid, String podName) throws ApiException {
     boolean status = false;
-    logger.info("Checking if the pod running in namespace");
     String labelSelector = null;
     if (domainUid != null) {
       labelSelector = String.format("weblogic.domainUID in (%s)", domainUid);
@@ -187,7 +185,7 @@ public class Kubernetes {
   }
 
   /**
-   * Get V1Service object for the given servicename, label and namespace
+   * Get V1Service object for the given service name, label and namespace.
    * @param serviceName name of the service to look for
    * @param label the key value pair with which the service is decorated with
    * @param namespace the namespace in which to check for the service
@@ -302,11 +300,11 @@ public class Kubernetes {
     }
   }
 
-  public static boolean loadBalancerReady(String domainUID) {
+  public static boolean loadBalancerReady(String domainUid) {
     return true;
   }
 
-  public static boolean adminServerReady(String domainUID, String namespace) {
+  public static boolean adminServerReady(String domainUid, String namespace) {
     return true;
   }
 
