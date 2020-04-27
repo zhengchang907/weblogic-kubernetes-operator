@@ -45,6 +45,8 @@ public class ItManagedCoherence extends BaseTest {
   private static String domainNS1;
   static boolean testCompletedSuccessfully = false;
   private static StringBuffer namespaceList;
+  private static int maxIterations = BaseTest.getMaxIterationsPod(); // 50 * 5 = 250 seconds
+  private static int waitTime = BaseTest.getWaitTimePod();
 
   /**
    * This method gets called only once before any of the test methods are executed. It does the
@@ -338,7 +340,8 @@ public class ItManagedCoherence extends BaseTest {
         .append(appToDeploy);
 
     LoggerHelper.getLocal().log(Level.INFO, "curlCmd is " + curlCmd.toString());
-    ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    ExecResult result = callApp(curlCmd.toString());
 
     return result;
   }
@@ -360,7 +363,8 @@ public class ItManagedCoherence extends BaseTest {
         .append(appToDeploy)
         .append("/")
         .append(appToDeploy);
-    ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    ExecResult result = callApp(curlCmd.toString());
     return result;
   }
 
@@ -381,7 +385,8 @@ public class ItManagedCoherence extends BaseTest {
         .append(appToDeploy)
         .append("/")
         .append(appToDeploy);
-    ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    ExecResult result = callApp(curlCmd.toString());
     return result;
   }
 
@@ -402,7 +407,41 @@ public class ItManagedCoherence extends BaseTest {
         .append(appToDeploy)
         .append("/")
         .append(appToDeploy);
-    ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
+    ExecResult result = callApp(curlCmd.toString());
     return result;
   }
+
+  private ExecResult callApp(String curlCmd) throws Exception {
+    ExecResult result = null;
+
+    for (int i = 0; i < maxIterations; i++) {
+      result = TestUtils.exec(curlCmd, true);
+      String responseCode = result.stdout().trim();
+      if (result.exitValue() != 0) {
+        LoggerHelper.getLocal().log(Level.INFO,
+            "curl command failedj, got "
+                + result.exitValue()
+                + ", iteration "
+                + i
+                + " of "
+                + maxIterations);
+        if (i == (maxIterations - 1)) {
+          throw new RuntimeException(
+              "FAILURE: curl command failed, got " + result.exitValue());
+        }
+        try {
+          Thread.sleep(waitTime * 1000);
+        } catch (InterruptedException ignore) {
+          // no-op
+        }
+      } else if (result.exitValue() == 0) {
+        LoggerHelper.getLocal().log(Level.INFO,
+            "callApp curl command succeeded, iteration " + i);
+        break;
+      }
+    }
+    return result;
+  }
+
 }
