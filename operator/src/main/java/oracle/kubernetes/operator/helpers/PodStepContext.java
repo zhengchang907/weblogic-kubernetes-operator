@@ -28,11 +28,9 @@ import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodReadinessGate;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1Probe;
-import io.kubernetes.client.openapi.models.V1SecretVolumeSource;
 import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeMount;
-import oracle.kubernetes.operator.DomainSourceType;
 import oracle.kubernetes.operator.DomainStatusUpdater;
 import oracle.kubernetes.operator.KubernetesConstants;
 import oracle.kubernetes.operator.LabelConstants;
@@ -195,10 +193,6 @@ public abstract class PodStepContext extends BasePodStepContext {
 
   private String isIncludeServerOutInPodLog() {
     return Boolean.toString(getDomain().isIncludeServerOutInPodLog());
-  }
-
-  private String getRuntimeEncryptionSecret() {
-    return getDomain().getRuntimeEncryptionSecret();
   }
 
   private List<V1ContainerPort> getContainerPorts() {
@@ -510,8 +504,6 @@ public abstract class PodStepContext extends BasePodStepContext {
         + domainIntrospectVersion);
     LOGGER.finest("PodStepContext.createMetaData domainRestartVersion from serverspec "
         + getServerSpec().getDomainRestartVersion());
-    LOGGER.finest("PodStepContext.createMetaData domainIntrospectVersion from spec "
-        + getDomain().getIntrospectVersion());
     metadata
         .putLabelsItem(LabelConstants.RESOURCE_VERSION_LABEL, DEFAULT_DOMAIN_VERSION)
         .putLabelsItem(LabelConstants.DOMAINUID_LABEL, getDomainUid())
@@ -520,7 +512,6 @@ public abstract class PodStepContext extends BasePodStepContext {
         .putLabelsItem(LabelConstants.CREATEDBYOPERATOR_LABEL, "true")
         .putLabelsItem(
             LabelConstants.DOMAINRESTARTVERSION_LABEL, getServerSpec().getDomainRestartVersion())
-        .putLabelsItem(LabelConstants.DOMAININTROSPECTVERSION_LABEL, getDomain().getIntrospectVersion())
         .putLabelsItem(
             LabelConstants.CLUSTERRESTARTVERSION_LABEL, getServerSpec().getClusterRestartVersion())
         .putLabelsItem(
@@ -562,9 +553,6 @@ public abstract class PodStepContext extends BasePodStepContext {
   private List<V1Volume> getVolumes(String domainUid) {
     List<V1Volume> volumes = PodDefaults.getStandardVolumes(domainUid);
     volumes.addAll(getServerSpec().getAdditionalVolumes());
-    if (DomainSourceType.FromModel.toString().equals(getDomainHomeSourceType())) {
-      volumes.add(createRuntimeEncryptionSecretVolume());
-    }
 
     return volumes;
   }
@@ -605,20 +593,7 @@ public abstract class PodStepContext extends BasePodStepContext {
   private List<V1VolumeMount> getVolumeMounts() {
     List<V1VolumeMount> mounts = PodDefaults.getStandardVolumeMounts(getDomainUid());
     mounts.addAll(getServerSpec().getAdditionalVolumeMounts());
-    if (DomainSourceType.FromModel.toString().equals(getDomainHomeSourceType())) {
-      mounts.add(createRuntimeEncryptionSecretVolumeMount());
-    }
     return mounts;
-  }
-
-  private V1Volume createRuntimeEncryptionSecretVolume() {
-    return new V1Volume()
-        .name(RUNTIME_ENCRYPTION_SECRET_VOLUME)
-        .secret(getRuntimeEncryptionSecretVolumeSource(getRuntimeEncryptionSecret()));
-  }
-
-  private V1SecretVolumeSource getRuntimeEncryptionSecretVolumeSource(String name) {
-    return new V1SecretVolumeSource().secretName(name).defaultMode(420);
   }
 
   /**

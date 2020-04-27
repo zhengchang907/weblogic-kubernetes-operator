@@ -85,20 +85,10 @@ spec:
     secret:
       defaultMode: 420
       secretName:  my-secret
-  - name: weblogic-runtime-encryption-volume
-    secret:
-      defaultMode: 420
-      secretName: ${DOMAIN_UID}-runtime-encryption-secret
-      optional: ${MII_WDT_ENCRYPT_SECRET}
   - name: weblogic-domain-cm-volume
     configMap:
       defaultMode: 365
       name: weblogic-domain-cm
-  - name: weblogic-wdt-config-map-volume
-    configMap:
-      defaultMode: 365
-      name: ${DOMAIN_UID}-wdt-config-map
-      optional: ${MII_WDT_CONFIGMAP}
   - name: ${DOMAIN_UID}-mycustom-overrides-cm-volume
     configMap:
       defaultMode: 365

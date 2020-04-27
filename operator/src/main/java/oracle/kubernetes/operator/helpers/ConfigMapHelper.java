@@ -408,19 +408,10 @@ public class ConfigMapHelper {
           packet.put(ProcessingConstants.SECRETS_HASH, miiModelSecretsHash);
         }
         String domainRestartVersion = info.getDomain().getRestartVersion();
-        String domainIntrospectVersion = info.getDomain().getIntrospectVersion();
         int modelInImageSpecHash =  ConfigMapHelper.getModelInImageSpecHash(info.getDomain().getSpec().getImage());
         if (domainRestartVersion != null) {
           packet.put(ProcessingConstants.DOMAIN_RESTART_VERSION, domainRestartVersion);
           data.put(ProcessingConstants.DOMAIN_RESTART_VERSION, domainRestartVersion);
-        }
-        if (domainIntrospectVersion != null) {
-          packet.put(ProcessingConstants.DOMAIN_INTROSPECT_VERSION, domainIntrospectVersion);
-          data.put(ProcessingConstants.DOMAIN_INTROSPECT_VERSION, domainIntrospectVersion);
-        }
-        if ("FromModel".equals(info.getDomain().getDomainHomeSourceType())) {
-          packet.put(ProcessingConstants.DOMAIN_INPUTS_HASH, String.valueOf(modelInImageSpecHash));
-          data.put(ProcessingConstants.DOMAIN_INPUTS_HASH, String.valueOf(modelInImageSpecHash));
         }
         LOGGER.fine(
             MessageKeys.WLS_CONFIGURATION_READ,
@@ -637,8 +628,6 @@ public class ConfigMapHelper {
 
         LOGGER.finest("ReadSituConfigMapStep.onSuccess restart version (from ino spec) "
             + info.getDomain().getRestartVersion());
-        LOGGER.finest("ReadSituConfigMapStep.onSuccess introspect version  (from ino spec) "
-            + info.getDomain().getIntrospectVersion());
         LOGGER.finest("ReadSituConfigMapStep.onSuccess restart version from cm result "
             + domainRestartVersion);
         LOGGER.finest("ReadSituConfigMapStep.onSuccess introspect version from cm result "

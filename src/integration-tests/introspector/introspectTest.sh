@@ -27,14 +27,7 @@
 #   calls in the implementation below for the complete list.
 #
 # Usage:
-#     For non Model In Image test
-#
-#         introspectTest.sh
-#
-#     For Model In Image test
-#
-#         export DOMAIN_SOURCE_TYPE=FromModel
-#         introspectTest.sh
+#     introspectTest.sh
 #
 #############################################################################
 #
@@ -111,17 +104,6 @@ export EXPECT_INVALID_DOMAIN=${EXPECT_INVALID_DOMAIN:-false}
 
 DOMAIN_SOURCE_TYPE=${DOMAIN_SOURCE_TYPE:-PersistentVolume}
 export DOMAIN_SOURCE_TYPE=${DOMAIN_SOURCE_TYPE}
-WDT_DOMAIN_TYPE=${WDT_DOMAIN_TYPE:-WLS}
-export WDT_DOMAIN_TYPE
-if [ "${DOMAIN_SOURCE_TYPE}" == "FromModel" ] ; then
-  # Make sure the configmap and secrets are not optional
-  export MII_WDT_CONFIGMAP="false"
-  export MII_WDT_ENCRYPT_SECRET="false"
-else
-  # Make sure the configmap and secrets are optional
-  export MII_WDT_CONFIGMAP="true"
-  export MII_WDT_ENCRYPT_SECRET="true"
-fi
 
 #############################################################################
 #

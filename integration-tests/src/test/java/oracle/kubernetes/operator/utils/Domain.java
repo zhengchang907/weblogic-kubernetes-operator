@@ -1641,9 +1641,6 @@ public class Domain {
           domainNS);
     }
 
-    //create configmap for MII
-    createMiiConfigMap("miiConfigMap", "miiConfigMapFileOrDir");
-
     // write configOverride, shutdownOptionsOverrides and configOverrideSecrets to domain.yaml and/or create domain
     if (domainMap.containsKey("configOverrides") || domainMap.containsKey("domainHomeImageBase")
         || domainMap.containsKey("shutdownOptionsOverrides")
@@ -1818,23 +1815,6 @@ public class Domain {
             + resultsDir,
         true);
 
-    if (domainHomeSourceType.equals("FromModel")) {
-      TestUtils.exec("cp -rf "
-              + (domainMap.containsKey("projectRoot")
-              ? domainMap.get("projectRoot") : BaseTest.getProjectRoot())
-              + "/integration-tests/src/test/resources/model-in-image "
-              + resultsDir + "/samples",
-          true);
-      //append mii section to domain-template.yaml
-      Path domainTemplateFile = Paths.get(
-          resultsDir + "/samples/scripts/common/domain-template.yaml");
-      Path miiConfigPartFile = Paths.get(
-          resultsDir + "/samples/model-in-image/miisection-toaddin-domain-template.yaml");
-      Files.write(domainTemplateFile, Files.readAllBytes(miiConfigPartFile),
-          StandardOpenOption.APPEND);
-
-    }
-
     this.voyager =
         (System.getenv("LB_TYPE") != null && System.getenv("LB_TYPE").equalsIgnoreCase("VOYAGER"))
             || (inputDomainMap.containsKey("loadBalancer")
@@ -1849,11 +1829,7 @@ public class Domain {
     // read sample domain inputs
     String sampleDomainInputsFile =
         "/samples/scripts/create-weblogic-domain/domain-home-on-pv/create-domain-inputs.yaml";
-    if (domainHomeSourceType.equals("FromModel")) {
-      sampleDomainInputsFile =
-          "/samples/model-in-image/create-domain-inputs.yaml";
-
-    } else if (domainMap.containsKey("domainHomeImageBase")) {
+    if (domainMap.containsKey("domainHomeImageBase")) {
       sampleDomainInputsFile =
           "/samples/scripts/create-weblogic-domain/domain-home-in-image/create-domain-inputs.yaml";
     } else if (domainMap.containsKey("rcuDatabaseURL")) {
@@ -1954,30 +1930,11 @@ public class Domain {
     // remove null values if any attributes
     domainMap.values().removeIf(Objects::isNull);
 
-    checkModelInImageAttributes();
-
     // create config map and secret for custom sit config
     createConfigMapAndSecretForSitConfig();
     
     if (!domainMap.containsKey("domainHomeImageBase")) {
       createDockerRegistrySecret();
-    }
-  }
-
-  private void checkModelInImageAttributes() {
-    //model in image attributes
-    if (domainHomeSourceType.equals("FromModel")) {
-      if (!domainMap.containsKey("wdtModelFile")) {
-        throw new RuntimeException("wdtModelFile is required for Model-In-Image");
-      } else {
-        domainMap.put("wdtModelFile",
-            resultsDir + "/samples/model-in-image/" + domainMap.get("wdtModelFile"));
-      }
-
-      if (domainMap.containsKey("wdtModelPropertiesFile")) {
-        domainMap.put("wdtModelPropertiesFile",
-            resultsDir + "/samples/model-in-image/" + domainMap.get("wdtModelPropertiesFile"));
-      }
     }
   }
 
@@ -2231,15 +2188,7 @@ public class Domain {
     createDomainScriptCmd.append(BaseTest.WDT_VERSION).append(" && ")
         .append(resultsDir);
     // call different create-domain.sh based on the domain type
-    if (domainHomeSourceType.equals("FromModel")) {
-      createDomainScriptCmd
-          .append(
-              "/samples/model-in-image/create-domain.sh -u ")
-          .append(BaseTest.getUsername())
-          .append(" -p ")
-          .append(BaseTest.getPassword())
-          .append(" -i ");
-    } else if (domainMap.containsKey("domainHomeImageBase")) {
+    if (domainMap.containsKey("domainHomeImageBase")) {
       createDomainScriptCmd
           .append(
               "/samples/scripts/create-weblogic-domain/domain-home-in-image/create-domain.sh -u ")
@@ -2592,27 +2541,6 @@ public class Domain {
     // Run the script to build WAR, EAR or JAR file and deploy the App in the admin pod
     callShellScriptToBuildDeployAppInPod(
         appName, scriptName, username, password, infoDirName, archiveExt);
-  }
-
-  /**
-   * create config map with given keys for map name and file.
-   * @param cmKeyName Config map key name
-   * @param cmFileKeyName Config map file key name
-   * @throws Exception on failure
-   */
-  public void createMiiConfigMap(String cmKeyName, String cmFileKeyName) throws Exception {
-    if (domainHomeSourceType.equals("FromModel")) {
-      if (domainMap.containsKey(cmKeyName)) {
-        if (!domainMap.containsKey(cmFileKeyName)) {
-          throw new RuntimeException("FAILED: Missing " + cmFileKeyName + " when "
-              + cmKeyName + " is configured");
-        }
-        TestUtils.createConfigMap(domainMap.get(cmKeyName).toString(),
-            resultsDir + "/samples/model-in-image/"
-                  + domainMap.get(cmFileKeyName), domainNS,
-            " weblogic.domainUID=" + domainUid);
-      }
-    }
   }
 
   /**
