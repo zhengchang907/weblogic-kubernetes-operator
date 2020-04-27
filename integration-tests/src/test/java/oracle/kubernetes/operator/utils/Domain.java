@@ -1652,7 +1652,7 @@ public class Domain {
 
   private void callWebAppAndWaitTillReady(String curlCmd) throws Exception {
     for (int i = 0; i < maxIterations; i++) {
-      ExecResult result = TestUtils.exec(curlCmd, true);
+      ExecResult result = ExecCommand.exec(curlCmd);
       String responseCode = result.stdout().trim();
       if (result.exitValue() != 0 || !responseCode.equals("200")) {
         LoggerHelper.getLocal().log(Level.INFO,
@@ -1896,6 +1896,9 @@ public class Domain {
     if (!domainMap.containsKey("domainHomeImageBase")) {
       createDockerRegistrySecret();
     }
+    System.out.println("Domain.initialize: Printing the doaminMap");
+    domainMap.forEach((k,v) -> System.out.println("Key = "
+                + k + ", Value = " + v));
   }
 
   private void checkModelInImageAttributes() {
