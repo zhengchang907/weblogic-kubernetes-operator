@@ -7,12 +7,12 @@
     <parent>
         <groupId>oracle.kubernetes</groupId>
         <artifactId>operator-parent</artifactId>
-        <version>2.5.0</version>
+        <version>2.6.0</version>
     </parent>
 
     <artifactId>operator-integration-tests</artifactId>
 
-    <description>Oracle Weblogic Server Kubernetes Operator</description>
+    <description>Oracle WebLogic Server Kubernetes Operator</description>
     <name>operator-integration-tests</name>
     <packaging>jar</packaging>
 
@@ -103,10 +103,6 @@
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
         </dependency>
         <!-- JSON processing: jackson -->
         <dependency>

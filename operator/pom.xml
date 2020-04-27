@@ -7,12 +7,12 @@
   <parent>
     <groupId>oracle.kubernetes</groupId>
     <artifactId>operator-parent</artifactId>
-    <version>2.5.0</version>
+    <version>2.6.0</version>
   </parent>
 
   <artifactId>weblogic-kubernetes-operator</artifactId>
 
-  <description>Oracle Weblogic Server Kubernetes Operator</description>
+  <description>Oracle WebLogic Server Kubernetes Operator</description>
   <name>operator-runtime</name>
   <packaging>jar</packaging>
 
@@ -26,6 +26,7 @@
   </licenses>
 
   <build>
+    <finalName>weblogic-kubernetes-operator</finalName>
     <plugins>
       <plugin>
         <groupId>pl.project13.maven</groupId>
@@ -248,6 +249,7 @@
     <dependency>
       <groupId>com.kjetland</groupId>
       <artifactId>mbknor-jackson-jsonschema_2.12</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <!-- HTTP client: jersey-client -->
@@ -327,10 +329,6 @@
     <dependency>
       <groupId>javax</groupId>
       <artifactId>javaee-web-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
