@@ -70,6 +70,7 @@ for I in 1 2; do
   grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployGAR.out
   cres=$?
   if [ $cres == 0 ]; then
+     echo "Deploy succeeded"
      break
   fi
   rm -rf ${APP_DIR_INPOD}/deployGAR.out
@@ -77,6 +78,7 @@ done
 
 #grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployGAR.out
 #cres=$?
+echo "CoherenceAppGAR deploy: cres = ${cres}"
 [[ $cres != 0 ]] && echo "[FAIL] Unable to deploy  gar app ..." exit -1
 [[ $cres == 0 ]] && echo "[SUCCESS] gar app is deployed  ..."
 
@@ -89,6 +91,7 @@ for I in 1 2; do
   grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployGAR.out
   cres=$?
   if [ $cres == 0 ]; then
+     echo "Deploy succeeded"
      break
   fi
   rm -rf ${APP_DIR_INPOD}/deployGAR.out
@@ -98,6 +101,7 @@ done
 
 #grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployear.out
 #cres=$?
+echo "CoherenceApp deploy: cres = ${cres}"
 [[ $cres != 0 ]] && echo "[FAIL] Unable to deploy ear  ..." exit -1
 [[ $cres == 0 ]] && echo "[SUCCESS] ear file is deployed  ..."
 

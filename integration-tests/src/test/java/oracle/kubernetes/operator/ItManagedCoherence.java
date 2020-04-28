@@ -345,8 +345,9 @@ public class ItManagedCoherence extends BaseTest {
       result = ExecCommand.exec(curlCmd.toString());
       LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: exec result - " + result.stdout());
     } catch (Exception e) {
-      LoggerHelper.getLocal.log(Level.INFO, "addDataToCache: e.getMessage());
-      LoggerHelper.getLocal.log(Level.INFO, "addDataToCache: e.printStackTrace());
+      LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: " + e.getMessage());
+      //LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: " + e.printStackTrace());
+      e.printStackTrace();
       throw e;
     }
     return result;
