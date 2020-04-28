@@ -341,7 +341,7 @@ public class ItManagedCoherence extends BaseTest {
 
     LoggerHelper.getLocal().log(Level.INFO, "curlCmd is " + curlCmd.toString());
     //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
-    ExecResult result = callApp(curlCmd.toString());
+    ExecResult result = ExecCommand.exec(curlCmd.toString());
 
     return result;
   }
@@ -364,7 +364,7 @@ public class ItManagedCoherence extends BaseTest {
         .append("/")
         .append(appToDeploy);
     //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
-    ExecResult result = callApp(curlCmd.toString());
+    ExecResult result = ExecCommand.exec(curlCmd.toString());
     return result;
   }
 
@@ -386,7 +386,7 @@ public class ItManagedCoherence extends BaseTest {
         .append("/")
         .append(appToDeploy);
     //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
-    ExecResult result = callApp(curlCmd.toString());
+    ExecResult result = ExecCommand.exec(curlCmd.toString());
     return result;
   }
 
@@ -408,15 +408,17 @@ public class ItManagedCoherence extends BaseTest {
         .append("/")
         .append(appToDeploy);
     //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
-    ExecResult result = callApp(curlCmd.toString());
+    ExecResult result = ExecCommand.exec(curlCmd.toString());
     return result;
   }
 
+  /*
   private ExecResult callApp(String curlCmd) throws Exception {
     ExecResult result = null;
 
     for (int i = 0; i < maxIterations; i++) {
       result = TestUtils.exec(curlCmd, true);
+      result = ExecCommand.exec(curlCmd);
       String responseCode = result.stdout().trim();
       if (result.exitValue() != 0) {
         LoggerHelper.getLocal().log(Level.INFO,
@@ -443,5 +445,5 @@ public class ItManagedCoherence extends BaseTest {
     }
     return result;
   }
-
+  */
 }
