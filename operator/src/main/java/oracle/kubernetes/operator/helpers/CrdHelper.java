@@ -39,6 +39,7 @@ import io.kubernetes.client.openapi.models.V1beta1JSONSchemaProps;
 import io.kubernetes.client.util.Yaml;
 import oracle.kubernetes.json.SchemaGenerator;
 import oracle.kubernetes.operator.KubernetesConstants;
+import oracle.kubernetes.operator.Main;
 import oracle.kubernetes.operator.calls.CallResponse;
 import oracle.kubernetes.operator.logging.LoggingFacade;
 import oracle.kubernetes.operator.logging.LoggingFactory;
@@ -238,7 +239,8 @@ public class CrdHelper {
 
     static V1beta1CustomResourceSubresources createBetaSubresources() {
       return new V1beta1CustomResourceSubresources()
-          .status(new HashMap<String, String>()) // this just needs an empty object to enable status subresource
+          // for 2.6.0 we will not enable the status subresource for the beta version of CRD
+          // the 3.0.0 operator will enable this subresource so 2.6.0 will still check the actual CRD
           .scale(
               new V1beta1CustomResourceSubresourceScale()
                   .specReplicasPath(".spec.replicas")
@@ -249,6 +251,7 @@ public class CrdHelper {
       Map<String, String> schemas = schemaReader.loadFilesFromClasspath();
       List<V1CustomResourceDefinitionVersion> versions = schemas.entrySet().stream()
           .sorted(Comparator.comparing(Map.Entry::getKey))
+          .filter(entry -> !KubernetesConstants.DOMAIN_VERSION.equals(getVersionFromCrdSchemaFileName(entry.getKey())))
           .map(entry -> new V1CustomResourceDefinitionVersion()
               .name(getVersionFromCrdSchemaFileName(entry.getKey()))
               .schema(getValidationFromCrdSchemaFile(entry.getValue()))
@@ -272,6 +275,7 @@ public class CrdHelper {
       Map<String, String> schemas = schemaReader.loadFilesFromClasspath();
       List<V1beta1CustomResourceDefinitionVersion> versions = schemas.entrySet().stream()
           .sorted(Comparator.comparing(Map.Entry::getKey))
+          .filter(entry -> !KubernetesConstants.DOMAIN_VERSION.equals(getVersionFromCrdSchemaFileName(entry.getKey())))
           .map(entry -> new V1beta1CustomResourceDefinitionVersion()
               .name(getVersionFromCrdSchemaFileName(entry.getKey()))
               .served(true)
@@ -517,6 +521,7 @@ public class CrdHelper {
           Packet packet, CallResponse<V1beta1CustomResourceDefinition> callResponse) {
         V1beta1CustomResourceDefinition existingCrd = callResponse.getResult();
         if (version.isCrdV1Supported()) {
+          Main.useDomainStatusEndpoint.set(true);
           if (existingCrd == null) {
             return doNext(createCrd(getNext()), packet);
           } else {
@@ -528,10 +533,18 @@ public class CrdHelper {
           } else if (isOutdatedBetaCrd(existingCrd)) {
             return doNext(updateBetaCrd(getNext(), existingCrd), packet);
           } else if (!existingBetaCrdContainsVersion(existingCrd)) {
+            checkForStatusSubresource(existingCrd);
             return doNext(updateExistingBetaCrd(getNext(), existingCrd), packet);
           }
+          checkForStatusSubresource(existingCrd);
         }
         return doNext(packet);
+      }
+
+      private void checkForStatusSubresource(V1beta1CustomResourceDefinition existingCrd) {
+        if (existingCrd.getSpec().getSubresources().getStatus() != null) {
+          Main.useDomainStatusEndpoint.set(true);
+        }
       }
 
       @Override

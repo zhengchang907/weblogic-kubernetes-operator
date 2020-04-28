@@ -181,19 +181,32 @@ public class DomainStatusUpdater {
 
     private Step createDomainStatusReplaceStep(DomainStatusUpdaterContext context, DomainStatus newStatus) {
       LOGGER.fine(MessageKeys.DOMAIN_STATUS, context.getDomainUid(), newStatus);
+
+      boolean useDomainStatusEndpoint = Main.useDomainStatusEndpoint.get();
+
       Domain oldDomain = context.getDomain();
       Domain newDomain = new Domain()
           .withKind(KubernetesConstants.DOMAIN)
           .withApiVersion(oldDomain.getApiVersion())
           .withMetadata(oldDomain.getMetadata())
-          .withSpec(null)
+          .withSpec(useDomainStatusEndpoint ? null : oldDomain.getSpec())
           .withStatus(newStatus);
 
-      return new CallBuilder().replaceDomainStatusAsync(
-            context.getDomainName(),
-            context.getNamespace(),
-            newDomain,
-            createResponseStep(context, getNext()));
+      if (useDomainStatusEndpoint) {
+        return new CallBuilder()
+            .replaceDomainStatusAsync(
+                context.getDomainName(),
+                context.getNamespace(),
+                newDomain,
+                createResponseStep(context, getNext()));
+      } else {
+        return new CallBuilder()
+            .replaceDomainAsync(
+                context.getDomainName(),
+                context.getNamespace(),
+                newDomain,
+                createResponseStep(context, getNext()));
+      }
     }
 
     private ResponseStep<Domain> createResponseStep(DomainStatusUpdaterContext context, Step next) {
@@ -214,6 +227,10 @@ public class DomainStatusUpdater {
 
     @Override
     public NextAction onSuccess(Packet packet, CallResponse<Domain> callResponse) {
+
+      // HERE: Need to check if 3.0.0 updated CRD to use status endpoint while I was running
+      // What will happen?
+
       packet.getSpi(DomainPresenceInfo.class).setDomain(callResponse.getResult());
       return doNext(packet);
     }
