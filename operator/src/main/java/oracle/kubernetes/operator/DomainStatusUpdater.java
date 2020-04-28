@@ -198,38 +198,55 @@ public class DomainStatusUpdater {
                 context.getDomainName(),
                 context.getNamespace(),
                 newDomain,
-                createResponseStep(context, getNext()));
+                createResponseStep(context, newStatus, useDomainStatusEndpoint, getNext()));
       } else {
         return new CallBuilder()
             .replaceDomainAsync(
                 context.getDomainName(),
                 context.getNamespace(),
                 newDomain,
-                createResponseStep(context, getNext()));
+                createResponseStep(context, newStatus, useDomainStatusEndpoint, getNext()));
       }
     }
 
-    private ResponseStep<Domain> createResponseStep(DomainStatusUpdaterContext context, Step next) {
-      return new StatusReplaceResponseStep(this, context, next);
+    private ResponseStep<Domain> createResponseStep(DomainStatusUpdaterContext context,
+                                                    DomainStatus newStatus, boolean useDomainStatusEndpoint,
+                                                    Step next) {
+      return new StatusReplaceResponseStep(this, context, newStatus, useDomainStatusEndpoint, next);
     }
   }
 
   static class StatusReplaceResponseStep extends DefaultResponseStep<Domain> {
     private final DomainStatusUpdaterStep updaterStep;
     private final DomainStatusUpdaterContext context;
+    private final DomainStatus newStatus;
+    private final boolean useDomainStatusEndpoint;
 
     public StatusReplaceResponseStep(DomainStatusUpdaterStep updaterStep,
-                                     DomainStatusUpdaterContext context, Step nextStep) {
+                                     DomainStatusUpdaterContext context,
+                                     DomainStatus newStatus,
+                                     boolean useDomainStatusEndpoint,
+                                     Step nextStep) {
       super(nextStep);
       this.updaterStep = updaterStep;
       this.context = context;
+      this.newStatus = newStatus;
+      this.useDomainStatusEndpoint = useDomainStatusEndpoint;
     }
 
     @Override
     public NextAction onSuccess(Packet packet, CallResponse<Domain> callResponse) {
+      // If the 3.0.0 operator updated the CRD to use status endpoint while this operator is running
+      // then these domain replace calls will succeed, but the proposed domain status will have been
+      // ignored. Check if the status on the returned domain is expected
+      if (!useDomainStatusEndpoint && !newStatus.equals(callResponse.getResult().getStatus())) {
+        // TEST
+        System.out.println("**** **** ****: Domain status update ignored; switching to status endpoint");
 
-      // HERE: Need to check if 3.0.0 updated CRD to use status endpoint while I was running
-      // What will happen?
+        // FIXME: would be better to recheck CRD
+        Main.useDomainStatusEndpoint.set(true);
+        return doNext(createRetry(context, getNext()), packet);
+      }
 
       packet.getSpi(DomainPresenceInfo.class).setDomain(callResponse.getResult());
       return doNext(packet);
