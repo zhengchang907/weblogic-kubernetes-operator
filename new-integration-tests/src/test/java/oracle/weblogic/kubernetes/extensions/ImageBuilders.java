@@ -52,7 +52,8 @@ public class ImageBuilders implements BeforeAllCallback, ExtensionContext.Store.
 
         // push the image to OCIR to make the test work in multi node cluster
         if (!REPO_USERNAME.equals(REPO_DUMMY_VALUE)) {
-          assertTrue(Operator.buildImage(operatorImage));
+          //assertTrue(Operator.buildImage(operatorImage));
+          assertTrue(false, "testing buildImage failure");
 
           logger.info("docker login");
           assertTrue(dockerLogin(REPO_REGISTRY, REPO_USERNAME, REPO_PASSWORD), "docker login failed");
