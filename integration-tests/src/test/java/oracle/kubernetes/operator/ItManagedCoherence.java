@@ -340,16 +340,9 @@ public class ItManagedCoherence extends BaseTest {
         .append(appToDeploy);
 
     LoggerHelper.getLocal().log(Level.INFO, "curlCmd is " + curlCmd.toString());
-    ExecResult result = null;
-    try {
-      result = ExecCommand.exec(curlCmd.toString());
-      LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: exec result - " + result.stdout());
-    } catch (Exception e) {
-      LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: " + e.getMessage());
-      //LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: " + e.printStackTrace());
-      e.printStackTrace();
-      throw e;
-    }
+    ExecResult result = ExecCommand.exec(curlCmd.toString());
+    LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: exec result.stddout- " + result.stdout());
+    LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: exec result.exitValue - " + result.exitValue());
     return result;
   }
 
