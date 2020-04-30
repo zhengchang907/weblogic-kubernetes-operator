@@ -310,7 +310,7 @@ public class ItManagedCoherence extends BaseTest {
 
     LoggerHelper.getLocal().log(Level.INFO, "Add initial data to cache");
 
-    StringBuffer curlCmd = new StringBuffer("curl --silent ");
+    StringBuffer curlCmd = new StringBuffer("curl ");
     curlCmd
         .append("-d 'action=add&first=")
         .append(firstName)
@@ -338,7 +338,7 @@ public class ItManagedCoherence extends BaseTest {
   private ExecResult getCacheSize() throws Exception {
     LoggerHelper.getLocal().log(Level.INFO, "get the number of records in cache");
 
-    StringBuffer curlCmd = new StringBuffer("curl --silent ");
+    StringBuffer curlCmd = new StringBuffer("curl ");
     curlCmd
         .append("-d 'action=size' ")
         .append("-H 'host: ")
@@ -359,7 +359,7 @@ public class ItManagedCoherence extends BaseTest {
   private ExecResult getCacheContents() throws Exception {
     LoggerHelper.getLocal().log(Level.INFO, "get the records from cache");
 
-    StringBuffer curlCmd = new StringBuffer("curl --silent ");
+    StringBuffer curlCmd = new StringBuffer("curl ");
     curlCmd
         .append("-d 'action=get' ")
         .append("-H 'host: ")
@@ -380,7 +380,7 @@ public class ItManagedCoherence extends BaseTest {
   private ExecResult clearCache() throws Exception {
     LoggerHelper.getLocal().log(Level.INFO, "clear the cache");
 
-    StringBuffer curlCmd = new StringBuffer("curl --silent ");
+    StringBuffer curlCmd = new StringBuffer("curl ");
     curlCmd
         .append("-d 'action=clear' ")
         .append("-H 'host: ")

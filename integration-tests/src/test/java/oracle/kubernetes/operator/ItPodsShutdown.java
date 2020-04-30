@@ -156,7 +156,7 @@ public class ItPodsShutdown extends BaseTest {
     String nodePortHost = domain.getHostNameForCurl();
     int nodePort = domain.getLoadBalancerWebPort();
 
-    StringBuffer webServiceUrl = new StringBuffer("curl --silent --noproxy '*' ");
+    StringBuffer webServiceUrl = new StringBuffer("curl --noproxy '*' ");
     webServiceUrl
         .append(" -H 'host: ")
         .append(domain.getDomainUid())

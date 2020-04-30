@@ -159,7 +159,7 @@ public class Domain {
     verifyServicesCreated(maxIterations);
     verifyServersReady(maxIterations);
     if (createLoadBalancer) {
-      String cmd = "curl --silent --noproxy '*' -H 'host: " + domainUid
+      String cmd = "curl --noproxy '*' -H 'host: " + domainUid
           + ".org' http://" + getHostNameForCurl() + ":" + getLoadBalancerWebPort()
           + "/weblogic/ready --write-out %{http_code} -o /dev/null";
       callWebAppAndWaitTillReady(cmd);
@@ -167,7 +167,7 @@ public class Domain {
 
     // using nodePort for now to access console, will be changed to t3channelport
     if (exposeAdminNodePort) {
-      String cmd = "curl --silent --noproxy " + getHostNameForCurl()
+      String cmd = "curl --noproxy " + getHostNameForCurl()
           + " http://" + getHostNameForCurl() + ":" + getNodePort()
           + "/console/login/LoginForm.jsp --user "
           + BaseTest.getUsername() + ":" + BaseTest.getPassword()
@@ -438,7 +438,7 @@ public class Domain {
           "nodePortHost " + nodePortHost + " nodePort " + nodePort);
 
       StringBuffer cmd = new StringBuffer();
-      cmd.append("curl --silent --show-error --noproxy ")
+      cmd.append("curl --show-error --noproxy ")
           .append(nodePortHost)
           .append(" http://")
           .append(nodePortHost)
@@ -546,7 +546,7 @@ public class Domain {
   public void deployWebAppViaRest(
       String webappName, String webappLocation, String username, String password) throws Exception {
     StringBuffer cmd = new StringBuffer();
-    cmd.append("curl --noproxy '*' --silent  --user ")
+    cmd.append("curl --noproxy '*' --user ")
         .append(username)
         .append(":")
         .append(password)
@@ -580,7 +580,7 @@ public class Domain {
   public void undeployWebAppViaRest(
       String webappName, String webappLocation, String username, String password) throws Exception {
     StringBuffer cmd = new StringBuffer();
-    cmd.append("curl --noproxy '*' --silent  --user ")
+    cmd.append("curl --noproxy '*' --user ")
         .append(username)
         .append(":")
         .append(password)
@@ -794,7 +794,7 @@ public class Domain {
       }
       testAppUrl.append(webappName).append("/");
       // curl cmd to call webapp
-      StringBuffer curlCmd = new StringBuffer("curl --silent --noproxy '*' ");
+      StringBuffer curlCmd = new StringBuffer("curl --noproxy '*' ");
       curlCmd
           .append(" -H 'host: ")
           .append(domainUid)
@@ -1062,7 +1062,7 @@ public class Domain {
         Level.INFO, "nodePortHost " + nodePortHost + " nodePort " + nodePort);
 
     StringBuffer cmd = new StringBuffer();
-    cmd.append("curl --silent --show-error --noproxy ")
+    cmd.append("curl --show-error --noproxy ")
         .append(nodePortHost)
         .append(" http://")
         .append(nodePortHost)

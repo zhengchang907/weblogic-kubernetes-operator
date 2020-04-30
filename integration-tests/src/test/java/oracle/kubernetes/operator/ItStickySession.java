@@ -319,7 +319,7 @@ public class ItStickySession extends BaseTest {
     String nodePortHost = domain.getHostNameForCurl();
     int nodePort = domain.getLoadBalancerWebPort();
 
-    StringBuffer webServiceUrl = new StringBuffer("curl --silent ");
+    StringBuffer webServiceUrl = new StringBuffer("curl ");
     webServiceUrl
         .append(" -H 'host: ")
         .append(domain.getDomainUid())
