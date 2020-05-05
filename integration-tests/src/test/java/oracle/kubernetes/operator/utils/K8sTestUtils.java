@@ -32,6 +32,7 @@ import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeClaimList;
 import io.kubernetes.client.openapi.models.V1PersistentVolumeList;
 import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodCondition;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.openapi.models.V1ReplicaSetList;
 import io.kubernetes.client.openapi.models.V1RoleBindingList;
@@ -554,7 +555,21 @@ public class K8sTestUtils {
    * @return boolean true if the pod is in Terminating status
    */
   public boolean isPodRunning(String namespace, String labelSelectors, String podName) {
-    return !isPodTerminating(namespace, labelSelectors, podName);
+    boolean status = false;
+    V1Pod pod = getPod(namespace, labelSelectors, podName);
+    if (pod != null) {
+      // get the podCondition with the 'Ready' type field
+      V1PodCondition v1PodReadyCondition = pod.getStatus().getConditions().stream()
+          .filter(v1PodCondition -> "Ready".equals(v1PodCondition.getType()))
+          .findAny()
+          .orElse(null);
+      if (v1PodReadyCondition != null) {
+        status = v1PodReadyCondition.getStatus().equalsIgnoreCase("true");
+      }
+    } else {
+      LoggerHelper.getLocal().log(Level.INFO, "Pod doesn't exist");
+    }
+    return status;
   }
 
 }
