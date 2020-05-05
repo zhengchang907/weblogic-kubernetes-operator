@@ -63,47 +63,56 @@ cp ${APP_DIR_INPOD}/builddir/${APP_NAME}.ear ${APP_DIR_INPOD}/.
 
 echo "Deploy ${APP_NAME} gar using curl:"
 
+cres=0
 CMD="curl --noproxy '*' -v --user ${USER}:${PASSWORD} -H X-Requested-By:MyClient -H Accept:application/json -H Content-Type:application/json -d \"{name: '${APP_NAME}GAR', sourcePath='${ARCHIVE_FILE_GAR}', targets: [ { identity: [ 'clusters', '${GAR_DEPLOY_TARGET}' ] } ] }\" -X POST http://${HOST}:${PORT}/management/weblogic/latest/edit/appDeployments -o ${APP_DIR_INPOD}/deployGAR.out"
 echo "Executing ${CMD}"
 for I in 1 2; do
   eval "${CMD}"
+  echo "Printing deployGar.out"
+  cat ${APP_DIR_INPOD}/deployGAR.out
   grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployGAR.out
   cres=$?
+  echo "CoherenceAppGAR deploy: cres = ${cres}"
   if [ $cres == 0 ]; then
      echo "Deploy succeeded"
      break
   fi
-  rm -rf ${APP_DIR_INPOD}/deployGAR.out
+  #rm -rf ${APP_DIR_INPOD}/deployGAR.out
+  #echo "Deploy failed
 done 
 
 #grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployGAR.out
 #cres=$?
-echo "CoherenceAppGAR deploy: cres = ${cres}"
+echo "CoherenceAppGAR(1) deploy: cres = ${cres}"
 [[ $cres != 0 ]] && echo "[FAIL] Unable to deploy  gar app ..." exit -1
 [[ $cres == 0 ]] && echo "[SUCCESS] gar app is deployed  ..."
 
 echo "Deploy ${APP_NAME} ear using curl:"
 
+cres1=0
 CMD="curl --noproxy '*' -v --user ${USER}:${PASSWORD} -H X-Requested-By:MyClient -H Accept:application/json -H Content-Type:application/json -d \"{name: '${APP_NAME}', sourcePath='${ARCHIVE_FILE_EAR}', targets: [ { identity: [ 'clusters', '${EAR_DEPLOY_TARGET}' ] } ] }\" -X POST http://${HOST}:${PORT}/management/weblogic/latest/edit/appDeployments -o ${APP_DIR_INPOD}/deployear.out"
 echo "Executing ${CMD}"
 for I in 1 2; do
   eval "${CMD}"
-  grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployGAR.out
-  cres=$?
-  if [ $cres == 0 ]; then
+  echo "Printing deployear.out"
+  cat ${APP_DIR_INPOD}/deployear.out
+  grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployear.out
+  cres1=$?
+  echo "CoherenceApp deploy: cres1 = ${cres1}"
+  if [ $cres1 == 0 ]; then
      echo "Deploy succeeded"
      break
   fi
-  rm -rf ${APP_DIR_INPOD}/deployGAR.out
+  #rm -rf ${APP_DIR_INPOD}/deployeaar.out
 done 
 
 #eval "${CMD}"
 
 #grep -q "\"progress\": \"success\"" ${APP_DIR_INPOD}/deployear.out
 #cres=$?
-echo "CoherenceApp deploy: cres = ${cres}"
-[[ $cres != 0 ]] && echo "[FAIL] Unable to deploy ear  ..." exit -1
-[[ $cres == 0 ]] && echo "[SUCCESS] ear file is deployed  ..."
+echo "CoherenceApp(1) deploy: cres1 = ${cres1}"
+[[ $cres1 != 0 ]] && echo "[FAIL] Unable to deploy ear  ..." exit -1
+[[ $cres1 == 0 ]] && echo "[SUCCESS] ear file is deployed  ..."
 
 rm -rf ${APP_DIR_INPOD}/builddir
 
