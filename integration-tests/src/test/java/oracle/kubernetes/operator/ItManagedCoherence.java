@@ -340,7 +340,8 @@ public class ItManagedCoherence extends BaseTest {
         .append(appToDeploy);
 
     LoggerHelper.getLocal().log(Level.INFO, "curlCmd is " + curlCmd.toString());
-    ExecResult result = ExecCommand.exec(curlCmd.toString());
+    //ExecResult result = ExecCommand.exec(curlCmd.toString());
+    ExecResult result = callApp(curlCmd.toString());
     LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: exec result.stddout- " + result.stdout());
     LoggerHelper.getLocal().log(Level.INFO, "addDataToCache: exec result.exitValue - " + result.exitValue());
     return result;
@@ -364,7 +365,8 @@ public class ItManagedCoherence extends BaseTest {
         .append("/")
         .append(appToDeploy);
     //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
-    ExecResult result = ExecCommand.exec(curlCmd.toString());
+    //ExecResult result = ExecCommand.exec(curlCmd.toString());
+    ExecResult result = callApp(curlCmd.toString());
     return result;
   }
 
@@ -386,7 +388,8 @@ public class ItManagedCoherence extends BaseTest {
         .append("/")
         .append(appToDeploy);
     //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
-    ExecResult result = ExecCommand.exec(curlCmd.toString());
+    //ExecResult result = ExecCommand.exec(curlCmd.toString());
+    ExecResult result = callApp(curlCmd.toString());
     return result;
   }
 
@@ -408,16 +411,16 @@ public class ItManagedCoherence extends BaseTest {
         .append("/")
         .append(appToDeploy);
     //ExecResult result = TestUtils.exec(curlCmd.toString(), true);
-    ExecResult result = ExecCommand.exec(curlCmd.toString());
+    //ExecResult result = ExecCommand.exec(curlCmd.toString());
+    ExecResult result = callApp(curlCmd.toString());
     return result;
   }
 
-  /*
   private ExecResult callApp(String curlCmd) throws Exception {
     ExecResult result = null;
 
     for (int i = 0; i < maxIterations; i++) {
-      result = TestUtils.exec(curlCmd, true);
+      //result = TestUtils.exec(curlCmd, true);
       result = ExecCommand.exec(curlCmd);
       String responseCode = result.stdout().trim();
       if (result.exitValue() != 0) {
@@ -445,5 +448,5 @@ public class ItManagedCoherence extends BaseTest {
     }
     return result;
   }
-  */
+  
 }
