@@ -25,11 +25,6 @@ import oracle.kubernetes.operator.utils.ExecResult;
 import oracle.kubernetes.operator.utils.LoggerHelper;
 import oracle.kubernetes.operator.utils.Operator;
 import oracle.kubernetes.operator.utils.TestUtils;
-import org.junit.Rule;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 
 /**
  * Base class which contains common methods to create/shutdown operator and domain. IT tests can
@@ -1065,16 +1060,4 @@ public class BaseTest {
     return domainMap;
   }
 
-  @Rule
-  public final TestRule watchman = new TestWatcher() {
-    @Override
-    public Statement apply(Statement base, Description description) {
-      return super.apply(base, description);
-    }
-
-    @Override
-    protected void failed(Throwable e, Description description) {
-      
-    }
-  };
 }
