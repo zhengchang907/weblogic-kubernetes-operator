@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * And to test WLS Session Migration feature
  */
 @TestMethodOrder(Alphanumeric.class)
+@Disabled
 public class ItSessionMigration extends BaseTest {
   private static final String testAppName = "httpsessionreptestapp";
   private static final String scriptName = "buildDeployAppInPod.sh";

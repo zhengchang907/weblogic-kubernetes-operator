@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -632,6 +633,7 @@ public class ItUsabilityOperatorHelmChart extends BaseTest {
    * Make sure domain1 is still accessible by checking liveness probe for server(s)
    * @throws Exception when domain1 is not accessible in the absence of operator
    */
+  @Disabled
   @Test
   public void testDeleteOperatorButNotDomain() throws Exception {
     Assumptions.assumeTrue(FULLTEST);

@@ -17,12 +17,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 @TestMethodOrder(Alphanumeric.class)
-
+@Disabled
 public class ItJrfPvWlst extends BaseTest {
   private static String rcuSchemaPrefix = "jrfdomain";
   private static Operator operator1;

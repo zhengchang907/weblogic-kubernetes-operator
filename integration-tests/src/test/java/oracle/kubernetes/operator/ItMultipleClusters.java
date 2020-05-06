@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -168,6 +169,7 @@ public class ItMultipleClusters extends BaseTest {
    *
    * @throws Exception exception
    */
+  @Disabled
   @Test
   public void testCreateDomainTwoMixedCluster() throws Exception {
     Assumptions.assumeTrue(FULLTEST);
@@ -214,6 +216,7 @@ public class ItMultipleClusters extends BaseTest {
    *
    * @throws Exception exception
    */
+  @Disabled
   @Test
   public void testCreateDomainTwoClusterWdtInImage() throws Exception {
     Assumptions.assumeTrue(FULLTEST);

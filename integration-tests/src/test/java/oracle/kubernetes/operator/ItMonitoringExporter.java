@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled
 public class ItMonitoringExporter extends BaseTest {
 
   private static int number = 5;

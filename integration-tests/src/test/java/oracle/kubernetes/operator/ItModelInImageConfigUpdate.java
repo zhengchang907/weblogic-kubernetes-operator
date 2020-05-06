@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -176,6 +177,7 @@ public class ItModelInImageConfigUpdate extends MiiBaseTest {
    * and update the domain crd to change image name to reload the model,
    * generate new config and initiate a rolling restart.
    */
+  @Disabled
   @Test
   public void testMiiConfigUpdateNonJdbcImage() {
     Assumptions.assumeTrue(QUICKTEST);
@@ -340,6 +342,7 @@ public class ItModelInImageConfigUpdate extends MiiBaseTest {
    * and update the domain crd to change image name to reload the model,
    * generate new config and initiate a rolling restart.
    */
+  @Disabled
   @Test
   public void testMiiConfigUpdateJdbcImage() {
     Assumptions.assumeTrue(QUICKTEST);
@@ -436,6 +439,7 @@ public class ItModelInImageConfigUpdate extends MiiBaseTest {
    *
    * @throws Exception when test fails
    */
+  @Disabled
   @Test
   public void testMiiConfigAppDelete() throws Exception {
     Assumptions.assumeTrue(FULLTEST);
