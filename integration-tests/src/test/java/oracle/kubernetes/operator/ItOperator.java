@@ -13,7 +13,6 @@ import oracle.kubernetes.operator.utils.LoggerHelper;
 import oracle.kubernetes.operator.utils.Operator;
 import oracle.kubernetes.operator.utils.Operator.RestCertType;
 import oracle.kubernetes.operator.utils.TestUtils;
-import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
@@ -22,11 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
-
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Simple JUnit test file used for testing Operator.
@@ -130,7 +124,6 @@ public class ItOperator extends BaseTest {
       TestUtils.renewK8sClusterLease(getProjectRoot(), getLeaseId());
       testAdvancedUseCasesForADomain(operator1, domain);
       domain.testWlsLivenessProbe();
-      fail("FAIL THE TEST testDomainOnPvUsingWlst");
       testCompletedSuccessfully = true;
     } finally {
       if (domain != null && (JENKINS || testCompletedSuccessfully)) {
@@ -186,7 +179,6 @@ public class ItOperator extends BaseTest {
       namespaceList.append(" ").append(domainMap.get("namespace"));
       // TODO: Test Apache LB
       // domain.verifyAdminConsoleViaLB();
-      fail("FAIL THE TEST testDomainOnPvUsingWdt");
       testCompletedSuccessfully = true;
     } finally {
       // if (domain != null && (JENKINS || testCompletedSuccessfully)) {
@@ -408,14 +400,5 @@ public class ItOperator extends BaseTest {
     TestUtils.callShellScriptByExecToPod(
         adminPod, domain.getDomainNs(), scriptsLocInPod, "callpyscript.sh", args);
   }
-
-
-  @Rule
-  public final TestRule watchman = new TestWatcher() {
-    @Override
-    protected void failed(Throwable e, Description description) {
-        LoggerHelper.getLocal().log(Level.INFO, namespaceList.toString());
-    }
-  };
 
 }
