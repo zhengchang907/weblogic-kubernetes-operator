@@ -27,6 +27,9 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 import org.junit.jupiter.api.extension.TestWatcher;
 
+import static oracle.kubernetes.operator.BaseTest.getLeaseId;
+import static oracle.kubernetes.operator.BaseTest.getProjectRoot;
+
 /**
  * JUnit5 extension class to intercept test execution at various
  * levels and collect logs in Kubernetes cluster for all artifacts
@@ -255,6 +258,11 @@ public class IntegrationTestWatcher implements
   @Override
   public void afterAll(ExtensionContext context) {
     printHeader(String.format("Ending Test Suite %s", className), "+");
+    try {
+      TestUtils.renewK8sClusterLease(getProjectRoot(), getLeaseId());
+    } catch (Exception ex) {
+      LoggerHelper.getLocal().log(Level.SEVERE, ex.getMessage());
+    }
     LoggerHelper.getLocal().log(Level.INFO, "Starting cleanup after test class");
     CleanupUtil.cleanup(namespaces);
   }
