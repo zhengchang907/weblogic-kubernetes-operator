@@ -269,6 +269,7 @@ public class IntegrationTestWatcher implements
   public void handleAfterAllMethodExecutionException​(ExtensionContext context, Throwable throwable)
       throws Throwable {
     printHeader(String.format("AfterAll failed for %s", className), "!");
+    getNamespaceList(context);
     collectLogs(context, "afterAll");
   }
 
