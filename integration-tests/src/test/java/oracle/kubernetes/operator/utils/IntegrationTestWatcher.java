@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -88,6 +89,10 @@ public class IntegrationTestWatcher implements
   @Override
   public void beforeEach(ExtensionContext context) {
     String[] tempMethodName = context.getRequiredTestMethod().toString().split(" ");
+    LoggerHelper.getLocal().log(Level.INFO, Arrays.toString(tempMethodName));
+    Optional<Method> testMethod = context.getTestMethod();
+    LoggerHelper.getLocal().log(Level.INFO, testMethod.get().getName());
+    LoggerHelper.getLocal().log(Level.INFO, context.getDisplayName());
     methodName = tempMethodName[tempMethodName.length - 1];
     printHeader(String.format("Starting beforeEach for %s", methodName), "-");
   }
