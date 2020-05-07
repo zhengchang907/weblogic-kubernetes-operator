@@ -255,6 +255,8 @@ public class IntegrationTestWatcher implements
   @Override
   public void afterAll(ExtensionContext context) {
     printHeader(String.format("Ending Test Suite %s", className), "+");
+    LoggerHelper.getLocal().log(Level.INFO, "Starting cleanup after test class");
+    CleanupUtil.cleanup(namespaces);
   }
 
 
