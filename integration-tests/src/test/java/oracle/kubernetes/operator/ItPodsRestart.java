@@ -21,7 +21,6 @@ import oracle.kubernetes.operator.utils.K8sTestUtils;
 import oracle.kubernetes.operator.utils.LoggerHelper;
 import oracle.kubernetes.operator.utils.Operator;
 import oracle.kubernetes.operator.utils.TestUtils;
-import org.junit.Rule;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
@@ -30,11 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Simple JUnit test file used for testing Operator.
@@ -230,7 +225,6 @@ public class ItPodsRestart extends BaseTest {
         "About to verifyDomainServerPodRestart for Domain: "
             + domain.getDomainUid()
             + "  includeServerOutInPodLog: true -->  includeServerOutInPodLog: false");
-    fail("FAIL THE TEST testServerPodsRestartByChangingIncludeServerOutInPodLog");
     domain.verifyDomainServerPodRestart(
         "includeServerOutInPodLog: true", "includeServerOutInPodLog: false");
 
@@ -428,7 +422,6 @@ public class ItPodsRestart extends BaseTest {
 
       LoggerHelper.getLocal().log(Level.INFO, "Verifying if the admin server pod is recreated");
       domain.verifyAdminServerRestarted();
-      fail("FAIL THE TEST testAdminServerRestartVersion");
     } finally {
       LoggerHelper.getLocal().log(
           Level.INFO, "Reverting back the domain to old crd\n kubectl apply -f {0}", originalYaml);
@@ -651,14 +644,5 @@ public class ItPodsRestart extends BaseTest {
       }
     }
   }
-
-  @Rule
-  public final TestRule watchman = new TestWatcher() {
-    @Override
-    protected void failed(Throwable e, Description description) {
-        LoggerHelper.getLocal().log(Level.INFO, "In the failed testwatcher method");
-        LoggerHelper.getLocal().log(Level.INFO, namespaceList.toString());
-    }
-  };
 
 }
