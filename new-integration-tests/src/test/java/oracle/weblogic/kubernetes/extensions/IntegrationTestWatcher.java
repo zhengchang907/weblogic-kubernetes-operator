@@ -133,8 +133,7 @@ public class IntegrationTestWatcher implements
    */
   @Override
   public void beforeEach(ExtensionContext context) {
-    String[] tempMethodName = context.getRequiredTestMethod().toString().split(" ");
-    methodName = tempMethodName[tempMethodName.length - 1];
+    methodName = context.getDisplayName();
     printHeader(String.format("Starting beforeEach for %s", methodName), "-");
   }
 
