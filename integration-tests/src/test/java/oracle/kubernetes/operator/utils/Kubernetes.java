@@ -258,6 +258,34 @@ public class Kubernetes {
   // ------------------------  deployments -----------------------------------
 
   /**
+   * Delete a deployment.
+   *
+   * @param namespace namespace in which to delete the deployment
+   * @param name deployment name
+   * @return true if deletion was successful
+   * @throws ApiException when delete fails
+   */
+  public static boolean deleteDeployment(String namespace, String name) throws ApiException {
+    try {
+      AppsV1Api apiInstance = new AppsV1Api(apiClient);
+      apiInstance.deleteNamespacedDeployment(
+          name, // String | deployment object name.
+          namespace, // String | namespace in which the deployment exists.
+          PRETTY, // String | If 'true', then the output is pretty printed.
+          null, // String | When present, indicates that modifications should not be persisted.
+          GRACE_PERIOD, // Integer | The duration in seconds before the object should be deleted.
+          null, // Boolean | Deprecated: use the PropagationPolicy.
+          FOREGROUND, // String | Whether and how garbage collection will be performed.
+          null // V1DeleteOptions.
+      );
+    } catch (ApiException apex) {
+      logger.warning(apex.getResponseBody());
+      throw apex;
+    }
+    return true;
+  }
+
+  /**
    * List deployments in the given namespace.
    *
    * @param namespace namespace in which to list the deployments
@@ -706,6 +734,33 @@ public class Kubernetes {
   // --------------------------- Custom Resource Domain -----------------------------------
 
   /**
+   * Delete the Domain Custom Resource.
+   *
+   * @param domainUid unique domain identifier
+   * @param namespace name of namespace
+   * @throws io.kubernetes.client.openapi.ApiException when delete fails
+   */
+  public static void deleteDomainCustomResource(String domainUid, String namespace)
+      throws ApiException {
+    try {
+      customObjectsApi.deleteNamespacedCustomObject(
+          DOMAIN_GROUP,
+          DOMAIN_VERSION,
+          namespace,
+          DOMAIN_PLURAL,
+          domainUid,
+          GRACE_PERIOD,
+          null,
+          FOREGROUND,
+          null
+      );
+    } catch (ApiException apex) {
+      LoggerHelper.getLocal().log(Level.SEVERE, apex.getResponseBody());
+      throw apex;
+    }
+  }
+
+  /**
    * List Domain Custom Resources for a given namespace.
    *
    * @param namespace name of namespace
@@ -730,6 +785,32 @@ public class Kubernetes {
   }
 
   // --------------------------- config map ---------------------------
+
+  /**
+   * Delete Kubernetes Config Map.
+   *
+   * @param name name of the Config Map
+   * @param namespace name of namespace
+   * @return true if successful, false otherwise
+   */
+  public static boolean deleteConfigMap(String name, String namespace) {
+
+    KubernetesApiResponse<V1ConfigMap> response = configMapClient.delete(namespace, name, deleteOptions);
+
+    if (!response.isSuccess()) {
+      logger.warning("Failed to delete config map '" + name + "' from namespace: "
+          + namespace + " with HTTP status code: " + response.getHttpStatusCode());
+      return false;
+    }
+
+    if (response.getObject() != null) {
+      LoggerHelper.getLocal().log(Level.INFO,
+          "Received after-deletion status of the requested object, will be deleting "
+          + "config map in background!");
+    }
+
+    return true;
+  }
 
   /**
    * List Config Maps in the Kubernetes cluster.
@@ -763,6 +844,33 @@ public class Kubernetes {
   }
 
   // --------------------------- secret ---------------------------
+
+  /**
+   * Delete a Kubernetes Secret.
+   *
+   * @param name name of the Secret
+   * @param namespace name of namespace
+   * @return true if successful, false otherwise
+   */
+  public static boolean deleteSecret(String name, String namespace) {
+
+    KubernetesApiResponse<V1Secret> response = secretClient.delete(namespace, name);
+
+    if (!response.isSuccess()) {
+      logger.warning("Failed to delete secret '" + name + "' from namespace: "
+          + namespace + " with HTTP status code: " + response.getHttpStatusCode());
+      return false;
+    }
+
+    if (response.getObject() != null) {
+      LoggerHelper.getLocal().log(Level.INFO,
+          "Received after-deletion status of the requested object, will be deleting "
+          + "secret in background!");
+    }
+
+    return true;
+  }
+
   /**
    * List secrets in the Kubernetes cluster.
    * @param namespace Namespace in which to query
@@ -779,6 +887,58 @@ public class Kubernetes {
   }
 
   // --------------------------- pv/pvc ---------------------------
+
+  /**
+   * Delete a Kubernetes Persistent Volume.
+   *
+   * @param name name of the Persistent Volume
+   * @return true if successful
+   */
+  public static boolean deletePv(String name) {
+
+    KubernetesApiResponse<V1PersistentVolume> response = pvClient.delete(name, deleteOptions);
+
+    if (!response.isSuccess()) {
+      logger.warning("Failed to delete persistent volume '" + name + "' "
+          + "with HTTP status code: " + response.getHttpStatusCode());
+      return false;
+    }
+
+    if (response.getObject() != null) {
+      LoggerHelper.getLocal().log(Level.INFO,
+          "Received after-deletion status of the requested object, will be deleting "
+          + "persistent volume in background!");
+    }
+
+    return true;
+  }
+
+  /**
+   * Delete a Kubernetes Persistent Volume Claim.
+   *
+   * @param name name of the Persistent Volume Claim
+   * @param namespace name of the namespace
+   * @return true if successful
+   */
+  public static boolean deletePvc(String name, String namespace) {
+
+    KubernetesApiResponse<V1PersistentVolumeClaim> response = pvcClient.delete(namespace, name, deleteOptions);
+
+    if (!response.isSuccess()) {
+      logger.warning(
+          "Failed to delete persistent volume claim '" + name + "' from namespace: "
+          + namespace + " with HTTP status code: " + response.getHttpStatusCode());
+      return false;
+    }
+
+    if (response.getObject() != null) {
+      LoggerHelper.getLocal().log(Level.INFO,
+          "Received after-deletion status of the requested object, will be deleting "
+          + "persistent volume claim in background!");
+    }
+
+    return true;
+  }
 
   /**
    * List all persistent volumes in the Kubernetes cluster.
@@ -839,6 +999,36 @@ public class Kubernetes {
   }
 
   // --------------------------- service account ---------------------------
+
+  /**
+   * Delete a Kubernetes Service Account.
+   *
+   * @param name name of the Service Account
+   * @param namespace name of namespace
+   * @return true if successful, false otherwise
+   */
+  public static boolean deleteServiceAccount(String name, String namespace) {
+
+    KubernetesApiResponse<V1ServiceAccount> response = serviceAccountClient.delete(namespace, name, deleteOptions);
+
+    if (!response.isSuccess()) {
+      logger.warning("Failed to delete Service Account '" + name + "' from namespace: "
+          + namespace + " with HTTP status code: " + response.getHttpStatusCode());
+      return false;
+    }
+
+    if (response.getObject() != null) {
+      LoggerHelper.getLocal().log(Level.INFO,
+          "Received after-deletion status of the requested object, will be deleting "
+          + "service account in background!");
+      V1ServiceAccount serviceAccount = (V1ServiceAccount) response.getObject();
+      LoggerHelper.getLocal().log(Level.INFO,
+          "Deleting Service Account " + serviceAccount.getMetadata().getName() + " in background.");
+    }
+
+    return true;
+  }
+
   /**
    * List all service accounts in the Kubernetes cluster.
    *
@@ -856,7 +1046,33 @@ public class Kubernetes {
     }
   }
   // --------------------------- Services ---------------------------
-  
+
+  /**
+   * Delete a Kubernetes Service.
+   *
+   * @param name name of the Service
+   * @param namespace name of the namespace
+   * @return true if successful
+   */
+  public static boolean deleteService(String name, String namespace) {
+
+    KubernetesApiResponse<V1Service> response = serviceClient.delete(namespace, name, deleteOptions);
+
+    if (!response.isSuccess()) {
+      logger.warning("Failed to delete Service '" + name + "' from namespace: "
+          + namespace + " with HTTP status code: " + response.getHttpStatusCode());
+      return false;
+    }
+
+    if (response.getObject() != null) {
+      LoggerHelper.getLocal().log(Level.INFO,
+          "Received after-deletion status of the requested object, will be deleting "
+          + "service in background!");
+    }
+
+    return true;
+  }
+
   /**
    * List services in a given namespace.
    *
@@ -875,6 +1091,35 @@ public class Kubernetes {
   }
 
   // --------------------------- jobs ---------------------------
+
+  /**
+   * Delete a job.
+   *
+   * @param namespace name of the namespace
+   * @param name name of the job
+   * @return true if delete was successful
+   * @throws ApiException when deletion of job fails
+   */
+  public static boolean deleteJob(String namespace, String name) throws ApiException {
+    try {
+      BatchV1Api apiInstance = new BatchV1Api(apiClient);
+      apiInstance.deleteNamespacedJob(
+          name, // String | name of the job.
+          namespace, // String | name of the namespace.
+          PRETTY, // String | pretty print output.
+          null, // String | When present, indicates that modifications should not be persisted.
+          GRACE_PERIOD, // Integer | The duration in seconds before the object should be deleted.
+          null, // Boolean | Deprecated: use the PropagationPolicy.
+          FOREGROUND, // String | Whether and how garbage collection will be performed.
+          null // V1DeleteOptions.
+      );
+    } catch (ApiException apex) {
+      logger.warning(apex.getResponseBody());
+      throw apex;
+    }
+    return true;
+  }
+
   /**
    * List jobs in the given namespace.
    *
@@ -906,6 +1151,35 @@ public class Kubernetes {
   }
 
   // --------------------------- replica sets ---------------------------
+
+  /**
+   * Delete a replica set.
+   *
+   * @param namespace name of the namespace
+   * @param name name of the replica set
+   * @return true if delete was successful
+   * @throws ApiException if delete fails
+   */
+  public static boolean deleteReplicaSet(String namespace, String name) throws ApiException {
+    try {
+      AppsV1Api apiInstance = new AppsV1Api(apiClient);
+      apiInstance.deleteNamespacedReplicaSet(
+          name, // String | name of the replica set.
+          namespace, // String | name of the namespace.
+          PRETTY, // String | pretty print output.
+          null, // String | When present, indicates that modifications should not be persisted.
+          GRACE_PERIOD, // Integer | The duration in seconds before the object should be deleted.
+          null, // Boolean | Deprecated: use the PropagationPolicy.
+          FOREGROUND, // String | Whether and how garbage collection will be performed.
+          null // V1DeleteOptions.
+      );
+    } catch (ApiException apex) {
+      logger.warning(apex.getResponseBody());
+      throw apex;
+    }
+    return true;
+  }
+
   /**
    * List replica sets in the given namespace.
    *
@@ -962,6 +1236,34 @@ public class Kubernetes {
       throw apex;
     }
     return roleBindings;
+  }
+
+  /**
+   * Delete a rolebinding in the given namespace.
+   *
+   * @param namespace name of the namespace
+   * @param name name of the rolebinding to delete
+   * @return return true if deletion was successful
+   * @throws ApiException when delete rolebinding fails
+   */
+  public static boolean deleteNamespacedRoleBinding(String namespace, String name)
+      throws ApiException {
+    try {
+      rbacAuthApi.deleteNamespacedRoleBinding(
+          name, // String | name of the job.
+          namespace, // String | name of the namespace.
+          PRETTY, // String | pretty print output.
+          null, // String | When present, indicates that modifications should not be persisted.
+          GRACE_PERIOD, // Integer | The duration in seconds before the object should be deleted.
+          null, // Boolean | Deprecated: use the PropagationPolicy.
+          FOREGROUND, // String | Whether and how garbage collection will be performed.
+          null // V1DeleteOptions.
+      );
+    } catch (ApiException apex) {
+      logger.warning(apex.getResponseBody());
+      throw apex;
+    }
+    return true;
   }
 
   /**
@@ -1025,6 +1327,32 @@ public class Kubernetes {
   }
 
 
+  /**
+   * Delete a role in the Kubernetes cluster in the given namespace.
+   *
+   * @param namespace name of the namespace
+   * @param name name of the role to delete
+   * @return true if deletion was successful
+   * @throws ApiException when delete fails
+   */
+  public static boolean deleteNamespacedRole(String namespace, String name) throws ApiException {
+    try {
+      rbacAuthApi.deleteNamespacedRole(
+          name, // String | name of the job.
+          namespace, // String | name of the namespace.
+          PRETTY, // String | pretty print output.
+          null, // String | When present, indicates that modifications should not be persisted.
+          GRACE_PERIOD, // Integer | The duration in seconds before the object should be deleted.
+          null, // Boolean | Deprecated: use the PropagationPolicy.
+          FOREGROUND, // String | Whether and how garbage collection will be performed.
+          null // V1DeleteOptions.
+      );
+    } catch (ApiException apex) {
+      logger.warning(apex.getResponseBody());
+      throw apex;
+    }
+    return true;
+  }
 
   /**
    * List roles in a given namespace.

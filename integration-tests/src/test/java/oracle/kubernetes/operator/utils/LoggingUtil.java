@@ -224,6 +224,13 @@ public class LoggingUtil {
       LoggerHelper.getLocal().log(Level.WARNING, "Listing pods failed, not collecting any data for pod configuration");
     }
 
+    // get ingresses
+    try {
+      writeToFile(Kubernetes.listNamespacedIngresses(namespace), resultDir, namespace + ".list.ingresses.log");
+    } catch (Exception ex) {
+      LoggerHelper.getLocal().log(Level.WARNING, "Listing ingresses failed, not collecting any data for ingresses");
+    }
+
     // get domain/operator pods
     try {
       for (var pod : Kubernetes.listPods(namespace, null).getItems()) {

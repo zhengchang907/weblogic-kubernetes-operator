@@ -198,7 +198,7 @@ class ItMiiDomain implements LoggedTest {
             .helmParams(opHelmParams)
             .image(operatorImage)
             .imagePullSecrets(secretNameMap)
-            .domainNamespaces(Arrays.asList(domainNamespace))
+            .domainNamespaces(Arrays.asList(domainNamespace, domainNamespace1))
             .serviceAccount(serviceAccountName);
 
     // install Operator
