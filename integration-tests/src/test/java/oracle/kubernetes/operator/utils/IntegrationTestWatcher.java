@@ -264,6 +264,7 @@ public class IntegrationTestWatcher implements
       LoggerHelper.getLocal().log(Level.SEVERE, ex.getMessage());
     }
     LoggerHelper.getLocal().log(Level.INFO, "Starting cleanup after test class");
+    getNamespaceList(context);
     CleanupUtil.cleanup(namespaces);
   }
 
