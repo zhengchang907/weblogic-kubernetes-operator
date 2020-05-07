@@ -30,7 +30,6 @@ import org.junit.jupiter.api.MethodOrderer.Alphanumeric;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-
 /**
  * Simple JUnit test file used for testing Operator.
  *
@@ -626,7 +625,7 @@ public class ItPodsRestart extends BaseTest {
                 + maxIterations);
         if (i == (maxIterations - 1)) {
           throw new RuntimeException(
-              "FAILURE: callDockerPull did not return 0 exitValue, got "
+              "FAILURE: callDockerPull did not return 0 exitValue, got " 
                   + "\nstderr = "
                   + result.stderr()
                   + "\nstdout = "

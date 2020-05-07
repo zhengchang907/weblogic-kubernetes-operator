@@ -1062,5 +1062,4 @@ public class BaseTest {
     }
     return domainMap;
   }
-
 }

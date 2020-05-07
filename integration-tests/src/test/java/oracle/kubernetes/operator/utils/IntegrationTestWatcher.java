@@ -4,6 +4,7 @@
 package oracle.kubernetes.operator.utils;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -331,8 +332,9 @@ public class IntegrationTestWatcher implements
   private void getNamespaceList(ExtensionContext context) {
     try {
       Object test = context.getRequiredTestInstance();
-      StringBuffer list = (StringBuffer)test.getClass()
-          .getDeclaredField("namespaceList").get(test);
+      Field declaredField = test.getClass().getDeclaredField("namespaceList");
+      declaredField.setAccessible(true);
+      StringBuffer list = (StringBuffer)declaredField.get(test);
       namespaces = Arrays.asList(list.toString().split("\\s+"));
     } catch (NoSuchFieldException | SecurityException
         | IllegalArgumentException | IllegalAccessException ex) {
