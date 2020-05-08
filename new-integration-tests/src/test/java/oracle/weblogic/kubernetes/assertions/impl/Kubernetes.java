@@ -146,6 +146,32 @@ public class Kubernetes {
     }
     return status;
   }
+  
+  /**
+   * Checks if a pod in a given namespace has been restarted.
+   * @param namespace in which to check for the pod
+   * @param domainUid the label the pod is decorated with
+   * @param podName name of the pod to check for
+   * @return true if pod has been restarted
+   * @throws ApiException when there is error in querying the cluster
+   */
+  public static boolean podRestarted(String namespace, String domainUid, String podName, String lastCreationTime) throws ApiException {
+    String newCreationTime =
+	    assertDoesNotThrow(() -> getPodCreationTimestamp(namespace, "", podName),
+	         String.format("Can not find PodCreationTime for pod %s", podName));
+
+	logger.info("New PodCreationTime {0} ", newCreationTime);
+	if (newCreationTime != null &&
+	    Long.parseLong(newCreationTime) > Long.parseLong(lastCreationTime)) {
+	  logger.info("New CreationTime of pod {0} is {1}, which is later than the lastCreationTime {2}", 
+	      podName, newCreationTime, lastCreationTime);
+	    return true;
+	}
+	logger.info("New CreationTime of pod {0} is {1}, which is NOT later that the lastCreationTime {2}",
+	    newCreationTime, lastCreationTime);
+	return false;	
+  }
+
 
   /**
    * Checks if a WebLogic server pod has been patched with an expected image.
@@ -176,7 +202,7 @@ public class Kubernetes {
       for (V1Container container : containers) {
         // look for the container
         if (container.getName().equals(containerName)
-            && (container.getImage().equals(image))) {
+            && container.getImage().equals(image)) {
           podPatched = true;
         }
       }
@@ -236,7 +262,7 @@ public class Kubernetes {
         );
     for (V1Pod item : v1PodList.getItems()) {
       if (item.getMetadata().getName().startsWith(podName.trim())) {
-        logger.fine(String.format("Pod Name: %s, Pod Namespace: %s, Pod UID: %s, Pod Status: %s",
+        logger.info(String.format("Pod Name: %s, Pod Namespace: %s, Pod UID: %s, Pod Status: %s",
             item.getMetadata().getName(),
             item.getMetadata().getNamespace(),
             item.getMetadata().getUid(),

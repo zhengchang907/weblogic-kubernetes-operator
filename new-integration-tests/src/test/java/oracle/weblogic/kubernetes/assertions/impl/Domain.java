@@ -81,14 +81,16 @@ public class Domain {
    * Check if the domain resource has been patched with a new image.
    *
    * @param domainUID identifier of the domain resource
-   * @param namespace Kubernetes namespace in which the domain exists
-   * @param image name of the image that the pod is expected to be using
+ * @param namespace Kubernetes namespace in which the domain exists
+ * @param specElement part of the domain spec that is to be changed
+ * @param newValue name of the image that the pod is expected to be using
    * @return true if domain resource's image matches the expected value
    */
   public static Callable<Boolean> domainResourceImagePatched(
       String domainUID,
       String namespace,
-      String image
+      String specElement,
+      String newValue
   ) {
     return () -> {
       oracle.weblogic.domain.Domain domain = null;
@@ -100,8 +102,14 @@ public class Domain {
         return false;
       }
       
-      boolean domainPatched = (domain.spec().image().equals(image));
-      logger.info("Domain Object patched : " + domainPatched + " domain image = " + domain.spec().image());
+      boolean domainPatched = false;
+      if (specElement.contentEquals("image")) {
+        domainPatched = (domain.spec().image().equals(newValue));
+      } else if (specElement.contains("webLogicCredentialsSecret")) {
+        domainPatched = (domain.spec().webLogicCredentialsSecret().getName().equals(newValue));
+      }
+      logger.info("Domain Object patched : {0}, domain image: {1}, weblogicDomainSecret: {2}",
+          domainPatched, domain.spec().image(), domain.getSpec().webLogicCredentialsSecret());
       return domainPatched;
     };
   }

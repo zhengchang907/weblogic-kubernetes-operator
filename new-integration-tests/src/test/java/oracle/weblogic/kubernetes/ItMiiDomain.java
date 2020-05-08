@@ -80,6 +80,7 @@ import static oracle.weblogic.kubernetes.actions.TestActions.dockerLogin;
 import static oracle.weblogic.kubernetes.actions.TestActions.dockerPush;
 import static oracle.weblogic.kubernetes.actions.TestActions.execCommand;
 import static oracle.weblogic.kubernetes.actions.TestActions.getOperatorImageName;
+import static oracle.weblogic.kubernetes.actions.TestActions.getPodCreationTimestamp;
 import static oracle.weblogic.kubernetes.actions.TestActions.installOperator;
 import static oracle.weblogic.kubernetes.actions.TestActions.patchDomainCustomResource;
 import static oracle.weblogic.kubernetes.actions.TestActions.upgradeOperator;
@@ -365,7 +366,7 @@ class ItMiiDomain implements LoggedTest {
         domainUid);
   }
 
-  @Test
+  //@Test
   @Order(2)
   @DisplayName("Create a second domain with the image from the the first test")
   @Slow
@@ -460,7 +461,7 @@ class ItMiiDomain implements LoggedTest {
     }
   }
 
-  @Test
+  //@Test
   @Order(3)
   @DisplayName("Create a domain with same domainUid as first domain but in a new namespace")
   @Slow
@@ -542,7 +543,7 @@ class ItMiiDomain implements LoggedTest {
     }
   }
 
-  @Test
+  //@Test
   @Order(4)
   @DisplayName("Update the sample-app application to version 2")
   @Slow
@@ -621,6 +622,7 @@ class ItMiiDomain implements LoggedTest {
           adminServerPodName,
           managedServerPrefix,
           replicaCount,
+          "image",
           miiImagePatchAppV2);
 
       logger.info("Check and wait for the V2 application to become available");
@@ -654,7 +656,7 @@ class ItMiiDomain implements LoggedTest {
     logger.info("The version 2 application has been deployed correctly on all server Pods");
   }
 
-  @Test
+  //@Test
   @Order(5)
   @DisplayName("Update the domain with another application")
   @Slow
@@ -709,6 +711,7 @@ class ItMiiDomain implements LoggedTest {
         adminServerPodName,
         managedServerPrefix,
         replicaCount,
+        "image",
         miiImageAddSecondApp);
     
     logger.info("Check and wait for the new application to become ready");
@@ -732,6 +735,89 @@ class ItMiiDomain implements LoggedTest {
     }
 
     logger.info("Both of the applications are running correctly after patching");
+  }
+
+  @Test
+  @Order(6)
+  @DisplayName("Change the WebLogic credentials")
+  @Slow
+  @MustNotRunInParallel
+  public void testChangeWebLogicCredentials() {
+    // admin/managed server name here should match with model yaml in WDT_MODEL_FILE
+    final String adminServerPodName = domainUid + "-admin-server";
+    final String managedServerPrefix = domainUid + "-managed-server";
+    final int replicaCount = 2;
+
+    // get the creation time of the admin server pod before patching
+    String adminPodLastCreationTime =
+        assertDoesNotThrow(() -> getPodCreationTimestamp(domainNamespace,"",adminServerPodName),
+        String.format("Can not find PodCreationTime for pod %s", adminServerPodName));
+    assertNotNull(adminPodLastCreationTime, "adminPodCreationTime returns NULL");
+    logger.info("Before patching AdminPodCreationTime {0}", adminPodLastCreationTime);
+    
+    List<String> msLastCreationTime = new ArrayList<String>();
+    // get the creation time of the managed server pods before patching
+    assertDoesNotThrow(() -> { for (int i = 1; i <= replicaCount; i++) {
+      msLastCreationTime.add(
+          getPodCreationTimestamp(domainNamespace,"",adminServerPodName));
+    }},
+      String.format("Can not find PodCreationTime for pod %s", adminServerPodName));
+    
+    // create a new secret for admin credentials
+    logger.info("Create secret for admin credentials");
+    String adminSecretName = "weblogic-credentials-new";
+    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,"weblogicnew",
+            "welcome1new", domainNamespace),
+            String.format("createSecret failed for %s", adminSecretName));
+
+    // patch the domain resource with the new image and verify that the domain resource is patched, 
+    // and all server pods are patched as well.
+    logger.info("Patch the domain with the secret {0}, and verify the result", adminSecretName); 
+    patchAndVerify(
+        domainUid,
+        domainNamespace,
+        adminServerPodName,
+        managedServerPrefix,
+        replicaCount,
+        "webLogicCredentialsSecret/name",
+        adminSecretName);
+    
+    try {
+      TimeUnit.SECONDS.sleep(3);
+    } catch (InterruptedException ie) {
+      // do nothing
+    }
+    
+    // check admin server pod is ready
+    logger.info("Wait for admin server pod {0} to be ready in namespace {1}",
+        adminServerPodName, domainNamespace);
+    checkPodReady(adminServerPodName, domainUid, domainNamespace);
+
+    checkPodCreationTime(adminServerPodName, adminServerLastCreationTime);
+
+    logger.info("Check admin server status by calling read state command");
+    checkServerReadyStatusByExec(adminServerPodName, domainNamespace);
+
+    // check managed server pods are ready
+    for (int i = 1; i <= replicaCount; i++) {
+      logger.info("Wait for managed server pod {0} to be ready in namespace {1}",
+          managedServerPrefix + i, domainNamespace);
+      checkPodReady(managedServerPrefix + i, domainUid, domainNamespace);
+      checkPodCreationTime(managedServerPrefix + i, managedServerCreationTime.get(i));
+    }
+
+    // check and wait for the application to be accessible in all server pods
+    for (int i = 1; i <= replicaCount; i++) {
+      checkAppRunning(
+          domainNamespace,
+          managedServerPrefix + i,
+          "8001",
+          "sample-war/index.jsp",
+          APP_RESPONSE_V1 + i);
+    }
+ 
+    logger.info("Domain {0} is fully started - servers are running and application is available",
+        domainUid);
   }
 
   // This method is needed in this test class, since the cleanup util
@@ -815,10 +901,10 @@ class ItMiiDomain implements LoggedTest {
       String baseImageName,
       List<String> appDirList
   ) {
-    logger.info("Build the model file list that contains {0}", WDT_MODEL_FILE);
+    logger.info("BuilimagenewValued the model file list that contains {0}", WDT_MODEL_FILE);
     List<String> modelList = 
         Collections.singletonList(String.format("%s/%s", MODEL_DIR, WDT_MODEL_FILE));
-   
+
     logger.info("Build an application archive using what is in {0}", appDirList);
     assertTrue(
         buildAppArchive(
@@ -884,7 +970,7 @@ class ItMiiDomain implements LoggedTest {
   }
 
   /**
-   * Patch the domain resource with a new image.
+   * Patch the domain resource with a new value of a spec element.
    * Here is an example of the JSON patch string that is constructed in this method.
    * [
    *   {"op": "replace", "path": "/spec/image", "value": "mii-image:v2" }
@@ -892,16 +978,19 @@ class ItMiiDomain implements LoggedTest {
    * 
    * @param domainResourceName name of the domain resource
    * @param namespace Kubernetes namespace that the domain is hosted
+   * @param specElement part of the domain spec that is going o be changed
+   * @param newValue the expected value of the given element
    * @param image name of the new image
    */
-  private void patchDomainResourceImage(
+  private void patchDomainResource(
       String domainResourceName,
       String namespace,
-      String image
+      String specElement,
+      String newValue
   ) {
     String patch = 
-        String.format("[\n  {\"op\": \"replace\", \"path\": \"/spec/image\", \"value\": \"%s\"}\n]\n",
-            image);
+        String.format("[\n  {\"op\": \"replace\", \"path\": \"/spec/%s\", \"value\": \"%s\"}\n]\n",
+            specElement, newValue);
     logger.info("About to patch the domain resource {0} in namespace {1} with:{2}\n",
         domainResourceName, namespace, patch);
 
@@ -910,8 +999,24 @@ class ItMiiDomain implements LoggedTest {
             namespace,
             new V1Patch(patch),
             V1Patch.PATCH_FORMAT_JSON_PATCH),
-        String.format("Failed to patch the domain resource {0} in namespace {1} with image {2}",
-            domainResourceName, namespace, image));
+        String.format("Failed to patch the domain resource %s in namespace %s with %s:%s",
+            domainResourceName, namespace, specElement, newValue));
+
+    if (!specElement.equals("image")) {
+      patch =
+          String.format("[\n  {\"op\": \"replace\", \"path\": \"/spec/restartVersion\", \"value\": \"3\"}\n]\n",
+              specElement, newValue);
+      logger.info("About to patch the domain resource {0} in namespace {1} with:{2}\n",
+          domainResourceName, namespace, patch);
+
+      assertTrue(patchDomainCustomResource(
+              domainResourceName,
+              namespace,
+              new V1Patch(patch),
+              V1Patch.PATCH_FORMAT_JSON_PATCH),
+          String.format("Failed to patch the domain resource %s in namespace %s with startVersion:3",
+              domainResourceName, namespace));
+    }
   }
 
   private String createImageAndVerify(
@@ -1069,43 +1174,45 @@ class ItMiiDomain implements LoggedTest {
       final String adminServerPodName,
       final String managedServerPrefix,
       final int replicaCount,
-      final String image
+      final String specElement,
+      final String newValue
   ) {
     logger.info(
-        "Patch the domain resource {0} in namespace {1} to use the new image {2}",
-        domainUid, namespace, image);
+        "Patch the domain resource {0} in namespace {1} to use the new {2} {3}",
+        domainUid, namespace, specElement, newValue);
 
-    patchDomainResourceImage(domainUid, namespace, image);
+    patchDomainResource(domainUid, namespace, specElement, newValue);
     
     logger.info(
-        "Check that domain resource {0} in namespace {1} has been patched with image {2}",
-        domainUid, namespace, image);
-    checkDomainPatched(domainUid, namespace, image);
+        "Check that domain resource {0} in namespace {1} has been patched with {2}: {3}",
+        domainUid, namespace, specElement, newValue);
+    checkDomainPatched(domainUid, namespace, specElement, newValue);
 
     // check and wait for the admin server pod to be patched with the new image
     logger.info(
-        "Check that admin server pod for domain resource {0} in namespace {1} has been patched with image {2}",
-        domainUid, namespace, image);
+        "Check that admin server pod for domain resource {0} in namespace {1} has been patched with {2}: {3}",
+        domainUid, namespace, specElement, newValue);
 
-    checkPodImagePatched(
-        domainUid,
-        namespace,
-        adminServerPodName,
-        image);
-
-    // check and wait for the managed server pods to be patched with the new image
-    logger.info(
-        "Check that server pods for domain resource {0} in namespace {1} have been patched with image {2}",
-        domainUid, namespace, image);
-    for (int i = 1; i <= replicaCount; i++) {
+    if (specElement.equals("image")) {
       checkPodImagePatched(
           domainUid,
           namespace,
-          managedServerPrefix + i,
-          image);
+          adminServerPodName,
+          newValue);
+    
+      // check and wait for the managed server pods to be patched with the new image
+      logger.info(
+          "Check that server pods for domain resource {0} in namespace {1} have been patched with {2}: {3}",
+          domainUid, namespace, specElement, newValue);
+      for (int i = 1; i <= replicaCount; i++) {
+        checkPodImagePatched(
+            domainUid,
+            namespace,
+            managedServerPrefix + i,
+            newValue);
+      }
     }
   }
-
 
   private void checkPodReady(String podName, String domainUid, String domNamespace) {
     withStandardRetryPolicy
@@ -1217,7 +1324,8 @@ class ItMiiDomain implements LoggedTest {
   private void checkDomainPatched(
       String domainUid,
       String namespace,
-      String image 
+      String specElement,
+      String newValue
   ) {
    
     // check if the domain resource has been patched with the given image
@@ -1229,9 +1337,9 @@ class ItMiiDomain implements LoggedTest {
             namespace,
             condition.getElapsedTimeInMS(),
             condition.getRemainingTimeInMS()))
-        .until(assertDoesNotThrow(() -> domainResourceImagePatched(domainUid, namespace, image),
+        .until(assertDoesNotThrow(() -> domainResourceImagePatched(domainUid, namespace, specElement, newValue),
             String.format(
-               "Domain %s is not patched in namespace %s with image %s", domainUid, namespace, image)));
+               "Domain %s is not patched in namespace %s with %s %s", domainUid, namespace, specElement, newValue)));
 
   }
   

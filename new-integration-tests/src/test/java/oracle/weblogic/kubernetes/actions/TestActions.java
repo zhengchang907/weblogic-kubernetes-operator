@@ -37,6 +37,7 @@ import oracle.weblogic.kubernetes.actions.impl.TraefikParams;
 import oracle.weblogic.kubernetes.actions.impl.primitive.Docker;
 import oracle.weblogic.kubernetes.actions.impl.primitive.Helm;
 import oracle.weblogic.kubernetes.actions.impl.primitive.HelmParams;
+import oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes;
 import oracle.weblogic.kubernetes.actions.impl.primitive.WebLogicImageTool;
 import oracle.weblogic.kubernetes.actions.impl.primitive.WitParams;
 import oracle.weblogic.kubernetes.utils.ExecResult;
@@ -567,6 +568,20 @@ public class TestActions {
           String.format("The pod %s does not exist in namespace %s!", podName, namespace));
     }
     return Exec.exec(pod, containerName, redirectToStdout, command);
+  }
+  
+  /**
+   * Get the creationTimestamp for a given pod with following parameters.
+   *
+   * @param namespace namespace in which to check for the pod existence
+   * @param labelSelector in the format "weblogic.domainUID in (%s)"
+   * @param podName name of the pod
+   * @return creationTimestamp from metadata section of the Pod
+   * @throws ApiException if Kubernetes client API call fails
+   **/
+  public static String getPodCreationTimestamp(String namespace, String labelSelector, String podName) 
+      throws ApiException {
+    return Kubernetes.getPodCreationTimestamp(namespace, labelSelector, podName);
   }
 
   // ------------------------ where does this go  -------------------------

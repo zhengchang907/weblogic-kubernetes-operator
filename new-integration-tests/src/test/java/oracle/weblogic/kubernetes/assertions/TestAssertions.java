@@ -59,16 +59,18 @@ public class TestAssertions {
    * Check if a WebLogic domain custom resource has been patched with a new image.
    *
    * @param domainUid ID of the domain resource
-   * @param namespace Kubernetes namespace in which the domain custom resource object exists
-   * @param image name of the image that was used to patch the domain resource
+ * @param namespace Kubernetes namespace in which the domain custom resource object exists
+ * @param specElement part of the domain spec that is to be change
+ * @param newValue he expected value for the given domain spec element
    * @return true if the domain is patched correctly
    */
   public static Callable<Boolean> domainResourceImagePatched(
       String domainUid,
       String namespace,
-      String image
+      String specElement,
+      String newValue
   ) {
-    return Domain.domainResourceImagePatched(domainUid, namespace, image);
+    return Domain.domainResourceImagePatched(domainUid, namespace, specElement, newValue);
   }
 
   /**
@@ -77,6 +79,7 @@ public class TestAssertions {
    * @param domainUid ID of the domain resource
    * @param namespace Kubernetes namespace in which the domain custom resource object exists
    * @param podName name of the WebLogic server pod
+   * @param containerName name of the container
    * @param image name of the image that was used to patch the domain resource
    * @return true if the pod is patched correctly
    */
@@ -148,6 +151,20 @@ public class TestAssertions {
   public static Callable<Boolean> podTerminating(String podName, String domainUid, String namespace) {
     return () -> {
       return Kubernetes.isPodTerminating(namespace, domainUid, podName);
+    };
+  }
+
+  /**
+   * Check if a pod has been restarted.
+   *
+   * @param podName   name of the pod to check
+   * @param domainUid WebLogic domain uid in which the pod belongs
+   * @param namespace in which the pod is running
+   * @return true if the pod has been restarted
+   */
+  public static Callable<Boolean> podRestarted(String podName, String domainUid, String namespace, String lastCreationTime) {
+    return () -> {
+      return Kubernetes.podRestarted(namespace, domainUid, podName, lastCreationTime);
     };
   }
 
