@@ -3,7 +3,6 @@
 
 package oracle.weblogic.kubernetes;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -62,7 +61,6 @@ import static oracle.weblogic.kubernetes.TestConstants.REPO_REGISTRY;
 import static oracle.weblogic.kubernetes.TestConstants.REPO_SECRET_NAME;
 import static oracle.weblogic.kubernetes.TestConstants.REPO_USERNAME;
 import static oracle.weblogic.kubernetes.actions.ActionConstants.ARCHIVE_DIR;
-import static oracle.weblogic.kubernetes.actions.ActionConstants.DOWNLOAD_DIR;
 import static oracle.weblogic.kubernetes.actions.ActionConstants.MODEL_DIR;
 import static oracle.weblogic.kubernetes.actions.ActionConstants.WDT_VERSION;
 import static oracle.weblogic.kubernetes.actions.ActionConstants.WIT_BUILD_DIR;
@@ -98,7 +96,6 @@ import static oracle.weblogic.kubernetes.assertions.TestAssertions.podReady;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podRestarted;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.serviceExists;
 import static oracle.weblogic.kubernetes.utils.FileUtils.checkDirectory;
-import static oracle.weblogic.kubernetes.utils.FileUtils.cleanupDirectory;
 import static org.awaitility.Awaitility.with;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -165,14 +162,6 @@ class ItMiiDomain implements LoggedTest {
     withQuickRetryPolicy = with().pollDelay(0, SECONDS)
         .and().with().pollInterval(4, SECONDS)
         .atMost(10, SECONDS).await();
-
-    // clean up the download directory so that we always get the latest
-    // versions of the tools in every run of the test class.
-    try {
-      cleanupDirectory(DOWNLOAD_DIR);
-    } catch (IOException ioe) {    
-      logger.severe("Failed to cleanup the download directory " + DOWNLOAD_DIR, ioe);    
-    }
 
     // get a new unique opNamespace
     logger.info("Creating unique namespace for Operator");
@@ -575,6 +564,7 @@ class ItMiiDomain implements LoggedTest {
     List<Integer> appAvailability = new ArrayList<Integer>();
     
     if (enableAppAvailbilityCheck.equalsIgnoreCase("true")) {
+      logger.info("Start a thread to keep track of the application's availability");
       // start a new thread to collect the availability data of the application while the
       // main thread performs patching operation, and checking of the results.
       accountingThread =
@@ -622,7 +612,7 @@ class ItMiiDomain implements LoggedTest {
 
       // patch the domain resource with the new image and verify that the domain resource is patched, 
       // and all server pods are patched as well.
-      logger.info("Patch domain resource with the new image, and verify the results");
+      logger.info("Patch domain resource with image {0}, and verify the results", miiImagePatchAppV2);
       patchAndVerify(
           domainUid,
           domainNamespace,
@@ -660,7 +650,7 @@ class ItMiiDomain implements LoggedTest {
       }
     }
     
-    logger.info("The version 2 application has been deployed correctly on all server Pods");
+    logger.info("The version 2 application has been deployed correctly on all server pods");
   }
 
   //@Test
@@ -679,7 +669,7 @@ class ItMiiDomain implements LoggedTest {
     final String managedServerPrefix = domainUid + "-managed-server";
     final int replicaCount = 2;
 
-    logger.info("Check V2 application is still running after the previous test");
+    logger.info("Check that V2 application is still running after the previous test");
     for (int i = 1; i <= replicaCount; i++) {
       quickCheckAppRunning(
           domainNamespace,
@@ -711,7 +701,7 @@ class ItMiiDomain implements LoggedTest {
    
     // patch the domain resource with the new image and verify that the domain resource is patched, 
     // and all server pods are patched as well.
-    logger.info("Patch the domain with the new image, and verify the result"); 
+    logger.info("Patch the domain with image {0}, and verify the results", miiImageAddSecondApp); 
     patchAndVerify(
         domainUid,
         domainNamespace,
@@ -959,7 +949,7 @@ class ItMiiDomain implements LoggedTest {
     String appName1 = appDirList1.get(0);
     String appName2 = appDirList2.get(0);
     
-    logger.info("Build an application archive using what is in {0}", appDirList1);
+    logger.info("Build the first application archive using what is in {0}", appDirList1);
     assertTrue(
         buildAppArchive(
             defaultAppParams()
@@ -968,7 +958,7 @@ class ItMiiDomain implements LoggedTest {
         String.format("Failed to create application archive for %s",
             appName1));
     
-    logger.info("Build an application archive usingt what is in {0}", appDirList2);
+    logger.info("Build the second application archive usingt what is in {0}", appDirList2);
     assertTrue(
         buildAppArchive(
             defaultAppParams()
@@ -1061,10 +1051,10 @@ class ItMiiDomain implements LoggedTest {
     if (witJavaHome != null) {
       env.put("JAVA_HOME", witJavaHome);
     }
-
+ 
     // build an image using WebLogic Image Tool
-    logger.info("Create image {0} using model directory {1}",
-        image, MODEL_DIR);
+    logger.info("Create image {0} using model list {1} and archive list {2}",
+        image, modelList, archiveList);
     boolean result = createMiiImage(
         defaultWitParams()
             .modelImageName(imageName)
@@ -1075,7 +1065,7 @@ class ItMiiDomain implements LoggedTest {
             .env(env)
             .redirect(true));
 
-    assertTrue(result, String.format("Failed to create the image %s using WebLogic Image Tool", image));
+    assertTrue(result, String.format("Failed to create image %s using WebLogic Image Tool", image));
 
     /* Check image exists using docker images | grep image tag.
      * Tag name is unique as it contains date and timestamp.
@@ -1333,7 +1323,7 @@ class ItMiiDomain implements LoggedTest {
       String expectedStr
   ) {
    
-    // check if the application is not running inside of a server pod
+    // check that the application is NOT running inside of a server pod
     withQuickRetryPolicy
         .conditionEvaluationListener(
             condition -> logger.info("Checking if application {0} is not running on pod {1} in namespace {2} "

@@ -315,7 +315,7 @@ public class Kubernetes {
             Boolean.FALSE // Watch for changes to the described resources.
         );
     for (V1Pod item : v1PodList.getItems()) {
-      if (item.getMetadata().getName().startsWith(podName.trim())) {
+      if (item.getMetadata().getName().contains(podName.trim())) {
         logger.info(String.format("Pod Name: %s, Pod Namespace: %s, Pod UID: %s, Pod Status: %s",
             item.getMetadata().getName(),
             item.getMetadata().getNamespace(),
