@@ -171,3 +171,8 @@ Configuration Overrides Usecases
 | Using WebLogic Image Tool (WIT) to Create WebLogic Domain | Use Case |
 | --- | --- |
 | Create WebLogic Domain using an image built by WIT |  Download WIT, build a WebLogic Docker image using WIT and then use the image to create WebLogic Domain  |
+
+| Domain Config Update Using Model-in-image | Use Case |
+| --- | --- |
+| Update domain config by re-creating config map | Re-create the config map with model files that define a JDBC DataSource, patch domain to reload the model files and then verify config is updated |
+| Update domain config by re-creating domain image | Re-create the domain image with model files that define a JDBC DataSource, patch domain to reload the model files and then verify config is updated |
