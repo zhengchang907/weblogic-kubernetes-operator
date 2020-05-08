@@ -22,6 +22,7 @@ import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.util.ClientBuilder;
 
+import static oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes.getPodCreationTimestamp;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
 
 public class Kubernetes {
@@ -64,6 +65,29 @@ public class Kubernetes {
       podExist = true;
     }
     return podExist;
+  }
+
+  /**
+   * Checks if a pod does not exist in a given namespace in any state.
+   * @param namespace in which to check for the pod existence
+   * @param domainUid the label the pod is decorated with
+   * @param podName name of the pod to check for
+   * @return true if pod does not exists otherwise false
+   * @throws ApiException when there is error in querying the cluster
+   */
+  public static boolean doesPodNotExist(String namespace, String domainUid, String podName) throws ApiException {
+    boolean podDeleted = false;
+    String labelSelector = null;
+    if (domainUid != null) {
+      labelSelector = String.format("weblogic.domainUID in (%s)", domainUid);
+    }
+    V1Pod pod = getPod(namespace, labelSelector, podName);
+    if (pod == null) {
+      podDeleted = true;
+    } else {
+      logger.info("[" + pod.getMetadata().getName() + "] still exist");
+    }
+    return podDeleted;
   }
 
   /**
@@ -155,21 +179,25 @@ public class Kubernetes {
    * @return true if pod has been restarted
    * @throws ApiException when there is error in querying the cluster
    */
-  public static boolean podRestarted(String namespace, String domainUid, String podName, String lastCreationTime) throws ApiException {
-    String newCreationTime =
-	    assertDoesNotThrow(() -> getPodCreationTimestamp(namespace, "", podName),
-	         String.format("Can not find PodCreationTime for pod %s", podName));
+  public static boolean podRestarted(
+      String namespace,
+      String domainUid,
+      String podName,
+      String lastCreationTime
+  ) throws ApiException {
+    String newCreationTime = getPodCreationTimestamp(namespace, "", podName);
 
-	logger.info("New PodCreationTime {0} ", newCreationTime);
-	if (newCreationTime != null &&
-	    Long.parseLong(newCreationTime) > Long.parseLong(lastCreationTime)) {
-	  logger.info("New CreationTime of pod {0} is {1}, which is later than the lastCreationTime {2}", 
-	      podName, newCreationTime, lastCreationTime);
-	    return true;
-	}
-	logger.info("New CreationTime of pod {0} is {1}, which is NOT later that the lastCreationTime {2}",
-	    newCreationTime, lastCreationTime);
-	return false;	
+    logger.info("New PodCreationTime {0} ", newCreationTime);
+    if (newCreationTime != null
+        && Long.parseLong(newCreationTime) > Long.parseLong(lastCreationTime)) {
+      logger.info("New CreationTime of pod {0} is {1}, which is later than the lastCreationTime {2}", 
+          podName, newCreationTime, lastCreationTime);
+      return true;
+    }
+    logger.info("New CreationTime of pod {0} is {1}, which is NOT later that the lastCreationTime {2}",
+        newCreationTime, lastCreationTime);
+
+    return false;
   }
 
 
@@ -211,7 +239,7 @@ public class Kubernetes {
   }
 
   /**
-   * Checks if a Operator pod running in a given namespace.
+   * Checks if an operator pod is running in a given namespace.
    * The method assumes the operator name to starts with weblogic-operator-
    * and decorated with label weblogic.operatorName:namespace
    * @param namespace in which to check for the pod existence
@@ -236,6 +264,32 @@ public class Kubernetes {
       logger.info("Pod doesn't exist");
     }
     return status;
+  }
+
+  /**
+   * Checks if a NGINX pod is running in the specified namespace.
+   * The method assumes that the NGINX pod name contains "nginx-ingress-controller".
+   *
+   * @param namespace in which to check if the NGINX pod is running
+   * @return true if the pod is running, otherwise false
+   * @throws ApiException if Kubernetes client API call fails
+   */
+  public static boolean isNginxPodRunning(String namespace) throws ApiException {
+
+    return isPodRunning(namespace, null, "nginx-ingress-controller");
+  }
+
+  /**
+   * Check whether the NGINX pod is ready in the specified namespace.
+   * The method assumes that the NGINX pod name starts with "nginx-ingress-controller".
+   *
+   * @param namespace in which to check if the NGINX pod is ready
+   * @return true if the pod is in the ready state, false otherwise
+   * @throws ApiException if Kubernetes client API call fails
+   */
+  public static boolean isNginxPodReady(String namespace) throws ApiException {
+
+    return isPodReady(namespace, null, "nginx-ingress-controller");
   }
 
   /**

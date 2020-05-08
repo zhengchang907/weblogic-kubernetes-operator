@@ -95,6 +95,7 @@ import static oracle.weblogic.kubernetes.assertions.TestAssertions.operatorIsRea
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podExists;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podImagePatched;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podReady;
+import static oracle.weblogic.kubernetes.assertions.TestAssertions.podRestarted;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.serviceExists;
 import static oracle.weblogic.kubernetes.utils.FileUtils.checkDirectory;
 import static oracle.weblogic.kubernetes.utils.FileUtils.cleanupDirectory;
@@ -145,6 +146,8 @@ class ItMiiDomain implements LoggedTest {
   private String miiImagePatchAppV2 = null;
   private String miiImageAddSecondApp = null;
   private String miiImage = null;
+
+  private static Map<String, Object> secretNameMap;
 
   /**
    * Install Operator.
@@ -204,6 +207,7 @@ class ItMiiDomain implements LoggedTest {
     dockerConfigJson = dockerConfigJsonObject.toString();
 
     // Create the V1Secret configuration
+    logger.info("Creating repo secret {0}", REPO_SECRET_NAME);
     V1Secret repoSecret = new V1Secret()
         .metadata(new V1ObjectMeta()
             .name(REPO_SECRET_NAME)
@@ -217,7 +221,7 @@ class ItMiiDomain implements LoggedTest {
                   REPO_SECRET_NAME, opNamespace));
 
     // map with secret
-    Map<String, Object> secretNameMap = new HashMap<String, Object>();
+    secretNameMap = new HashMap<String, Object>();
     secretNameMap.put("name", REPO_SECRET_NAME);
     // helm install parameters
     opHelmParams = new HelmParams()
@@ -231,7 +235,7 @@ class ItMiiDomain implements LoggedTest {
             .helmParams(opHelmParams)
             .image(operatorImage)
             .imagePullSecrets(secretNameMap)
-            .domainNamespaces(Arrays.asList(domainNamespace))
+            .domainNamespaces(Arrays.asList(domainNamespace, domainNamespace1))
             .serviceAccount(serviceAccountName);
 
     // install Operator
@@ -381,6 +385,7 @@ class ItMiiDomain implements LoggedTest {
             new OperatorParams()
                     .helmParams(opHelmParams)
                     .image(operatorImage)
+                    .imagePullSecrets(secretNameMap)
                     .domainNamespaces(Arrays.asList(domainNamespace,domainNamespace1))
                     .serviceAccount(serviceAccountName);
 
@@ -391,6 +396,7 @@ class ItMiiDomain implements LoggedTest {
     logger.info("Operator upgraded in namespace {0}", opNamespace);
 
     // Create the repo secret to pull the image
+    logger.info("Creating repo secret {0}", REPO_SECRET_NAME);
     assertDoesNotThrow(() -> createRepoSecret(domainNamespace1),
               String.format("createSecret failed for %s", REPO_SECRET_NAME));
 
@@ -409,6 +415,7 @@ class ItMiiDomain implements LoggedTest {
              String.format("createSecret failed for %s", encryptionSecretName));
 
     // create the domain CR
+    logger.info("Creating custom domain resource");
     createDomainResource(domainUid1, domainNamespace1, adminSecretName, REPO_SECRET_NAME,
               encryptionSecretName, replicaCount);
 
@@ -757,11 +764,13 @@ class ItMiiDomain implements LoggedTest {
     
     List<String> msLastCreationTime = new ArrayList<String>();
     // get the creation time of the managed server pods before patching
-    assertDoesNotThrow(() -> { for (int i = 1; i <= replicaCount; i++) {
-      msLastCreationTime.add(
-          getPodCreationTimestamp(domainNamespace,"",adminServerPodName));
-    }},
-      String.format("Can not find PodCreationTime for pod %s", adminServerPodName));
+    assertDoesNotThrow(() -> { 
+      for (int i = 1; i <= replicaCount; i++) {
+        msLastCreationTime.add(
+            getPodCreationTimestamp(domainNamespace,"",adminServerPodName));
+      } 
+    },
+        String.format("Can not find PodCreationTime for pod %s", adminServerPodName));
     
     // create a new secret for admin credentials
     logger.info("Create secret for admin credentials");
@@ -793,17 +802,30 @@ class ItMiiDomain implements LoggedTest {
         adminServerPodName, domainNamespace);
     checkPodReady(adminServerPodName, domainUid, domainNamespace);
 
-    checkPodCreationTime(adminServerPodName, adminServerLastCreationTime);
+    boolean succeeded = assertDoesNotThrow(() -> podRestarted(adminServerPodName,
+        domainUid, domainNamespace, adminPodLastCreationTime),
+        String.format("Pod %s in namespace %s has not been restarted after patching",
+          adminServerPodName, domainNamespace));
+    assertTrue(succeeded,
+        String.format("Pod %s in namespace %s has not been restarted after patching",
+        adminServerPodName, domainNamespace));
 
     logger.info("Check admin server status by calling read state command");
     checkServerReadyStatusByExec(adminServerPodName, domainNamespace);
 
     // check managed server pods are ready
     for (int i = 1; i <= replicaCount; i++) {
+      final String podName = managedServerPrefix + i;
+      final String lastCreationTime = msLastCreationTime.get(i);
       logger.info("Wait for managed server pod {0} to be ready in namespace {1}",
-          managedServerPrefix + i, domainNamespace);
-      checkPodReady(managedServerPrefix + i, domainUid, domainNamespace);
-      checkPodCreationTime(managedServerPrefix + i, managedServerCreationTime.get(i));
+          podName, domainNamespace);
+      checkPodReady(podName, domainUid, domainNamespace);
+      succeeded = assertDoesNotThrow(() -> podRestarted(podName, domainUid, domainNamespace, lastCreationTime),
+          String.format("Failed to check if pod %s in namespace %s has not been restarted after patching",
+              podName, domainNamespace));
+      assertTrue(succeeded, 
+          String.format("Pod %s in namespace %s has not been restarted after patching",
+              podName, domainNamespace));
     }
 
     // check and wait for the application to be accessible in all server pods
@@ -1031,6 +1053,14 @@ class ItMiiDomain implements LoggedTest {
     checkDirectory(WIT_BUILD_DIR);
     Map<String, String> env = new HashMap<>();
     env.put("WLSIMG_BLDDIR", WIT_BUILD_DIR);
+
+    // For k8s 1.16 support and as of May 6, 2020, we presently need a different JDK for these
+    // tests and for image tool. This is expected to no longer be necessary once JDK 11.0.8 or
+    // the next JDK 14 versions are released.
+    String witJavaHome = System.getenv("WIT_JAVA_HOME");
+    if (witJavaHome != null) {
+      env.put("JAVA_HOME", witJavaHome);
+    }
 
     // build an image using WebLogic Image Tool
     logger.info("Create image {0} using model directory {1}",
