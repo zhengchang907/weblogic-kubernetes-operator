@@ -816,28 +816,10 @@ class ItMiiDomain implements LoggedTest {
         replicaCount,
         "webLogicCredentialsSecret/name",
         adminSecretName);
-    
-    logger.info("Wait for 4 minutes to allow the rolling-restart of the servers in {0} to be triggered", domainUid);
-    try {
-      TimeUnit.MINUTES.sleep(4);
-    } catch (InterruptedException ie) {
-      // do nothing
-    }
-    
-    // check admin server pod is ready
-    logger.info("Wait for admin server pod {0} to be ready in namespace {1}",
-        adminServerPodName, domainNamespace);
-    checkPodReady(adminServerPodName, domainUid, domainNamespace);
 
-    logger.info("Check that domain {0} admin server pod {1} in namespace {2} has been restarted",
+    logger.info("For for domain {0} admin server pod {1} in namespace {2} to be restarted",
         domainUid, adminServerPodName, domainNamespace);
-    boolean succeeded = assertDoesNotThrow(() -> podRestarted(adminServerPodName,
-        domainUid, domainNamespace, adminPodLastCreationTime),
-        String.format("Failed to check if pod %s in namespace %s has been restarted after patching",
-          adminServerPodName, domainNamespace));
-    assertTrue(succeeded,
-        String.format("Pod %s in namespace %s has not been restarted after patching",
-        adminServerPodName, domainNamespace));
+    checkPodRestarted(domainUid, domainNamespace, adminServerPodName, adminPodLastCreationTime);
 
     // check managed server pods are ready
     for (int i = 1; i <= replicaCount; i++) {
@@ -845,14 +827,7 @@ class ItMiiDomain implements LoggedTest {
       final String lastCreationTime = msLastCreationTime.get(i - 1);
       logger.info("Wait for managed server pod {0} to be restarted in namespace {1}",
           podName, domainNamespace);
-      checkPodReady(podName, domainUid, domainNamespace);
-
-      succeeded = assertDoesNotThrow(() -> podRestarted(podName, domainUid, domainNamespace, lastCreationTime),
-          String.format("Failed to check if pod %s in namespace %s has been restarted after patching",
-              podName, domainNamespace));
-      assertTrue(succeeded, 
-          String.format("Pod %s in namespace %s has not been restarted after patching",
-              podName, domainNamespace));
+      checkPodRestarted(domainUid, domainNamespace, podName, lastCreationTime);
     }
  
     logger.info("Domain {0} in namespace {1} is fully started after chaning the WebLogic credential secret",
@@ -1429,6 +1404,25 @@ class ItMiiDomain implements LoggedTest {
                namespace)));
   }
   
+  private void checkPodRestarted(
+      String domainUid,
+      String domNamespace,
+      String podName,
+      String lastCreationTime
+  ) {
+    withStandardRetryPolicy
+        .conditionEvaluationListener(
+            condition -> logger.info("Waiting for pod {0} to be restarted in namespace {1} "
+            + "(elapsed time {2}ms, remaining time {3}ms)",
+            podName,
+            domNamespace,
+            condition.getElapsedTimeInMS(),
+            condition.getRemainingTimeInMS()))
+        .until(assertDoesNotThrow(() -> podRestarted(podName, domainUid, domNamespace, lastCreationTime),
+            String.format(
+                "pod %s has not been restarted in namespace %s", podName, domNamespace)));
+  }
+
   private static void collectAppAvaiability(
       String namespace,
       List<Integer> appAvailability,

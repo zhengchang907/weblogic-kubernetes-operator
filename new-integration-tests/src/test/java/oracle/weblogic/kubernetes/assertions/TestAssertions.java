@@ -180,15 +180,18 @@ public class TestAssertions {
    * @param podName   name of the pod to check
    * @param domainUid WebLogic domain uid in which the pod belongs
    * @param namespace in which the pod is running
+   * @param lastCreationTime last time the pod was created
    * @return true if the pod has been restarted
    */
-  public static boolean podRestarted(
+  public static Callable<Boolean> podRestarted(
       String podName,
       String domainUid,
       String namespace,
       String lastCreationTime
   ) throws ApiException {
-    return Kubernetes.podRestarted(namespace, domainUid, podName, lastCreationTime);
+    return () -> {
+      return Kubernetes.podRestarted(namespace, domainUid, podName, lastCreationTime);
+    };
   }
 
   /**
