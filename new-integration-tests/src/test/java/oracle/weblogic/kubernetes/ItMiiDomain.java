@@ -94,6 +94,7 @@ import static oracle.weblogic.kubernetes.assertions.TestAssertions.operatorIsRea
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podExists;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podImagePatched;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podReady;
+import static oracle.weblogic.kubernetes.assertions.TestAssertions.podRestartVersionUpdated;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.podRestarted;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.serviceExists;
 import static oracle.weblogic.kubernetes.utils.FileUtils.checkDirectory;
@@ -808,7 +809,7 @@ class ItMiiDomain implements LoggedTest {
     // and all server pods are patched as well.
     logger.info("Patch domain {0} in namespace {1} with the secret {2}, and verify the result",
         domainUid, domainNamespace, adminSecretName); 
-    patchAndVerifyDomainResource(
+    String restartVersion = patchAndVerifyDomainResource(
         domainUid,
         domainNamespace,
         adminServerPodName,
@@ -817,10 +818,19 @@ class ItMiiDomain implements LoggedTest {
         "webLogicCredentialsSecret/name",
         adminSecretName);
 
-    logger.info("For for domain {0} admin server pod {1} in namespace {2} to be restarted",
+    logger.info("Wait for domain {0} admin server pod {1} in namespace {2} to be restarted",
         domainUid, adminServerPodName, domainNamespace);
     checkPodRestarted(domainUid, domainNamespace, adminServerPodName, adminPodLastCreationTime);
-
+    
+    logger.info("Check if the admin server pod's domainRestartVersion has been updated");
+    boolean restartVersionUpdated = assertDoesNotThrow(
+        () -> podRestartVersionUpdated(domainUid, domainNamespace, adminServerPodName, restartVersion),
+        String.format("Failed to get domain {0} pod {1}'s domainRestartVersion label",
+            domainUid, adminServerPodName));
+    assertTrue(restartVersionUpdated, 
+        String.format("Domain {0} pod {1}'s domainRestartVersion label has not been updated",
+            domainUid, adminServerPodName));
+    
     // check managed server pods are ready
     for (int i = 1; i <= replicaCount; i++) {
       final String podName = managedServerPrefix + i;
@@ -828,6 +838,14 @@ class ItMiiDomain implements LoggedTest {
       logger.info("Wait for managed server pod {0} to be restarted in namespace {1}",
           podName, domainNamespace);
       checkPodRestarted(domainUid, domainNamespace, podName, lastCreationTime);
+      logger.info("Check if the managed server pod's domainRestartVersion has been updated");
+      restartVersionUpdated = assertDoesNotThrow(
+          () -> podRestartVersionUpdated(domainUid, domainNamespace, podName, restartVersion),
+          String.format("Failed to get domain {0} pod {1}'s domainRestartVersion label",
+              domainUid, podName));
+      assertTrue(restartVersionUpdated, 
+          String.format("Domain {0} pod {1}'s domainRestartVersion label has not been updated",
+              domainUid, podName)); 
     }
  
     logger.info("Domain {0} in namespace {1} is fully started after chaning the WebLogic credential secret",
@@ -995,8 +1013,9 @@ class ItMiiDomain implements LoggedTest {
    * @param specElement part of the domain spec that is going o be changed
    * @param newValue the expected value of the given element
    * @param image name of the new image
+   * @return restartVersion of the domain resource, null if only image is patched
    */
-  private void patchDomainResource(
+  private String patchDomainResource(
       String domainResourceName,
       String namespace,
       String specElement,
@@ -1045,6 +1064,9 @@ class ItMiiDomain implements LoggedTest {
                         domainResourceName,
                         restartVersion,
                         newVersion));
+      return String.valueOf(newVersion);
+    } else {
+      return null;
     }
   }
 
@@ -1205,7 +1227,7 @@ class ItMiiDomain implements LoggedTest {
 
   }
 
-  private void patchAndVerifyDomainResource(
+  private String patchAndVerifyDomainResource(
       final String domainUid,
       final String namespace,
       final String adminServerPodName,
@@ -1218,7 +1240,7 @@ class ItMiiDomain implements LoggedTest {
         "Patch the domain resource {0} in namespace {1} to use the new {2} {3}",
         domainUid, namespace, specElement, newValue);
 
-    patchDomainResource(domainUid, namespace, specElement, newValue);
+    String restartVersion = patchDomainResource(domainUid, namespace, specElement, newValue);
     
     logger.info(
         "Check that domain resource {0} in namespace {1} has been patched with {2}: {3}",
@@ -1249,6 +1271,7 @@ class ItMiiDomain implements LoggedTest {
             newValue);
       }
     }
+    return restartVersion;
   }
 
   private void checkPodReady(String podName, String domainUid, String domNamespace) {
@@ -1398,12 +1421,12 @@ class ItMiiDomain implements LoggedTest {
             condition.getRemainingTimeInMS()))
         .until(assertDoesNotThrow(() -> podImagePatched(domainUid, namespace, podName, "weblogic-server", image),
             String.format(
-               "Pod %s is not patched with image %s in namespace %s.",
-               podName,
-               image,
-               namespace)));
+                "Pod %s is not patched with image %s in namespace %s.",
+                podName,
+                image,
+                namespace)));
   }
-  
+
   private void checkPodRestarted(
       String domainUid,
       String domNamespace,

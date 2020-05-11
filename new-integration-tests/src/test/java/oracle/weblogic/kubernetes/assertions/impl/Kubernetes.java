@@ -23,6 +23,7 @@ import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.util.ClientBuilder;
 
 import static oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes.getPodCreationTimestamp;
+import static oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes.getPodRestartVersion;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
 
 public class Kubernetes {
@@ -171,6 +172,36 @@ public class Kubernetes {
     return status;
   }
   
+  /**
+   * Checks if a pod in a given namespace has been updated with an expectedi
+   * weblogic.domainRestartVersion label.
+   *
+   * @param namespace in which to check for the pod
+   * @param domainUid the label the pod is decorated with
+   * @param podName name of the pod to check for
+   * @param expectedRestartVersion domainRestartVersion that is expected
+   * @return true if pod has been restarted
+   * @throws ApiException when there is error in querying the cluster
+   */
+  public static boolean podRestartVersionUpdated(
+      String namespace,
+      String domainUid,
+      String podName,
+      String expectedRestartVersion
+  ) throws ApiException {
+    String restartVersion = getPodRestartVersion(namespace, "", podName);
+
+    if (restartVersion == null && expectedRestartVersion == null
+        || restartVersion != null && restartVersion.contentEquals(expectedRestartVersion)) {
+      logger.info("Pod {0}: domainRestartVersion has been updated to expect value {1}",
+          podName, expectedRestartVersion);
+      return true;
+    }
+    logger.info("Pod {0}: domainRestartVersion {1} does not match the expected value {2}",
+        podName, restartVersion, expectedRestartVersion);
+    return false;
+  }
+
   /**
    * Checks if a pod in a given namespace has been restarted.
    * @param namespace in which to check for the pod

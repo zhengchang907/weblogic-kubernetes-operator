@@ -180,6 +180,24 @@ public class TestAssertions {
    * @param podName   name of the pod to check
    * @param domainUid WebLogic domain uid in which the pod belongs
    * @param namespace in which the pod is running
+   * @param expectedRestartVersion restartVersion that is expected
+   * @return true if the pod has been restarted
+   */
+  public static boolean podRestartVersionUpdated(
+      String podName,
+      String domainUid,
+      String namespace,
+      String expectedRestartVersion
+  ) throws ApiException {
+    return Kubernetes.podRestartVersionUpdated(namespace, domainUid, podName, expectedRestartVersion);
+  }
+
+  /**
+   * Check if a pod has been restarted.
+   *
+   * @param podName   name of the pod to check
+   * @param domainUid WebLogic domain uid in which the pod belongs
+   * @param namespace in which the pod is running
    * @param lastCreationTime last time the pod was created
    * @return true if the pod has been restarted
    */
