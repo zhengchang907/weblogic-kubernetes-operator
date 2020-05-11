@@ -187,7 +187,7 @@ public class Kubernetes {
   ) throws ApiException {
     String newCreationTime = getPodCreationTimestamp(namespace, "", podName);
 
-    logger.info("New PodCreationTime {0} ", newCreationTime);
+    logger.info("New PodCreationTime {0}, lastCreationTime {1}", newCreationTime, lastCreationTime);
     if (newCreationTime != null
         && Long.parseLong(newCreationTime) > Long.parseLong(lastCreationTime)) {
       logger.info("New CreationTime of pod {0} is {1}, which is later than the lastCreationTime {2}", 
@@ -195,7 +195,7 @@ public class Kubernetes {
       return true;
     }
     logger.info("New CreationTime of pod {0} is {1}, which is NOT later that the lastCreationTime {2}",
-        newCreationTime, lastCreationTime);
+        podName, newCreationTime, lastCreationTime);
 
     return false;
   }

@@ -77,6 +77,7 @@ import static oracle.weblogic.kubernetes.actions.TestActions.deleteImage;
 import static oracle.weblogic.kubernetes.actions.TestActions.dockerLogin;
 import static oracle.weblogic.kubernetes.actions.TestActions.dockerPush;
 import static oracle.weblogic.kubernetes.actions.TestActions.execCommand;
+import static oracle.weblogic.kubernetes.actions.TestActions.getDomainCustomResource;
 import static oracle.weblogic.kubernetes.actions.TestActions.getOperatorImageName;
 import static oracle.weblogic.kubernetes.actions.TestActions.getPodCreationTimestamp;
 import static oracle.weblogic.kubernetes.actions.TestActions.installOperator;
@@ -539,6 +540,14 @@ class ItMiiDomain implements LoggedTest {
     }
   }
 
+  /**
+   * Patch the running WebLogic domain that is started by testCreateMiiDomain() method with a
+   * a new image that contains the second version of the application running in the WebLogic cluster,
+   * and verify the new version of the applicaiton's availability by accessing it inside each of the
+   * managed pod using Kubernetes Java client Exec api.
+   * This test method has to be run after testCreateMiiDomain() method.
+   */
+
   //@Test
   @Order(4)
   @DisplayName("Update the sample-app application to version 2")
@@ -653,6 +662,13 @@ class ItMiiDomain implements LoggedTest {
     logger.info("The version 2 application has been deployed correctly on all server pods");
   }
 
+  /**
+   * Patch the running WebLogic domain that is started by testPatchAppV2() method with a
+   * a new image that contains another application, and verify that both of the existing application
+   * and the additional application are available by accessing it inside each of the
+   * managed pod using Kubernetes Java client Exec api.
+   * This test method has to be run after testPatchAppV2() method.
+   */
   //@Test
   @Order(5)
   @DisplayName("Update the domain with another application")
@@ -734,6 +750,14 @@ class ItMiiDomain implements LoggedTest {
     logger.info("Both of the applications are running correctly after patching");
   }
 
+  /**
+   * Patch the running WebLogic domain that is started by the previous test method with a different
+   * WebLogic credential secret, and then update the domain's restartVersion to trigger a rolling,
+   * restart. Verify the WebLogic server pods are restarted by verifying that each pod's creation
+   * time is advanced compared with the value before the domain is patched.
+   * This test method has to be run after either testCreateMiiDomain, testPatchAppV2, or testAddSecondApp
+   * to make sure that domain ${domainUid} is running in ${domainNamespace}.
+   */
   @Test
   @Order(6)
   @DisplayName("Change the WebLogic credentials")
@@ -750,20 +774,31 @@ class ItMiiDomain implements LoggedTest {
         assertDoesNotThrow(() -> getPodCreationTimestamp(domainNamespace,"",adminServerPodName),
         String.format("Can not find PodCreationTime for pod %s", adminServerPodName));
     assertNotNull(adminPodLastCreationTime, "adminPodCreationTime returns NULL");
-    logger.info("Before patching AdminPodCreationTime {0}", adminPodLastCreationTime);
+    logger.info("Domain {0} in namespace {1}, admin server pod {2} CreationTime before patching is {3}",
+        domainUid,
+        domainNamespace,
+        adminServerPodName,
+        adminPodLastCreationTime);
     
     List<String> msLastCreationTime = new ArrayList<String>();
     // get the creation time of the managed server pods before patching
-    assertDoesNotThrow(() -> { 
-      for (int i = 1; i <= replicaCount; i++) {
-        msLastCreationTime.add(
-            getPodCreationTimestamp(domainNamespace,"",adminServerPodName));
-      } 
-    },
+    assertDoesNotThrow(
+        () -> { 
+          for (int i = 1; i <= replicaCount; i++) {
+            String creationTime = getPodCreationTimestamp(domainNamespace,"", managedServerPrefix + i);
+            msLastCreationTime.add(creationTime);
+
+            logger.info("Domain {0} in namespace {1}, admin server pod {2} CreationTime before patching is {3}",
+                domainUid,
+                domainNamespace,
+                managedServerPrefix + i,
+                creationTime);
+          } 
+        },
         String.format("Can not find PodCreationTime for pod %s", adminServerPodName));
     
     // create a new secret for admin credentials
-    logger.info("Create secret for admin credentials");
+    logger.info("Create a new secret for WebLogic admin credentials");
     String adminSecretName = "weblogic-credentials-new";
     assertDoesNotThrow(() -> createDomainSecret(adminSecretName,"weblogicnew",
             "welcome1new", domainNamespace),
@@ -771,7 +806,8 @@ class ItMiiDomain implements LoggedTest {
 
     // patch the domain resource with the new image and verify that the domain resource is patched, 
     // and all server pods are patched as well.
-    logger.info("Patch the domain with the secret {0}, and verify the result", adminSecretName); 
+    logger.info("Patch domain {0} in namespace {1} with the secret {2}, and verify the result",
+        domainUid, domainNamespace, adminSecretName); 
     patchAndVerify(
         domainUid,
         domainNamespace,
@@ -781,8 +817,9 @@ class ItMiiDomain implements LoggedTest {
         "webLogicCredentialsSecret/name",
         adminSecretName);
     
+    logger.info("Wait for 3 minutes to allow the servers in domain {0} to be restarted", domainUid);
     try {
-      TimeUnit.SECONDS.sleep(3);
+      TimeUnit.MINUTES.sleep(3);
     } catch (InterruptedException ie) {
       // do nothing
     }
@@ -794,24 +831,21 @@ class ItMiiDomain implements LoggedTest {
 
     boolean succeeded = assertDoesNotThrow(() -> podRestarted(adminServerPodName,
         domainUid, domainNamespace, adminPodLastCreationTime),
-        String.format("Pod %s in namespace %s has not been restarted after patching",
+        String.format("Failed to check if pod %s in namespace %s has been restarted after patching",
           adminServerPodName, domainNamespace));
     assertTrue(succeeded,
         String.format("Pod %s in namespace %s has not been restarted after patching",
         adminServerPodName, domainNamespace));
 
-    logger.info("Check admin server status by calling read state command");
-    checkServerReadyStatusByExec(adminServerPodName, domainNamespace);
-
     // check managed server pods are ready
     for (int i = 1; i <= replicaCount; i++) {
       final String podName = managedServerPrefix + i;
-      final String lastCreationTime = msLastCreationTime.get(i);
+      final String lastCreationTime = msLastCreationTime.get(i - 1);
       logger.info("Wait for managed server pod {0} to be ready in namespace {1}",
           podName, domainNamespace);
       checkPodReady(podName, domainUid, domainNamespace);
       succeeded = assertDoesNotThrow(() -> podRestarted(podName, domainUid, domainNamespace, lastCreationTime),
-          String.format("Failed to check if pod %s in namespace %s has not been restarted after patching",
+          String.format("Failed to check if pod %s in namespace %s has been restarted after patching",
               podName, domainNamespace));
       assertTrue(succeeded, 
           String.format("Pod %s in namespace %s has not been restarted after patching",
@@ -828,8 +862,8 @@ class ItMiiDomain implements LoggedTest {
           APP_RESPONSE_V1 + i);
     }
  
-    logger.info("Domain {0} is fully started - servers are running and application is available",
-        domainUid);
+    logger.info("Domain {0} in namespace {1} is fully started after chaning the WebLogic credential secret",
+        domainUid, domainNamespace);
   }
 
   // This method is needed in this test class, since the cleanup util
@@ -1015,9 +1049,15 @@ class ItMiiDomain implements LoggedTest {
             domainResourceName, namespace, specElement, newValue));
 
     if (!specElement.equals("image")) {
+      String restartVersion = assertDoesNotThrow(
+          () -> getDomainCustomResource(domainResourceName, namespace).getSpec().getRestartVersion(),
+          String.format("Failed to get the restartVersion of %s in namespace %s", domainResourceName, namespace));
+      int newVersion = restartVersion == null ? 1 : Integer.valueOf(restartVersion) + 1;
+      logger.info("Update restartVersion of domain {0} from {1} to {2}",
+          domainResourceName, restartVersion, newVersion);
       patch =
-          String.format("[\n  {\"op\": \"replace\", \"path\": \"/spec/restartVersion\", \"value\": \"3\"}\n]\n",
-              specElement, newValue);
+          String.format("[\n  {\"op\": \"replace\", \"path\": \"/spec/restartVersion\", \"value\": \"%s\"}\n]\n",
+              newVersion);
       logger.info("About to patch the domain resource {0} in namespace {1} with:{2}\n",
           domainResourceName, namespace, patch);
 
@@ -1028,6 +1068,15 @@ class ItMiiDomain implements LoggedTest {
               V1Patch.PATCH_FORMAT_JSON_PATCH),
           String.format("Failed to patch the domain resource %s in namespace %s with startVersion:3",
               domainResourceName, namespace));
+      String currentVersion = assertDoesNotThrow(
+          () -> getDomainCustomResource(domainResourceName, namespace).getSpec().getRestartVersion(),
+          String.format("Failed to get the restartVersion of %s in namespace %s", domainResourceName, namespace));
+      logger.info("Current restartVersion is %s", currentVersion);
+      assertTrue(currentVersion.equals(String.valueOf(newVersion)),
+          String.format("Failed to update the restartVersion of domain %s from %s to %s",
+                        domainResourceName,
+                        restartVersion,
+                        newVersion));
     }
   }
 
