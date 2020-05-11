@@ -360,7 +360,7 @@ class ItMiiDomain implements LoggedTest {
         domainUid);
   }
 
-  //@Test
+  @Test
   @Order(2)
   @DisplayName("Create a second domain with the image from the the first test")
   @Slow
@@ -458,7 +458,7 @@ class ItMiiDomain implements LoggedTest {
     }
   }
 
-  //@Test
+  @Test
   @Order(3)
   @DisplayName("Create a domain with same domainUid as first domain but in a new namespace")
   @Slow
@@ -548,7 +548,7 @@ class ItMiiDomain implements LoggedTest {
    * This test method has to be run after testCreateMiiDomain() method.
    */
 
-  //@Test
+  @Test
   @Order(4)
   @DisplayName("Update the sample-app application to version 2")
   @Slow
@@ -669,7 +669,7 @@ class ItMiiDomain implements LoggedTest {
    * managed pod using Kubernetes Java client Exec api.
    * This test method has to be run after testPatchAppV2() method.
    */
-  //@Test
+  @Test
   @Order(5)
   @DisplayName("Update the domain with another application")
   @Slow
