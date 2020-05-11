@@ -622,7 +622,7 @@ class ItMiiDomain implements LoggedTest {
       // patch the domain resource with the new image and verify that the domain resource is patched, 
       // and all server pods are patched as well.
       logger.info("Patch domain resource with image {0}, and verify the results", miiImagePatchAppV2);
-      patchAndVerify(
+      patchAndVerifyDomainResource(
           domainUid,
           domainNamespace,
           adminServerPodName,
@@ -718,7 +718,7 @@ class ItMiiDomain implements LoggedTest {
     // patch the domain resource with the new image and verify that the domain resource is patched, 
     // and all server pods are patched as well.
     logger.info("Patch the domain with image {0}, and verify the results", miiImageAddSecondApp); 
-    patchAndVerify(
+    patchAndVerifyDomainResource(
         domainUid,
         domainNamespace,
         adminServerPodName,
@@ -808,7 +808,7 @@ class ItMiiDomain implements LoggedTest {
     // and all server pods are patched as well.
     logger.info("Patch domain {0} in namespace {1} with the secret {2}, and verify the result",
         domainUid, domainNamespace, adminSecretName); 
-    patchAndVerify(
+    patchAndVerifyDomainResource(
         domainUid,
         domainNamespace,
         adminServerPodName,
@@ -817,9 +817,9 @@ class ItMiiDomain implements LoggedTest {
         "webLogicCredentialsSecret/name",
         adminSecretName);
     
-    logger.info("Wait for 3 minutes to allow the servers in domain {0} to be restarted", domainUid);
+    logger.info("Wait for 4 minutes to allow the rolling-restart of the servers in {0} to be triggered", domainUid);
     try {
-      TimeUnit.MINUTES.sleep(3);
+      TimeUnit.MINUTES.sleep(4);
     } catch (InterruptedException ie) {
       // do nothing
     }
@@ -829,6 +829,8 @@ class ItMiiDomain implements LoggedTest {
         adminServerPodName, domainNamespace);
     checkPodReady(adminServerPodName, domainUid, domainNamespace);
 
+    logger.info("Check that domain {0} admin server pod {1} in namespace {2} has been restarted",
+        domainUid, adminServerPodName, domainNamespace);
     boolean succeeded = assertDoesNotThrow(() -> podRestarted(adminServerPodName,
         domainUid, domainNamespace, adminPodLastCreationTime),
         String.format("Failed to check if pod %s in namespace %s has been restarted after patching",
@@ -841,25 +843,16 @@ class ItMiiDomain implements LoggedTest {
     for (int i = 1; i <= replicaCount; i++) {
       final String podName = managedServerPrefix + i;
       final String lastCreationTime = msLastCreationTime.get(i - 1);
-      logger.info("Wait for managed server pod {0} to be ready in namespace {1}",
+      logger.info("Wait for managed server pod {0} to be restarted in namespace {1}",
           podName, domainNamespace);
       checkPodReady(podName, domainUid, domainNamespace);
+
       succeeded = assertDoesNotThrow(() -> podRestarted(podName, domainUid, domainNamespace, lastCreationTime),
           String.format("Failed to check if pod %s in namespace %s has been restarted after patching",
               podName, domainNamespace));
       assertTrue(succeeded, 
           String.format("Pod %s in namespace %s has not been restarted after patching",
               podName, domainNamespace));
-    }
-
-    // check and wait for the application to be accessible in all server pods
-    for (int i = 1; i <= replicaCount; i++) {
-      checkAppRunning(
-          domainNamespace,
-          managedServerPrefix + i,
-          "8001",
-          "sample-war/index.jsp",
-          APP_RESPONSE_V1 + i);
     }
  
     logger.info("Domain {0} in namespace {1} is fully started after chaning the WebLogic credential secret",
@@ -1237,7 +1230,7 @@ class ItMiiDomain implements LoggedTest {
 
   }
 
-  private void patchAndVerify(
+  private void patchAndVerifyDomainResource(
       final String domainUid,
       final String namespace,
       final String adminServerPodName,
