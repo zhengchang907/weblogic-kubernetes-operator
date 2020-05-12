@@ -893,13 +893,8 @@ class ItMiiDomain implements LoggedTest {
     return dateFormat.format(date) + "-" + System.currentTimeMillis();
   }
 
-  private String createImageName(String baseImageName) {
-    // Add repository name in image name for Jenkins runs
-    return REPO_NAME.isEmpty() ? baseImageName : REPO_NAME + baseImageName;
-  }
-
   private String updateImageWithAppV2Patch(
-      String baseImageName,
+      String imageName,
       List<String> appDirList
   ) {
     logger.info("Build the model file list that contains {0}", MII_BASIC_WDT_MODEL_FILE);
@@ -921,14 +916,14 @@ class ItMiiDomain implements LoggedTest {
             String.format("%s/%s.zip", ARCHIVE_DIR, MII_BASIC_APP_NAME));
     
     return createImageAndVerify(
-      createImageName(baseImageName),
+      imageName,
       createUniqueImageTag(),
       modelList,
       archiveList);
   }
 
   private String updateImageWithSampleApp3(
-      String baseImageName,
+      String imageName,
       List<String> appDirList1,
       List<String> appDirList2,
       String modelFile
@@ -965,7 +960,7 @@ class ItMiiDomain implements LoggedTest {
         String.format("%s/%s.zip", ARCHIVE_DIR, appName2));
     
     return createImageAndVerify(
-      createImageName(baseImageName),
+      imageName,
       createUniqueImageTag(),
       modelList,
       archiveList);
