@@ -349,6 +349,42 @@ public class Kubernetes implements LoggedTest {
 
   // --------------------------- pods -----------------------------------------
   /**
+   * Get the V1Pod object given the following parameters.
+   *
+   * @param namespace in which to check for the pod existence
+   * @param labelSelector for example, in the format "weblogic.domainUID in (%s)"
+   * @param podName name of the pod to return
+   * @return V1Pod object if found otherwise null
+   * @throws ApiException when there is error in querying the cluster
+   */
+  public static V1Pod getPod(String namespace, String labelSelector, String podName) throws ApiException {
+    V1PodList v1PodList =
+        coreV1Api.listNamespacedPod(
+            namespace, // namespace in which to look for the pods.
+            Boolean.FALSE.toString(), // // pretty print output.
+            Boolean.FALSE, // allowWatchBookmarks requests watch events with type "BOOKMARK".
+            null, // continue to query when there is more results to return.
+            null, // selector to restrict the list of returned objects by their fields
+            labelSelector, // selector to restrict the list of returned objects by their labels.
+            null, // maximum number of responses to return for a list call.
+            null, // shows changes that occur after that particular version of a resource.
+            null, // Timeout for the list/watch call.
+            Boolean.FALSE // Watch for changes to the described resources.
+        );
+    for (V1Pod item : v1PodList.getItems()) {
+      if (item.getMetadata().getName().contains(podName.trim())) {
+        logger.fine(String.format("Pod Name: %s, Pod Namespace: %s, Pod UID: %s, Pod Status: %s",
+            item.getMetadata().getName(),
+            item.getMetadata().getNamespace(),
+            item.getMetadata().getUid(),
+            item.getStatus().getPhase()));
+        return item;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Get a pod's log.
    *
    * @param name name of the Pod
@@ -436,25 +472,6 @@ public class Kubernetes implements LoggedTest {
     return true;
   }
 
-  /**
-   * Returns the V1Pod object given the following parameters.
-   *
-   * @param namespace in which to check for the pod existence
-   * @param labelSelector in the format "weblogic.domainUID in (%s)"
-   * @param podName name of the pod to return
-   * @return V1Pod object if found otherwise null
-   * @throws ApiException if Kubernetes client API call fails
-   */
-  public static V1Pod getPod(String namespace, String labelSelector, String podName) throws ApiException {
-    V1PodList pods = listPods(namespace, labelSelector);
-    for (var pod : pods.getItems()) {
-      if (podName.equals(pod.getMetadata().getName())) {
-        return pod;
-      }
-    }
-    return null;
-  }
-  
   /**
    * Get the weblogic.domainRestartVersion label from a given pod.
    *
