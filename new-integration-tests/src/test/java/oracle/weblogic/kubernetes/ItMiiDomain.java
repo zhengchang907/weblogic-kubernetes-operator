@@ -349,7 +349,7 @@ class ItMiiDomain implements LoggedTest {
         domainUid);
   }
 
-  @Test
+  //@Test
   @Order(2)
   @DisplayName("Create a second domain with the image from the the first test")
   @Slow
@@ -447,7 +447,7 @@ class ItMiiDomain implements LoggedTest {
     }
   }
 
-  @Test
+  //@Test
   @Order(3)
   @DisplayName("Create a domain with same domainUid as first domain but in a new namespace")
   @Slow
@@ -536,7 +536,7 @@ class ItMiiDomain implements LoggedTest {
    * the managed server pods using Kubernetes Java client Exec API.
    * This test method depends on the testCreateMiiDomain() method.
    */
-  @Test
+  //@Test
   @Order(4)
   @DisplayName("Update the sample-app application to version 2")
   @Slow
@@ -660,7 +660,7 @@ class ItMiiDomain implements LoggedTest {
    * managed server pods using Kubernetes Java client Exec API.
    * This test method depends on the testPatchAppV2() method.
    */
-  @Test
+  //@Test
   @Order(5)
   @DisplayName("Update the domain with another application")
   @Slow
@@ -814,7 +814,7 @@ class ItMiiDomain implements LoggedTest {
     
     logger.info("Check if the admin server pod's domainRestartVersion has been updated");
     boolean restartVersionUpdated = assertDoesNotThrow(
-        () -> podRestartVersionUpdated(domainUid, domainNamespace, adminServerPodName, restartVersion),
+        () -> podRestartVersionUpdated(adminServerPodName, domainUid, domainNamespace, restartVersion),
         String.format("Failed to get domain {0} pod {1}'s domainRestartVersion label",
             domainUid, adminServerPodName));
     assertTrue(restartVersionUpdated, 
@@ -830,7 +830,7 @@ class ItMiiDomain implements LoggedTest {
       checkPodRestarted(domainUid, domainNamespace, podName, lastCreationTime);
       logger.info("Check if the managed server pod's domainRestartVersion has been updated");
       restartVersionUpdated = assertDoesNotThrow(
-          () -> podRestartVersionUpdated(domainUid, domainNamespace, podName, restartVersion),
+          () -> podRestartVersionUpdated(podName, domainUid, domainNamespace, restartVersion),
           String.format("Failed to get domain {0} pod {1}'s domainRestartVersion label",
               domainUid, podName));
       assertTrue(restartVersionUpdated, 
@@ -877,8 +877,9 @@ class ItMiiDomain implements LoggedTest {
     if (!REPO_USERNAME.equals(REPO_DUMMY_VALUE)) {
       logger.info("docker login to registry {0}", REPO_REGISTRY);
       assertTrue(dockerLogin(REPO_REGISTRY, REPO_USERNAME, REPO_PASSWORD), "docker login failed");
-
-      logger.info("docker push image {0} to registry {1}", image, REPO_REGISTRY);
+    }
+    if (!REPO_NAME.isEmpty()) {
+      logger.info("docker push image {0} to {1}", image, image);
       assertTrue(dockerPush(image), String.format("docker push failed for image %s", image));
     }
   }

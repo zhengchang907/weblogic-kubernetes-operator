@@ -192,13 +192,12 @@ public class Kubernetes {
   ) throws ApiException {
     String restartVersion = getPodRestartVersion(namespace, "", podName);
 
-    if (restartVersion == null && expectedRestartVersion == null
-        || restartVersion != null && restartVersion.contentEquals(expectedRestartVersion)) {
-      logger.info("Pod {0}: domainRestartVersion has been updated to expect value {1}",
+    if (restartVersion != null && restartVersion.equals(expectedRestartVersion)) {
+      logger.info("Pod {0}: domainRestartVersion has been updated to expected value {1}",
           podName, expectedRestartVersion);
       return true;
     }
-    logger.info("Pod {0}: domainRestartVersion {1} does not match the expected value {2}",
+    logger.info("Pod {0}: domainRestartVersion {1} does not match expected value {2}",
         podName, restartVersion, expectedRestartVersion);
     return false;
   }
