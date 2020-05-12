@@ -478,8 +478,8 @@ public class Kubernetes implements LoggedTest {
    * @param namespace in which to check for the pod existence
    * @param labelSelector in the format "weblogic.domainUID in (%s)"
    * @param podName  name of the pod
-   * @return value of weblogic.domainRestartVersion, null if the pod is not available
-   * @throws ApiException if Kubernetes client API call fail
+   * @return value of weblogic.domainRestartVersion label, null if unset or the pod is not available
+   * @throws ApiException when there is error in querying the cluster
    */
   public static String getPodRestartVersion(String namespace, String labelSelector, String podName) 
       throws ApiException {
@@ -488,7 +488,7 @@ public class Kubernetes implements LoggedTest {
       // return the value of the weblogic.domainRestartVersion label
       return pod.getMetadata().getLabels().get("weblogic.domainRestartVersion");
     } else {
-      logger.info("getPodCRestartVersion(): Pod doesn't exist");
+      logger.info("getPodRestartVersion(): Pod doesn't exist");
       return null;
     }
   }

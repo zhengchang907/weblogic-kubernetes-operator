@@ -542,13 +542,12 @@ class ItMiiDomain implements LoggedTest {
   }
 
   /**
-   * Patch the running WebLogic domain that is started by testCreateMiiDomain() method with a
-   * a new image that contains the second version of the application running in the WebLogic cluster,
-   * and verify the new version of the applicaiton's availability by accessing it inside each of the
-   * managed pod using Kubernetes Java client Exec api.
-   * This test method has to be run after testCreateMiiDomain() method.
+   * Test patching a running model-in-image domain, which contains an application, with a 
+   * new image that contains a newer version of the existing application.
+   * Verify the new version of the application's availability by accessing it inside each of
+   * the managed server pods using Kubernetes Java client Exec API.
+   * This test method depends on the testCreateMiiDomain() method.
    */
-
   @Test
   @Order(4)
   @DisplayName("Update the sample-app application to version 2")
@@ -633,6 +632,9 @@ class ItMiiDomain implements LoggedTest {
           miiImagePatchAppV2);
 
       logger.info("Check and wait for the V2 application to become available");
+      // check that the newer version of the application is running, which indicates that
+      // the cluster has been rolling restarted because this version of the application 
+      // does not exist before the server pods are patched and restarted.
       for (int i = 1; i <= replicaCount; i++) {
         checkAppRunning(
             domainNamespace,
@@ -664,11 +666,11 @@ class ItMiiDomain implements LoggedTest {
   }
 
   /**
-   * Patch the running WebLogic domain that is started by testPatchAppV2() method with a
-   * a new image that contains another application, and verify that both of the existing application
-   * and the additional application are available by accessing it inside each of the
-   * managed pod using Kubernetes Java client Exec api.
-   * This test method has to be run after testPatchAppV2() method.
+   * Test patching a running model-in-image domain, which contains an application, with a new
+   * image that contains an additional application.
+   * Verify the availability of both of the applications by accessing it inside each of the
+   * managed server pods using Kubernetes Java client Exec API.
+   * This test method depends on the testPatchAppV2() method.
    */
   @Test
   @Order(5)
@@ -752,12 +754,12 @@ class ItMiiDomain implements LoggedTest {
   }
 
   /**
-   * Patch the running WebLogic domain that is started by the previous test method with a different
-   * WebLogic credential secret, and then update the domain's restartVersion to trigger a rolling,
-   * restart. Verify the WebLogic server pods are restarted by verifying that each pod's creation
-   * time is advanced compared with the value before the domain is patched.
-   * This test method has to be run after either testCreateMiiDomain, testPatchAppV2, or testAddSecondApp
-   * to make sure that domain ${domainUid} is running in ${domainNamespace}.
+   * Test patching a running model-in-image domain with a new weblogicCredentialsSecret and then
+   * update the domain's restartVersion to trigger a rolling restart of the managed server pods.
+   * Verify the WebLogic server pods are restarted by verifying that each pod's creation time and
+   * the weblogic.domainRestartVersion label are updated.
+   * This test method depends on either testCreateMiiDomain, testPatchAppV2, or testAddSecondApp
+   * to make sure that domain ${domainUid} is running in ${domainNamespace} before this test starts.
    */
   @Test
   @Order(6)
