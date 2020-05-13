@@ -14,7 +14,7 @@ public interface TestConstants {
 
   // domain constants
   public static final String DOMAIN_VERSION = "v7";
-  public static final String API_VERSION = "weblogic.oracle/" + DOMAIN_VERSION;
+  public static final String DOMAIN_API_VERSION = "weblogic.oracle/" + DOMAIN_VERSION;
 
   // operator constants
   public static final String OPERATOR_RELEASE_NAME = "weblogic-operator";
@@ -65,9 +65,6 @@ public interface TestConstants {
   public static final String MII_BASIC_APP_NAME = "sample-app";
   public static final String MII_TWO_APP_WDT_MODEL_FILE = "model-singlecluster-two-sampleapp-wls.yaml";
 
-  // domain constants
-  public static final String DOMAIN_API_VERSION = "weblogic.oracle/" + DOMAIN_VERSION;
-
   // application constants
   public static final String MII_APP_RESPONSE_V1 = "Hello World, you have reached server managed-server";
   public static final String MII_APP_RESPONSE_V2 = "Hello World AGAIN, you have reached server managed-server";
@@ -75,4 +72,3 @@ public interface TestConstants {
   public static final String READ_STATE_COMMAND = "/weblogic-operator/scripts/readState.sh";
 
 }
-
