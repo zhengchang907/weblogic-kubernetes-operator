@@ -349,7 +349,7 @@ class ItMiiDomain implements LoggedTest {
         domainUid);
   }
 
-  //@Test
+  @Test
   @Order(2)
   @DisplayName("Create a second domain with the image from the the first test")
   @Slow
@@ -447,7 +447,7 @@ class ItMiiDomain implements LoggedTest {
     }
   }
 
-  //@Test
+  @Test
   @Order(3)
   @DisplayName("Create a domain with same domainUid as first domain but in a new namespace")
   @Slow
@@ -536,7 +536,7 @@ class ItMiiDomain implements LoggedTest {
    * the managed server pods using Kubernetes Java client Exec API.
    * This test method depends on the testCreateMiiDomain() method.
    */
-  //@Test
+  @Test
   @Order(4)
   @DisplayName("Update the sample-app application to version 2")
   @Slow
@@ -660,7 +660,7 @@ class ItMiiDomain implements LoggedTest {
    * managed server pods using Kubernetes Java client Exec API.
    * This test method depends on the testPatchAppV2() method.
    */
-  //@Test
+  @Test
   @Order(5)
   @DisplayName("Update the domain with another application")
   @Slow
@@ -812,14 +812,8 @@ class ItMiiDomain implements LoggedTest {
         domainUid, adminServerPodName, domainNamespace);
     checkPodRestarted(domainUid, domainNamespace, adminServerPodName, adminPodLastCreationTime);
     
-    logger.info("Check if the admin server pod's domainRestartVersion has been updated");
-    boolean restartVersionUpdated = assertDoesNotThrow(
-        () -> podRestartVersionUpdated(adminServerPodName, domainUid, domainNamespace, restartVersion),
-        String.format("Failed to get domain {0} pod {1}'s domainRestartVersion label",
-            domainUid, adminServerPodName));
-    assertTrue(restartVersionUpdated, 
-        String.format("Domain {0} pod {1}'s domainRestartVersion label has not been updated",
-            domainUid, adminServerPodName));
+    // check that the admin server pod's label has been updated with the new restarVersion
+    checkPodRestartVersionUpdated(adminServerPodName, domainUid, domainNamespace, restartVersion);
     
     // check managed server pods are ready
     for (int i = 1; i <= replicaCount; i++) {
@@ -828,14 +822,9 @@ class ItMiiDomain implements LoggedTest {
       logger.info("Wait for managed server pod {0} to be restarted in namespace {1}",
           podName, domainNamespace);
       checkPodRestarted(domainUid, domainNamespace, podName, lastCreationTime);
-      logger.info("Check if the managed server pod's domainRestartVersion has been updated");
-      restartVersionUpdated = assertDoesNotThrow(
-          () -> podRestartVersionUpdated(podName, domainUid, domainNamespace, restartVersion),
-          String.format("Failed to get domain {0} pod {1}'s domainRestartVersion label",
-              domainUid, podName));
-      assertTrue(restartVersionUpdated, 
-          String.format("Domain {0} pod {1}'s domainRestartVersion label has not been updated",
-              domainUid, podName)); 
+      
+      // check that the managed server pod's label has been updated with the new restarVersion`
+      checkPodRestartVersionUpdated(podName, domainUid, domainNamespace, restartVersion);
     }
  
     logger.info("Domain {0} in namespace {1} is fully started after chaning the WebLogic credential secret",
@@ -1411,6 +1400,21 @@ class ItMiiDomain implements LoggedTest {
                 "pod %s has not been restarted in namespace %s", podName, domNamespace)));
   }
 
+  private void checkPodRestartVersionUpdated(
+      String podName,
+      String domainUid,
+      String namespace,
+      String restartVersion) {
+    logger.info("Check if weblogic.domainRestartVersion of pod {0} has been updated", podName);
+    boolean restartVersionUpdated = assertDoesNotThrow(
+        () -> podRestartVersionUpdated(podName, domainUid, namespace, restartVersion),
+        String.format("Failed to get weblogic.domainRestartVersion label of pod %s in namespace %s",
+            podName, namespace));
+    assertTrue(restartVersionUpdated, 
+        String.format("Label weblogic.domainRestartVersion of pod %s in namespace %s has not been updated",
+            podName, namespace));
+  }
+  
   private static void collectAppAvaiability(
       String namespace,
       List<Integer> appAvailability,
