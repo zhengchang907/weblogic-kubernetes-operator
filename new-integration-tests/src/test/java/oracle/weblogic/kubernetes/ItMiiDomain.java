@@ -51,8 +51,13 @@ import org.junit.jupiter.api.TestMethodOrder;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static oracle.weblogic.kubernetes.TestConstants.ADMIN_PASSWORD_DEFAULT;
+import static oracle.weblogic.kubernetes.TestConstants.ADMIN_PASSWORD_PATCH;
+import static oracle.weblogic.kubernetes.TestConstants.ADMIN_USERNAME_DEFAULT;
+import static oracle.weblogic.kubernetes.TestConstants.ADMIN_USERNAME_PATCH;
 import static oracle.weblogic.kubernetes.TestConstants.DOMAIN_API_VERSION;
 import static oracle.weblogic.kubernetes.TestConstants.DOMAIN_VERSION;
+import static oracle.weblogic.kubernetes.TestConstants.K8S_NODEPORT_HOST;
 import static oracle.weblogic.kubernetes.TestConstants.MII_APP_RESPONSE_V1;
 import static oracle.weblogic.kubernetes.TestConstants.MII_APP_RESPONSE_V2;
 import static oracle.weblogic.kubernetes.TestConstants.MII_APP_RESPONSE_V3;
@@ -97,6 +102,7 @@ import static oracle.weblogic.kubernetes.actions.TestActions.upgradeOperator;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.appAccessibleInPod;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.appAccessibleInPodKubectl;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.appNotAccessibleInPod;
+import static oracle.weblogic.kubernetes.assertions.TestAssertions.credentialsValid;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.doesImageExist;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.domainExists;
 import static oracle.weblogic.kubernetes.assertions.TestAssertions.domainResourceImagePatched;
@@ -269,8 +275,8 @@ class ItMiiDomain implements LoggedTest {
     // create secret for admin credentials
     logger.info("Create secret for admin credentials");
     String adminSecretName = "weblogic-credentials";
-    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,"weblogic",
-            "welcome1", domainNamespace),
+    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,ADMIN_USERNAME_DEFAULT,
+            ADMIN_PASSWORD_DEFAULT, domainNamespace),
             String.format("createSecret failed for %s", adminSecretName));
 
     // create encryption secret
@@ -382,7 +388,7 @@ class ItMiiDomain implements LoggedTest {
     // create secret for admin credentials
     logger.info("Create secret for admin credentials");
     String adminSecretName = domainUid1 + "-weblogic-credentials";
-    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,"weblogic",
+    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,ADMIN_USERNAME_DEFAULT,
             "welcome2", domainNamespace1),
             String.format("createSecret failed for %s", adminSecretName));
 
@@ -465,7 +471,7 @@ class ItMiiDomain implements LoggedTest {
     // create secret for admin credentials
     logger.info("Create secret for admin credentials");
     String adminSecretName = domainUid + "-weblogic-credentials";
-    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,"weblogic",
+    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,ADMIN_USERNAME_DEFAULT,
             "welcome3", domainNamespace1),
             String.format("createSecret failed for %s", adminSecretName));
 
@@ -759,6 +765,8 @@ class ItMiiDomain implements LoggedTest {
     final String adminServerPodName = domainUid + "-admin-server";
     final String managedServerPrefix = domainUid + "-managed-server";
     final int replicaCount = 2;
+    final boolean VALID = true;
+    final boolean INVALID = false;
 
     // get the creation time of the admin server pod before patching
     String adminPodLastCreationTime =
@@ -788,11 +796,15 @@ class ItMiiDomain implements LoggedTest {
         },
         String.format("Can not find PodCreationTime for pod %s", adminServerPodName));
     
+    logger.info("Check that before patching current credentials are in effect and new credentials are not");
+    verifyCredentials(adminServerPodName, domainNamespace, ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, VALID);
+    verifyCredentials(adminServerPodName, domainNamespace, ADMIN_USERNAME_PATCH, ADMIN_PASSWORD_PATCH, INVALID);
+    
     // create a new secret for admin credentials
     logger.info("Create a new secret for WebLogic admin credentials");
     String adminSecretName = "weblogic-credentials-new";
-    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,"weblogicnew",
-            "welcome1new", domainNamespace),
+    assertDoesNotThrow(() -> createDomainSecret(adminSecretName,ADMIN_USERNAME_PATCH,
+            ADMIN_PASSWORD_PATCH, domainNamespace),
             String.format("createSecret failed for %s", adminSecretName));
 
     // patch the domain resource with the new image and verify that the domain resource is patched, 
@@ -827,7 +839,12 @@ class ItMiiDomain implements LoggedTest {
       checkPodRestartVersionUpdated(podName, domainUid, domainNamespace, restartVersion);
     }
  
-    logger.info("Domain {0} in namespace {1} is fully started after chaning the WebLogic credential secret",
+    // check if the new credentials are in effect and the old credentials are not valid any more
+    logger.info("Check that after patching current credentials are not in effect and new credentials are");
+    verifyCredentials(adminServerPodName, domainNamespace, ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, INVALID);
+    verifyCredentials(adminServerPodName, domainNamespace, ADMIN_USERNAME_PATCH, ADMIN_PASSWORD_PATCH, VALID);
+    
+    logger.info("Domain {0} in namespace {1} is fully started after changing WebLogic credential secret",
         domainUid, domainNamespace);
   }
 
@@ -1413,6 +1430,26 @@ class ItMiiDomain implements LoggedTest {
     assertTrue(restartVersionUpdated, 
         String.format("Label weblogic.domainRestartVersion of pod %s in namespace %s has not been updated",
             podName, namespace));
+  }
+  
+  private void verifyCredentials(
+      String podName,
+      String namespace,
+      String username,
+      String password,
+      boolean shouldBeValid) {
+    logger.info("Check if new WebLogic admin credentials are in effect on pod {0}", podName);
+    boolean connectSucceeded = assertDoesNotThrow(
+        () -> credentialsValid(K8S_NODEPORT_HOST, podName, namespace, username, password),
+        String.format("Failed to check the credentials on pod %s", podName));
+        
+    if (shouldBeValid) {
+      assertTrue(connectSucceeded, 
+          "Given credentials are invalid");
+    } else {
+      assertFalse(connectSucceeded, 
+          "Given credentials are incorrectly valid"); 
+    }
   }
   
   private static void collectAppAvaiability(

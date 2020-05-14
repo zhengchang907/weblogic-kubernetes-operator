@@ -346,6 +346,25 @@ public class TestAssertions {
   ) {
     return !Application.appAccessibleInPod(namespace, podName, port, appPath, expectedResponse);
   }
+  
+  /**
+   * Check if the given WebLogic admin credentials are valid.
+   *
+   * @param host hostname of WebLogic admin server pod
+   * @param podName name of WebLogic admin server pod
+   * @param namespace name of the namespace that the pod is running in
+   * @param username WebLogic admin username
+   * @param password WebLogic admin password
+   * @return true if the console can be accessed
+   */
+  public static boolean credentialsValid(
+      String host,
+      String podName,
+      String namespace,
+      String username,
+      String password) {
+    return Application.credentialsValid(host, podName, namespace, username, password);
+  }
 
   /**
    * Check if the Docker image containing the search string exists.
