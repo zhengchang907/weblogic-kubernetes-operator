@@ -14,6 +14,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import javax.json.Json;
+import javax.json.JsonPatchBuilder;
 
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -78,7 +80,7 @@ public class DomainStatusUpdater {
    * @param next the next step
    * @return the new step
    */
-  static Step createStatusUpdateStep(Step next) {
+  public static Step createStatusUpdateStep(Step next) {
     return new StatusUpdateStep(next);
   }
 
@@ -174,80 +176,55 @@ public class DomainStatusUpdater {
       DomainStatusUpdaterContext context = createContext(packet);
       DomainStatus newStatus = context.getNewStatus();
 
-      return context.isStatusChanged(newStatus)
-            ? doNext(packet)
-            : doNext(createDomainStatusReplaceStep(context, newStatus), packet);
+      return context.isStatusUnchanged(newStatus)
+          ? doNext(packet)
+          : doNext(createDomainStatusReplaceStep(context, newStatus), packet);
     }
 
     private Step createDomainStatusReplaceStep(DomainStatusUpdaterContext context, DomainStatus newStatus) {
       LOGGER.fine(MessageKeys.DOMAIN_STATUS, context.getDomainUid(), newStatus);
-
-      boolean useDomainStatusEndpoint = Main.useDomainStatusEndpoint.get();
-
+      if (LOGGER.isFinerEnabled()) {
+        LOGGER.finer("status change: " + createPatchString(context, newStatus));
+      }
       Domain oldDomain = context.getDomain();
       Domain newDomain = new Domain()
           .withKind(KubernetesConstants.DOMAIN)
           .withApiVersion(oldDomain.getApiVersion())
           .withMetadata(oldDomain.getMetadata())
-          .withSpec(useDomainStatusEndpoint ? null : oldDomain.getSpec())
+          .withSpec(null)
           .withStatus(newStatus);
 
-      if (useDomainStatusEndpoint) {
-        return new CallBuilder()
-            .replaceDomainStatusAsync(
-                context.getDomainName(),
-                context.getNamespace(),
-                newDomain,
-                createResponseStep(context, newStatus, useDomainStatusEndpoint, getNext()));
-      } else {
-        return new CallBuilder()
-            .replaceDomainAsync(
-                context.getDomainName(),
-                context.getNamespace(),
-                newDomain,
-                createResponseStep(context, newStatus, useDomainStatusEndpoint, getNext()));
-      }
+      return new CallBuilder().replaceDomainStatusAsync(
+          context.getDomainName(),
+          context.getNamespace(),
+          newDomain,
+          createResponseStep(context, getNext()));
     }
 
-    private ResponseStep<Domain> createResponseStep(DomainStatusUpdaterContext context,
-                                                    DomainStatus newStatus, boolean useDomainStatusEndpoint,
-                                                    Step next) {
-      return new StatusReplaceResponseStep(this, context, newStatus, useDomainStatusEndpoint, next);
+    private String createPatchString(DomainStatusUpdaterContext context, DomainStatus newStatus) {
+      JsonPatchBuilder builder = Json.createPatchBuilder();
+      newStatus.createPatchFrom(builder, context.getStatus());
+      return builder.build().toString();
+    }
+
+    private ResponseStep<Domain> createResponseStep(DomainStatusUpdaterContext context, Step next) {
+      return new StatusReplaceResponseStep(this, context, next);
     }
   }
 
   static class StatusReplaceResponseStep extends DefaultResponseStep<Domain> {
     private final DomainStatusUpdaterStep updaterStep;
     private final DomainStatusUpdaterContext context;
-    private final DomainStatus newStatus;
-    private final boolean useDomainStatusEndpoint;
 
     public StatusReplaceResponseStep(DomainStatusUpdaterStep updaterStep,
-                                     DomainStatusUpdaterContext context,
-                                     DomainStatus newStatus,
-                                     boolean useDomainStatusEndpoint,
-                                     Step nextStep) {
+                                     DomainStatusUpdaterContext context, Step nextStep) {
       super(nextStep);
       this.updaterStep = updaterStep;
       this.context = context;
-      this.newStatus = newStatus;
-      this.useDomainStatusEndpoint = useDomainStatusEndpoint;
     }
 
     @Override
     public NextAction onSuccess(Packet packet, CallResponse<Domain> callResponse) {
-      // If the 3.0.0 operator updated the CRD to use status endpoint while this operator is running
-      // then these domain replace calls will succeed, but the proposed domain status will have been
-      // ignored. Check if the status on the returned domain is expected
-      if (!useDomainStatusEndpoint && !newStatus.equals(callResponse.getResult().getStatus())) {
-        // TEST
-        System.out.println("**** **** ****: Domain status update ignored; switching to status endpoint");
-
-        // FIXME: would be better to recheck CRD
-        Main.useDomainStatusEndpoint.set(true);
-        return doNext(createRetry(context, getNext()), packet);
-      }
-
       packet.getSpi(DomainPresenceInfo.class).setDomain(callResponse.getResult());
       return doNext(packet);
     }
@@ -262,7 +239,7 @@ public class DomainStatusUpdater {
     }
 
     public Step createRetry(DomainStatusUpdaterContext context, Step next) {
-      return Step.chain(createDomainRefreshStep(context), updaterStep, next);
+      return Step.chain(createDomainRefreshStep(context), updaterStep);
     }
 
     private Step createDomainRefreshStep(DomainStatusUpdaterContext context) {
@@ -290,6 +267,9 @@ public class DomainStatusUpdater {
     DomainStatus getNewStatus() {
       DomainStatus newStatus = cloneStatus();
       modifyStatus(newStatus);
+      if (newStatus.getMessage() == null) {
+        newStatus.setMessage(info.getValidationWarningsAsString());
+      }
       return newStatus;
     }
 
@@ -297,7 +277,7 @@ public class DomainStatusUpdater {
       return getDomain().getDomainUid();
     }
 
-    boolean isStatusChanged(DomainStatus newStatus) {
+    boolean isStatusUnchanged(DomainStatus newStatus) {
       return newStatus.equals(getStatus());
     }
 
@@ -368,9 +348,9 @@ public class DomainStatusUpdater {
         if (getDomain() == null) {
           return;
         }
-        
+
         if (getDomainConfig().isPresent()) {
-          status.setServers(new ArrayList<>(getServerStatuses().values()));
+          status.setServers(new ArrayList<>(getServerStatuses(getDomainConfig().get().getAdminServerName()).values()));
           status.setClusters(new ArrayList<>(getClusterStatuses().values()));
           status.setReplicas(getReplicaSetting());
         }
@@ -381,8 +361,9 @@ public class DomainStatusUpdater {
           status.addCondition(new DomainCondition(Available).withStatus(TRUE).withReason(SERVERS_READY_REASON));
         } else if (!status.hasConditionWith(c -> c.hasType(Progressing))) {
           status.addCondition(new DomainCondition(Progressing).withStatus(TRUE)
-                .withReason(MANAGED_SERVERS_STARTING_PROGRESS_REASON));
+              .withReason(MANAGED_SERVERS_STARTING_PROGRESS_REASON));
         }
+
       }
 
       private boolean allIntendedServersRunning() {
@@ -426,22 +407,38 @@ public class DomainStatusUpdater {
         return Optional.ofNullable(getInfo().getServerPod(serverName)).filter(PodHelper::getReadyStatus).isPresent();
       }
 
-      Map<String, ServerStatus> getServerStatuses() {
+      Map<String, ServerStatus> getServerStatuses(final String adminServerName) {
         return getServerNames().stream()
-            .collect(Collectors.toMap(Function.identity(), this::createServerStatus));
+            .collect(Collectors.toMap(Function.identity(),
+                s -> createServerStatus(s, Objects.equals(s, adminServerName))));
       }
 
-      private ServerStatus createServerStatus(String serverName) {
+      private ServerStatus createServerStatus(String serverName, boolean isAdminServer) {
+        String clusterName = getClusterName(serverName);
         return new ServerStatus()
             .withServerName(serverName)
             .withState(getRunningState(serverName))
-            .withHealth(serverHealth.get(serverName))
-            .withClusterName(getClusterName(serverName))
-            .withNodeName(getNodeName(serverName));
+            .withDesiredState(getDesiredState(serverName, clusterName, isAdminServer))
+            .withHealth(serverHealth == null ? null : serverHealth.get(serverName))
+            .withClusterName(clusterName)
+            .withNodeName(getNodeName(serverName))
+            .withIsAdminServer(isAdminServer);
       }
 
       private String getRunningState(String serverName) {
-        return serverState.getOrDefault(serverName, SHUTDOWN_STATE);
+        return Optional.ofNullable(serverState).map(m -> m.get(serverName)).orElse(null);
+      }
+
+      private String getDesiredState(String serverName, String clusterName, boolean isAdminServer) {
+        return isAdminServer | shouldStart(serverName)
+            ? getDomain().getServer(serverName, clusterName).getDesiredState()
+            : SHUTDOWN_STATE;
+      }
+
+      private boolean shouldStart(final String serverName) {
+        return getServerStartupInfos()
+            .filter(s -> Objects.equals(serverName, s.getServerName()))
+            .anyMatch(s -> !s.isServiceOnly());
       }
 
       Integer getReplicaSetting() {
@@ -480,7 +477,9 @@ public class DomainStatusUpdater {
             .withReplicas(Optional.ofNullable(getClusterCounts().get(clusterName)).map(Long::intValue).orElse(null))
             .withReadyReplicas(
                 Optional.ofNullable(getClusterCounts(true).get(clusterName)).map(Long::intValue).orElse(null))
-            .withMaximumReplicas(getClusterMaximumSize(clusterName));
+            .withMaximumReplicas(getClusterMaximumSize(clusterName))
+            .withMinimumReplicas(getClusterMinimumSize(clusterName))
+            .withReplicasGoal(getClusterSizeGoal(clusterName));
       }
 
 
@@ -508,14 +507,16 @@ public class DomainStatusUpdater {
       private Collection<String> getServerNames() {
         Set<String> result = new HashSet<>();
         getDomainConfig()
-              .ifPresent(config -> {
-                result.addAll(config.getServerConfigs().keySet());
-                for (WlsClusterConfig cluster : config.getConfiguredClusters()) {
-                  Optional.ofNullable(cluster.getDynamicServersConfig())
-                        .flatMap(dynamicConfig -> Optional.ofNullable(dynamicConfig.getServerConfigs()))
-                        .ifPresent(servers -> servers.forEach(item -> result.add(item.getName())));
-                }
-              });
+            .ifPresent(config -> {
+              result.addAll(config.getServerConfigs().keySet());
+              for (WlsClusterConfig cluster : config.getConfiguredClusters()) {
+                Optional.ofNullable(cluster.getDynamicServersConfig())
+                    .flatMap(dynamicConfig -> Optional.ofNullable(dynamicConfig.getServerConfigs()))
+                    .ifPresent(servers -> servers.forEach(item -> result.add(item.getName())));
+                Optional.ofNullable(cluster.getServerConfigs())
+                    .ifPresent(servers -> servers.forEach(item -> result.add(item.getName())));
+              }
+            });
         return result;
       }
 
@@ -528,6 +529,15 @@ public class DomainStatusUpdater {
       private Integer getClusterMaximumSize(String clusterName) {
         return getDomainConfig().map(config -> Optional.ofNullable(config.getClusterConfig(clusterName)))
             .map(cluster -> cluster.map(WlsClusterConfig::getMaxClusterSize).orElse(0)).get();
+      }
+
+      private Integer getClusterMinimumSize(String clusterName) {
+        return getDomainConfig().map(config -> Optional.ofNullable(config.getClusterConfig(clusterName)))
+            .map(cluster -> cluster.map(WlsClusterConfig::getMinClusterSize).orElse(0)).get();
+      }
+
+      private Integer getClusterSizeGoal(String clusterName) {
+        return getDomain().getReplicaCount(clusterName);
       }
     }
   }

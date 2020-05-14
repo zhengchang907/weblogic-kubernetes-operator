@@ -51,6 +51,11 @@ class ObjectPatch<T> {
     return this;
   }
 
+  ObjectPatch<T> withBooleanField(String fieldName, Function<T,Boolean> getter) {
+    fields.add(new BooleanField<>(fieldName, getter));
+    return this;
+  }
+
   ObjectPatch<T> withStringField(String fieldName, Function<T,String> getter) {
     fields.add(new StringField<>(fieldName, getter));
     return this;
@@ -77,7 +82,7 @@ class ObjectPatch<T> {
   }
 
   <P extends PatchableComponent<P>> ObjectPatch<T> withListField(
-        String fieldName, ObjectPatch<P> objectPatch, Function<T,List<P>> getter) {
+      String fieldName, ObjectPatch<P> objectPatch, Function<T,List<P>> getter) {
     fields.add(new ObjectListField<>(fieldName, objectPatch, getter));
     return this;
   }
@@ -200,6 +205,28 @@ class ObjectPatch<T> {
     }
   }
 
+  static class BooleanField<T> extends ScalarFieldPatch<T,Boolean> {
+
+    BooleanField(String name, Function<T, Boolean> getter) {
+      super(name, getter);
+    }
+
+    @Override
+    void addToObject(JsonObjectBuilder builder, String name, Boolean value) {
+      builder.add(name, value);
+    }
+
+    @Override
+    void replaceField(JsonPatchBuilder builder, String path, Boolean oldValue, Boolean newValue) {
+      builder.replace(path, newValue);
+    }
+
+    @Override
+    void addField(JsonPatchBuilder builder, String path, Boolean newValue) {
+      builder.add(path, newValue);
+    }
+  }
+
   static class StringField<T> extends ScalarFieldPatch<T,String> {
 
     StringField(String name, Function<T, String> getter) {
@@ -285,7 +312,7 @@ class ObjectPatch<T> {
       if (contents.isEmpty()) {
         return;
       }
-      
+
       JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
       contents.stream().map(objectPatch::createObjectBuilder).forEach(arrayBuilder::add);
       builder.add(fieldName, arrayBuilder.build());
@@ -296,7 +323,7 @@ class ObjectPatch<T> {
       P[] oldItems = getListField(oldItem);
       P[] newItems = getListField(newItem);
       List<Disposition> disposition
-            = Arrays.stream(oldItems).map(c -> getDisposition(c, newItems)).collect(Collectors.toList());
+          = Arrays.stream(oldItems).map(c -> getDisposition(c, newItems)).collect(Collectors.toList());
 
       for (int i = 0; i < oldItems.length; i++) {
         if (disposition.get(i).type == DispositionType.UPDATE) {
@@ -314,7 +341,7 @@ class ObjectPatch<T> {
       if (oldItems.length == 0 && newItems.length != 0) {
         builder.add(getPath(parent), JsonValue.EMPTY_JSON_ARRAY);
       }
-      
+
       for (int j = 0; j < newItems.length; j++) {
         if (Disposition.shouldAdd(disposition, j)) {
           objectPatch.addItem(builder, getPath(parent), newItems[j]);
