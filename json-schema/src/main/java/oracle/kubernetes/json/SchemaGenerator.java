@@ -72,7 +72,7 @@ public class SchemaGenerator {
   static <T, S> Map<T, S> loadCachedSchema(URL cacheUrl) throws IOException {
     StringBuilder sb = new StringBuilder();
     try (BufferedReader schemaReader =
-             new BufferedReader(new InputStreamReader(cacheUrl.openStream()))) {
+        new BufferedReader(new InputStreamReader(cacheUrl.openStream()))) {
       String inputLine;
       while ((inputLine = schemaReader.readLine()) != null) {
         sb.append(inputLine).append('\n');
