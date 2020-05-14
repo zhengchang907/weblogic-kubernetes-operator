@@ -1,10 +1,10 @@
 ---
-title: "Providing access to a Persistent Volume Claim"
+title: "Providing access to a PersistentVolumeClaim"
 date: 2020-01-07T15:02:28-05:00
 draft: false
 weight: 60
 ---
-> I need to provide an instance with access to a Persistent Volume Claim.
+> I need to provide an instance with access to a PersistentVolumeClaim.
 
 Some applications need access to a file, either to read data or to provide additional logging beyond what is
 built into the operator. One common way of doing that within Kubernetes is to create a
@@ -32,7 +32,7 @@ spec:
   storageClassName: slow
 ```
 
-To provide access to this claim to all managed servers in the `cluster-1` cluster, specify the following
+To provide access to this claim to all Managed Servers in the `cluster-1` cluster, specify the following
 in your [domain resource](https://github.com/oracle/weblogic-kubernetes-operator/blob/master/docs/domains/Domain.md):
 
 ```
@@ -52,5 +52,5 @@ Note the use of the claim name in the `claimName` field of the `volume` entry. B
 `volumeMount` entry are required, and must have the same name. The `volume` entry associates that name with the claim,
 while the `volumeMount` entry defines the path to it that the application can use to access the file.
 
-**NOTE**: If the PVC is mapped either across the domain or to a cluster, 
+**NOTE**: If the PVC is mapped either across the domain or to a cluster,
 its access mode must be either `ReadOnlyMany` or `ReadWriteMany`.

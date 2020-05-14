@@ -21,7 +21,7 @@ it is supported for production use.
 * [Creating a SOA Suite Docker image](#creating-a-soa-suite-docker-image)
 * [Configuring access to your database](#configuring-access-to-your-database)
 * [Running the Repository Creation Utility to set up your database schemas](#running-the-repository-creation-utility-to-set-up-your-database-schemas)
-* [Create a Kubernetes secret with the RCU credentials](#create-a-kubernetes-secret-with-the-rcu-credentials)
+* [Create a Kubernetes Secret with the RCU credentials](#create-a-kubernetes-secret-with-the-rcu-credentials)
 * [Creating a SOA domain](#creating-a-soa-domain)
 * [Configuring a load balancer for SOA Suite domains](#configuring-a-load-balancer-for-soa-suite-domains)
 * [Monitoring a SOA domain](#monitoring-a-soa-domain)
@@ -41,7 +41,7 @@ This document provides details about the special considerations for deploying an
 Other than those considerations listed here, SOA Suite domains work in the same way as FMW Infrastructure domains and WebLogic Server domains.
 
 In this release, SOA Suite domains are supported using the “domain on a persistent volume”
-[model]({{< relref "/userguide/managing-domains/choosing-a-model/_index.md" >}}) only, where the domain home is located in a persistent volume (PV).
+[domain home source type]({{< relref "/userguide/managing-domains/choosing-a-model/_index.md" >}}) only, where the domain home is located in a PersistentVolume (PV).
 
 #### Prerequisites for SOA Suite domains
 
@@ -60,7 +60,7 @@ In this release, SOA Suite domains are supported using the “domain on a persis
 Compared to running a WebLogic Server domain in Kubernetes using the operator, the
 following limitations currently exist for SOA Suite domains:
 
-* The "domain in image" model is not supported.
+* The Domain in Image domain home source type is not supported.
 * Only configured clusters are supported.  Dynamic clusters are not supported for
   SOA Suite domains.  Note that you can still use all of the scaling features,
   you just need to define the maximum size of your cluster at domain creation time.
@@ -68,7 +68,7 @@ following limitations currently exist for SOA Suite domains:
 * The [WebLogic Logging Exporter](https://github.com/oracle/weblogic-logging-exporter)
   currently supports WebLogic Server logs only.  Other logs will not be sent to
   Elasticsearch.  Note, however, that you can use a sidecar with a log handling tool
-  like Logstash or fluentd to get logs.
+  like Logstash or Fluentd to get logs.
 * The [WebLogic Monitoring Exporter](https://github.com/oracle/weblogic-monitoring-exporter)
   currently supports the WebLogic MBean trees only.  Support for JRF MBeans has not
   been added yet.
@@ -110,8 +110,8 @@ For the Fusion Middleware Infrastructure image, you must install the [required p
 
 
   ```bash
-    $ docker pull container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.3-200109
-    $ docker tag container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.3-200109  oracle/fmw-infrastructure:12.2.1.3
+    $ docker pull container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.3-200316
+    $ docker tag container-registry.oracle.com/middleware/fmw-infrastructure:12.2.1.3-200316  oracle/fmw-infrastructure:12.2.1.3
   ```
 
 {{% notice warning %}}
@@ -193,18 +193,18 @@ Oracle Support for Database Running on Docker (Doc ID 2216342.1).
 Follow these instructions to perform a basic deployment of the Oracle
 database in Kubernetes. For more details about database setup and configuration, refer to this [page]({{< relref "/userguide/managing-fmw-domains/fmw-infra/_index.md#running-the-database-inside-kubernetes" >}}).
 
-When running the Oracle database in Kubernetes, you have an option to attach persistent volumes (PV) so that the database storage will be persisted across database restarts. If you prefer not to persist the database storage, follow the instructions in this
-[document](https://github.com/oracle/weblogic-kubernetes-operator/tree/master/kubernetes/samples/scripts/create-rcu-schema#start-an-oracle-database-service-in-a-kubernetes-cluster) to set up a database in a container with no persistent volume (PV) attached.
+When running the Oracle database in Kubernetes, you have an option to attach PersistentVolumes (PV) so that the database storage will be persisted across database restarts. If you prefer not to persist the database storage, follow the instructions in this
+[document](https://github.com/oracle/weblogic-kubernetes-operator/tree/master/kubernetes/samples/scripts/create-rcu-schema#start-an-oracle-database-service-in-a-kubernetes-cluster) to set up a database in a container with no PersistentVolume (PV) attached.
 
 >**NOTE**: `start-db-service.sh` creates the database in the `default` namespace. If you
 >want to create the database in a different namespace, you need to manually update
 >the value for all the occurrences of the namespace field in the provided
 >sample file `create-rcu-schema/common/oracle.db.yaml`.
 
-These instructions will set up the database in a container with the persistent volume (PV) attached.
+These instructions will set up the database in a container with the PersistentVolume (PV) attached.
 If you chose not to use persistent storage, please go to the [RCU creation step](#running-the-repository-creation-utility-to-set-up-your-database-schemas).
 
-* Create the persistent volume and persistent volume claim for the database
+* Create the PersistentVolume and PersistentVolumeClaim for the database
 using the [create-pv-pvc.sh]({{< relref "/samples/simple/storage/_index.md" >}}) sample.
 Refer to the instructions provided in that sample.
 
@@ -285,9 +285,9 @@ $ ./drop-rcu-schema.sh \
 For SOA domains, the `drop-rcu-schema.sh` script supports the domain types `soa,osb,soaosb,soaess,soaessosb`.
 You must specify one of these using the `-t` flag.
 
-#### Create a Kubernetes secret with the RCU credentials
+#### Create a Kubernetes Secret with the RCU credentials
 
-You also need to create a Kubernetes secret containing the credentials for the database schemas.
+You also need to create a Kubernetes Secret containing the credentials for the database schemas.
 When you create your domain using the sample provided below, it will obtain the RCU credentials
 from this secret.
 
@@ -347,8 +347,8 @@ to create your domain.  To continue, follow the instructions in the [SOA Domain 
 
 #### Configuring a load balancer for SOA Suite domains
 
-An Ingress based load balancer can be configured to access the Oracle SOA and Oracle Service Bus domain application URLs.
-Refer to the [setup Ingress](https://oracle.github.io/weblogic-kubernetes-operator/userguide/managing-domains/ingress/) document for details.
+An ingress-based load balancer can be configured to access the Oracle SOA and Oracle Service Bus domain application URLs.
+Refer to the [Ingress](https://oracle.github.io/weblogic-kubernetes-operator/userguide/managing-domains/ingress/) document for details.
 
 As part of the `ingress-per-domain` setup for Oracle SOA and Oracle Service Bus domains, the `values.yaml` file (under the `ingress-per-domain` directory) needs to be updated with the appropriate values from your environment. A sample `values.yaml` file (for the Traefik load balancer) is shown below:
 
@@ -383,7 +383,7 @@ voyager:
   statsPort: 30315
 ```
 
-Below are the path-based, Ingress routing rules (`spec.rules` section) that need to be defined for Oracle SOA and Oracle Service Bus domains. You need to update the appropriate Ingress template YAML file based on the load balancer being used. For example, the template YAML file for the Traefik load balancer is located at `kubernetes/samples/charts/ingress-per-domain/templates/traefik-ingress.yaml`.
+Below are the path-based, ingress routing rules (`spec.rules` section) that need to be defined for Oracle SOA and Oracle Service Bus domains. You need to update the appropriate Ingress template YAML file based on the load balancer being used. For example, the template YAML file for the Traefik load balancer is located at `kubernetes/samples/charts/ingress-per-domain/templates/traefik-ingress.yaml`.
 
 ```bash
 rules:
@@ -416,27 +416,28 @@ Now you can access the Oracle SOA Suite domain URLs, as listed below, based on t
 
 * Oracle SOA:
 
-  http://\<hostname\>:\<port\>/weblogic/ready  
-  http://\<hostname\>:\<port\>/console  
-  http://\<hostname\>:\<port\>/em  
-  http://\<hostname\>:\<port\>/soa-infra  
-  http://\<hostname\>:\<port\>/soa/composer  
-  http://\<hostname\>:\<port\>/integration/worklistapp
+  `http://\<hostname\>:\<port\>/weblogic/ready`  
+  `http://\<hostname\>:\<port\>/console`  
+  `http://\<hostname\>:\<port\>/em`  
+  `http://\<hostname\>:\<port\>/soa-infra`  
+  `http://\<hostname\>:\<port\>/soa/composer`  
+  `http://\<hostname\>:\<port\>/integration/worklistapp`
+
 
 * Oracle Enterprise Scheduler Service (ESS):
 
-  http://\<hostname\>:\<port\>/ess  
-  http://\<hostname\>:\<port\>/EssHealthCheck
+  `http://\<hostname\>:\<port\>/ess`  
+  `http://\<hostname\>:\<port\>/EssHealthCheck`
 
 * Oracle Service Bus (OSB):
 
-  http://\<hostname\>:\<port\>/servicebus  
-  http://\<hostname\>:\<port\>/lwpfconsole  
+  `http://\<hostname\>:\<port\>/servicebus`  
+  `http://\<hostname\>:\<port\>/lwpfconsole`  
 
 #### Monitoring a SOA domain
 
 After the SOA domain is set up, you can:
 
-* Monitor the SOA instance using Prometheus and Grafana. See [Monitoring a domain](https://github.com/oracle/weblogic-monitoring-exporter).
+* Monitor the SOA instance using Prometheus and Grafana. See [Monitor a SOA domain]({{< relref "/samples/simple/elastic-stack/soa-domain/weblogic-monitoring-exporter-setup/_index.md" >}}).
 * Publish operator and WebLogic Server logs into Elasticsearch and interact with them in Kibana.
-See [Publish logs to Elasticsearch](https://github.com/oracle/weblogic-logging-exporter).
+See [Publish logs to Elasticsearch]({{< relref "/samples/simple/elastic-stack/soa-domain/weblogic-logging-exporter-setup/_index.md" >}}).

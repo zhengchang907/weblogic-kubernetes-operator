@@ -2,7 +2,7 @@
 
 Oracle is finding ways for organizations using WebLogic Server to run important workloads, to move those workloads into the cloud. By certifying on industry standards, such as Docker and Kubernetes, WebLogic now runs in a cloud neutral infrastructure. In addition, we've provided an open source Oracle WebLogic Server Kubernetes Operator (the “operator”) which has several key features to assist you with deploying and managing WebLogic domains in a Kubernetes environment. You can:
 
-* Create WebLogic domains in a Kubernetes persistent volume. This persistent volume can reside in an NFS file system or other Kubernetes volume types.
+* Create WebLogic domains in a Kubernetes PersistentVolume. This PersistentVolume can reside in an NFS file system or other Kubernetes volume types.
 * Create a WebLogic domain in a Docker image.
 * Override certain aspects of the WebLogic domain configuration.
 * Define WebLogic domains as a Kubernetes resource (using a Kubernetes custom resource definition).
@@ -16,38 +16,50 @@ Oracle is finding ways for organizations using WebLogic Server to run important 
 
 The fastest way to experience the operator is to follow the [Quick Start guide]({{< relref "/quickstart/_index.md" >}}), or you can peruse our [documentation]({{< relref "/userguide/_index.md" >}}), read our [blogs](https://blogs.oracle.com/weblogicserver/how-to-weblogic-server-on-kubernetes), or try out the [samples]({{< relref "/samples/_index.md" >}}).
 
+{{% notice tip %}} Step through the [Tutorial](https://github.com/oracle/weblogic-kubernetes-operator/blob/master/kubernetes/hands-on-lab/README.md)
+using the operator to deploy and run a WebLogic domain container-packaged web application on an Oracle Cloud Infrastructure Container Engine for Kubernetes (OKE) cluster.
+{{% /notice %}}
+
 ***
-##### Current release
+#### Current production release
 
-The [current release of the operator](https://github.com/oracle/weblogic-kubernetes-operator/releases) is 2.6.0.
-This release was published on May 1, 2020. See the operator prerequisites and supported environments [here]({{< relref "/userguide/introduction/introduction#operator-prerequisites" >}}).
+The [current production release of the operator](https://github.com/oracle/weblogic-kubernetes-operator/releases) is 2.6.0.
+This release was published on June 1, 2020. See the operator prerequisites and supported environments [here]({{< relref "/userguide/introduction/introduction#operator-prerequisites" >}}).
 
-##### Preview of next planned release
+#### Preview of next major release
 
-The next planned release is 3.0.0-rc1 (release candidate).  This release candidate will
-be suitable for use by early adopters who wish to test 3.0.0 features and provide
-feedback.  
+The [current preview release of the operator](https://github.com/oracle/weblogic-kubernetes-operator/releases) is 3.0.0-rc1 (release candidate).
+This release candidate is suitable for use by early adopters who wish to test 3.0.0 features and provide feedback.
+This release candidate was published on May 8, 2020.  There may be additional release candidates before the final 3.0.0 release.
 
-This release is planned for April 2020, subject to change.
+This release candidate introduces _non-backward compatible_ changes.  This release candidate cannot be run in the same
+cluster as another release of the operator.  You can upgrade from 2.5.0 to 3.0.0-rc1 without needing to restart or recreate
+any existing domains. However, please note that we _do_ plan to support running the final 3.0.0
+release in the same cluster with at least one 2.x release of the operator to allow for staged migration.
 
-The planned feature changes in 3.0.0-rc1 are:
+The feature changes in 3.0.0-rc1 are:
 
-* Introduction of a new "Model In Image" feature which allows you to have a domain
+* Introduction of a new ["Model In Image"]({{% relref "/userguide/managing-domains/model-in-image" %}}) feature which allows you to have a domain
   created at pod startup time from a WebLogic Deploy Tool model and archive.
   This supports user-requested use cases like creating multiple domains from
   the same model and automated updating of the domain based on model changes.
   The operator automates management of the domain encryption keys to ensure
   that they are not changed during domain updates.
-* Support for running the operator on Kubernetes 1.16, 1.17 and 1.18.
+  We provide a [sample]({{% relref "/samples/simple/domains/model-in-image" %}}) that
+  demonstrates the key use cases for this feature.
+* Support for running the operator on Kubernetes 1.16.
 * Deprecation and removal of support for running the operator on Kubernetes 1.13
   and earlier versions.
 * Deprecation and removal of support for Helm 2.x.  Helm 2.x uses the "tiller" pod
   which needs to run with elevated privileges (`cluster-admin` or very close to that)
   and which could be a vector for a privilege escalation attack.  Helm 3.x removes
-  tiller and does not create the same exposure.
+  Tiller and does not create the same exposure.
 
 ***
 
+#### Recent changes and known issues
+
+See the [Release Notes]({{< relref "release-notes.md" >}})  for recent changes to the operator and known issues.
 
 #### Operator earlier versions
 
@@ -94,32 +106,26 @@ The [User guide]({{< relref "/userguide/_index.md" >}}) provides detailed inform
 
 Please refer to our [samples]({{< relref "/samples/_index.md" >}}) for information about the available sample code.
 
+### Developer guide
+
+Developers interested in this project are encouraged to read the [Developer guide]({{< relref "/developerguide/_index.md" >}}) to learn how to build the project, run tests, and so on.  The Developer guide also provides details about the structure of the code, coding standards, and the Asynchronous Call facility used in the code to manage calls to the Kubernetes API.
+
+### API documentation
+
+Documentation for APIs:
+
+* The operator provides a REST API that you can use to obtain configuration information and to initiate scaling actions. For details about how to use the REST APIs, see [Use the operator's REST services]({{< relref "/userguide/managing-operators/using-the-operator/the-rest-api#use-the-operators-rest-services" >}}).
+
+* See the [Swagger](https://oracle.github.io/weblogic-kubernetes-operator/swagger/index.html) documentation for the operator's REST interface.
+
+* See the [Javadoc](https://oracle.github.io/weblogic-kubernetes-operator/apidocs/index.html) for the operator.
+
 ### Need more help? Have a suggestion? Come and say, "Hello!"
 
 We have a **public Slack channel** where you can get in touch with us to ask questions about using the operator or give us feedback
 or suggestions about what features and improvements you would like to see.  We would love to hear from you. To join our channel,
 please [visit this site to get an invitation](https://weblogic-slack-inviter.herokuapp.com/).  The invitation email will include
 details of how to access our Slack workspace.  After you are logged in, please come to `#operator` and say, "hello!"
-
-### Recent changes and known issues
-
-See the [Release Notes]({{< relref "release-notes.md" >}})  for recent changes to the operator and known issues.
-
-### Developer guide
-
-Developers interested in this project are encouraged to read the [Developer guide]({{< relref "/developerguide/_index.md" >}}) to learn how to build the project, run tests, and so on.  The Developer guide also provides details about the structure of the code, coding standards, and the Asynchronous Call facility used in the code to manage calls to the Kubernetes API.
-
-Please take a look at our [wish list](https://github.com/oracle/weblogic-kubernetes-operator/wiki/Wish-list) to get an idea of the kind of features we would like to add to the operator.  Maybe you will see something to which you would like to contribute!
-
-### API documentation
-
-Documentation for APIs:
-
-* The operator provides a REST API that you can use to obtain configuration information and to initiate scaling actions. For details about how to use the REST APIs, see [Use the operator's REST services]({{< relref "/userguide/managing-operators/using-the-operator/the-rest-api.md#use-the-operator-s-rest-services" >}}).
-
-* See the [Swagger](https://oracle.github.io/weblogic-kubernetes-operator/swagger/index.html) documentation for the operator's REST interface.
-
-* See the [Javadoc](https://oracle.github.io/weblogic-kubernetes-operator/apidocs/index.html) for the operator.
 
 ### Contributing to the operator
 
