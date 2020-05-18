@@ -190,7 +190,7 @@ class ItUsabilityOperatorHelmChart implements LoggedTest {
     // check that the state of admin server pod in the domain was not changed
     // wait some time here to ensure the pod state is not changed
     try {
-      Thread.sleep(5000);
+      Thread.sleep(15000);
     } catch (InterruptedException e) {
       // ignore
     }
