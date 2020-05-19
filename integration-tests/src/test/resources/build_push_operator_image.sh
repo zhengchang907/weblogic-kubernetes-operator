@@ -43,9 +43,9 @@ if [ ! "$?" = "0" ] ; then
   exit 1
 fi
 
-mvn install
+mvn $MVN_OPTIONS install
 if [ ! "$?" = "0" ] ; then
-  echo "mvn install failed"
+  echo "mvn $MVN_OPTIONS install failed"
   exit 1
 fi
 
