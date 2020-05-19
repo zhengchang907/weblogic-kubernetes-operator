@@ -105,6 +105,8 @@ if [ -z "$BRANCH_NAME" ]; then
     exit 1
   fi
 fi
+
+echo "KUBECONFIG set to ${KUBECONFIG}"
 export IMAGE_TAG_OPERATOR=${IMAGE_TAG_OPERATOR:-`echo "test_${BRANCH_NAME}" | sed "s#/#_#g"`}
 export IMAGE_NAME_OPERATOR=${IMAGE_NAME_OPERATOR:-weblogic-kubernetes-operator}
 export IMAGE_PULL_POLICY_OPERATOR=${IMAGE_PULL_POLICY_OPERATOR:-Always}
