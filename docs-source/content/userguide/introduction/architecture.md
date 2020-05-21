@@ -14,11 +14,11 @@ The operator consists of the following parts:
 * A variety of sample shell scripts for preparing or packaging  WebLogic domains for running in Kubernetes.
 * A variety of sample Helm charts or shell scripts for conditionally exposing WebLogic endpoints outside the Kubernetes cluster.
 
-The operator is packaged in a [Docker image](https://hub.docker.com/r/oracle/weblogic-kubernetes-operator/) which you can access using the following `docker pull` commands:  
+The operator is packaged in a Docker image which you can access using the following `docker pull` commands:  
 
 ```
-$ docker login
-$ docker pull oracle/weblogic-kubernetes-operator:2.5.0
+$ docker login container-registry.oracle.com
+$ docker pull container-registry.oracle.com/middleware/weblogic-kubernetes-operator:2.5.0
 ```
 
 For more details on acquiring the operator image and prerequisites for installing the operator, consult the [Quick Start guide]({{< relref "/quickstart/_index.md" >}}).

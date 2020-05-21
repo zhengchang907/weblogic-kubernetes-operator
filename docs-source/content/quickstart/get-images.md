@@ -16,17 +16,6 @@ and accept the license agreement for the [WebLogic Server image](https://hub.doc
     $ docker login
     ```
 
-1. Pull the operator image:
-
-    ```bash
-    $ docker pull oracle/weblogic-kubernetes-operator:2.5.0
-    ```
-    
-    {{% notice note %}} If you are here because you are following the Model In Image sample,
-    change the image to `oracle/weblogic-kubernetes-operator:3.0.0-rc1`
-    in the previous command.
-    {{% /notice %}}
-
 1. Pull the Traefik load balancer image:
 
     ```bash
@@ -46,5 +35,16 @@ and accept the license agreement for the [WebLogic Server image](https://hub.doc
     {{% notice note %}} The WebLogic Docker image, `weblogic:12.2.1.3`, has all the necessary patches applied. The WebLogic Docker image, `weblogic:12.2.1.4`, does not require any additional patches.
     {{% /notice %}}
 
+
+1. Pull the operator image:
+
+    ```bash
+    $ docker pull container-registry.oracle.com/middleware/weblogic-kubernetes-operator:2.5.0
+    ```
+    
+    {{% notice note %}} If you are here because you are following the Model In Image sample,
+    change the image to `container-registry.oracle.com/middleware/weblogic-kubernetes-operator:3.0.0-rc1`
+    in the previous command.
+    {{% /notice %}}
 
 1. Copy the image to all the nodes in your cluster, or put it in a Docker registry that your cluster can access.
