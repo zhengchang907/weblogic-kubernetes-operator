@@ -70,6 +70,10 @@ spec:
       value: "%JAVA_OPTIONS%"
     - name: USER_MEM_ARGS
       value: "-Djava.security.egd=file:/dev/./urandom "
+    - name: POD_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
     %OPTIONAL_SERVERPOD_RESOURCES%
     %LOG_HOME_ON_PV_PREFIX%volumes:
     %LOG_HOME_ON_PV_PREFIX%- name: weblogic-domain-storage-volume
