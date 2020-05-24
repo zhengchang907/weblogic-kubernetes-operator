@@ -28,7 +28,6 @@ import io.kubernetes.client.util.ClientBuilder;
 
 import static io.kubernetes.client.util.Yaml.dump;
 import static oracle.weblogic.kubernetes.actions.TestActions.getPodRestartVersion;
-import static oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes.getPod;
 import static oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes.getPodCreationTimestamp;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
 
@@ -179,7 +178,7 @@ public class Kubernetes {
     }
     return terminating;
   }
-  
+
   /**
    * Checks if a pod in a given namespace has been updated with an expected
    * weblogic.domainRestartVersion label.
@@ -579,14 +578,16 @@ public class Kubernetes {
       String namespace, String timestamp) throws ApiException {
     String newCreationTime = getPodCreationTimestamp(namespace, "", podName);
 
-    if (newCreationTime != null
-        && Long.parseLong(newCreationTime) > Long.parseLong(timestamp)) {
-      logger.info("Pod {0}: new creation time {1} is later than the last creation time {2}",
-          podName, newCreationTime, timestamp);
-      return true;
+    if (newCreationTime != null) {
+      if (Long.parseLong(newCreationTime) > Long.parseLong(timestamp)) {
+        logger.info("Pod {0}: new creation time {1} is later than the last creation time {2}",
+            podName, newCreationTime, timestamp);
+        return true;
+      } else {
+        logger.info("Pod {0}: new creation time {1} is NOT later than the last creation time {2}",
+            podName, newCreationTime, timestamp);
+      }
     }
-    logger.info("Pod {0}: new creation time {1} is NOT later than the last creation time {2}",
-        podName, newCreationTime, timestamp);
     return false;
   }
 }
