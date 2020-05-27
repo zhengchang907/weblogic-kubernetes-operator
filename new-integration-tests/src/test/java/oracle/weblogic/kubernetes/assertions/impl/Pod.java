@@ -98,7 +98,7 @@ public class Pod {
           }
         }
         if (podName.equals(entry.getKey())) {
-          DateTimeFormatter dtf = DateTimeFormat.forPattern("HHmmss");
+          DateTimeFormatter dtf = DateTimeFormat.forPattern("MMddHHmmss");
           if (pod != null && pod.getMetadata().getCreationTimestamp() != null) {
             String newCreationTimeStamp = dtf.print(pod.getMetadata().getCreationTimestamp());
             logger.info("Comparing creation timestamps old: {0} new {1}",
