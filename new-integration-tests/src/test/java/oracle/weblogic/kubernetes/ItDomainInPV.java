@@ -314,7 +314,7 @@ public class ItDomainInPV implements LoggedTest {
         -> getServiceNodePort(wlstDomainNamespace, adminServerPodName + "-external", "t3channel"),
         "Getting admin server t3channel node port failed");
 
-    Path archivePath = Paths.get(ITTESTS_DIR, "src", "integration-tests", "apps", "testwebapp.war");
+    Path archivePath = Paths.get(ITTESTS_DIR, "../src/integration-tests/apps/testwebapp.war");
     WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
         ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName, archivePath, wlstDomainNamespace);
   }

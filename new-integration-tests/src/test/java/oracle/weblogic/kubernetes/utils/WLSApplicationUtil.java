@@ -210,18 +210,19 @@ public class WLSApplicationUtil {
                         .imagePullPolicy("IfNotPresent")
                         .volumeMounts(Arrays.asList(
                             new V1VolumeMount()
-                                .name("build-deploy-job-cm-volume") // deploy scripts volume
+                                .name("deploy-job-cm-volume") // deploy scripts volume
                                 .mountPath("/deployScripts"), // availble under /u01/weblogic inside pod
                             new V1VolumeMount()
                                 .name(pvName) // location to write domain
-                                .mountPath("/applications"))))) // mounted under /applications inside pod
-                    .volumes(Arrays.asList(new V1Volume()
+                                .mountPath(APPLICATIONS))))) // mounted under /applications inside pod
+                    .volumes(Arrays.asList(
+                        new V1Volume()
                             .name(pvName) // location of application source files
                             .persistentVolumeClaim(
                                 new V1PersistentVolumeClaimVolumeSource()
                                     .claimName(pvcName)),
                         new V1Volume()
-                            .name("build-deploy-job-cm-volume") // domain creation scripts volume
+                            .name("deploy-job-cm-volume") // domain creation scripts volume
                             .configMap(new V1ConfigMapVolumeSource()
                                     .name(deployScriptConfigMap)))) //config map containing domain scripts
                     .imagePullSecrets(isUseSecret ? Arrays.asList(
@@ -268,7 +269,7 @@ public class WLSApplicationUtil {
     V1PersistentVolume v1pv = new V1PersistentVolume()
         .spec(new V1PersistentVolumeSpec()
             .addAccessModesItem("ReadWriteMany")
-            .storageClassName("weblogic-build-storage-class")
+            .storageClassName("weblogic-deploy-storage-class")
             .volumeMode("Filesystem")
             .putCapacityItem("storage", Quantity.fromString("2Gi"))
             .persistentVolumeReclaimPolicy("Recycle")
@@ -296,7 +297,7 @@ public class WLSApplicationUtil {
     V1PersistentVolumeClaim v1pvc = new V1PersistentVolumeClaim()
         .spec(new V1PersistentVolumeClaimSpec()
             .addAccessModesItem("ReadWriteMany")
-            .storageClassName("weblogic-domain-storage-class")
+            .storageClassName("weblogic-deploy-storage-class")
             .volumeName(pvName)
             .resources(new V1ResourceRequirements()
                 .putRequestsItem("storage", Quantity.fromString("2Gi"))))
