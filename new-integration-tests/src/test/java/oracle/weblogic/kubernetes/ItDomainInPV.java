@@ -483,6 +483,24 @@ public class ItDomainInPV implements LoggedTest {
       return adminNodePortAccessible(serviceNodePort, ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT);
     }, "Access to admin server node port failed");
     assertTrue(loginSuccessful, "Console login validation failed");
+
+    logger.info("Getting node port for T3 channel");
+    int t3channelNodePort = assertDoesNotThrow(()
+        -> getServiceNodePort(wlstDomainNamespace, adminServerPodName + "-external", "t3channel"),
+        "Getting admin server t3channel node port failed");
+
+    Path archivePath = Paths.get(ITTESTS_DIR, "../src/integration-tests/apps/testwebapp.war");
+    //WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
+    //    ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
+    //    wlstDomainNamespace);
+    WLSApplicationUtilCM.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
+        ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
+        wdtDomainNamespace);
+    String url = "http://" + K8S_NODEPORT_HOST + ":" + serviceNodePort + "/testwebapp/index.jsp";
+    assertEquals(200,
+        assertDoesNotThrow(() -> OracleHttpClient.get(url, true),
+            "Accessing sample application on admin server failed")
+            .statusCode(), "Status code not equals to 200");
   }
 
   /**
