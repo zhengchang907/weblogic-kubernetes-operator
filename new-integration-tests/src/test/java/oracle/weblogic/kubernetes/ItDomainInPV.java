@@ -742,7 +742,7 @@ public class ItDomainInPV implements LoggedTest {
    * @throws IOException when creating pv path fails
    */
   private void createPV(String pvName, String domainUid) {
-    logger.info("creating persistent volume");
+    logger.info("Creating persistent volume");
 
     Path pvHostPath = null;
     try {
