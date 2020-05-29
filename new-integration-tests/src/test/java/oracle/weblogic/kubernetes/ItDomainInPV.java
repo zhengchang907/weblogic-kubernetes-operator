@@ -55,6 +55,7 @@ import oracle.weblogic.kubernetes.extensions.LoggedTest;
 import oracle.weblogic.kubernetes.utils.CommonTestUtils;
 import oracle.weblogic.kubernetes.utils.DeployUtil;
 import oracle.weblogic.kubernetes.utils.OracleHttpClient;
+import org.apache.commons.io.FileUtils;
 import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -805,12 +806,14 @@ public class ItDomainInPV implements LoggedTest {
    * @throws IOException when creating pv path fails
    */
   private void createPV(String pvName, String domainUid) {
-    logger.info("Creating persistent volume");
+    logger.info("creating persistent volume");
 
     Path pvHostPath = null;
     try {
-      pvHostPath = Paths.get(PV_ROOT, this.getClass().getSimpleName(), pvName);
+      pvHostPath = Files.createDirectories(Paths.get(
+          PV_ROOT, this.getClass().getSimpleName(), pvName));
       logger.info("Creating PV directory host path {0}", pvHostPath);
+      FileUtils.deleteDirectory(pvHostPath.toFile());
       Files.createDirectories(pvHostPath);
     } catch (IOException ioex) {
       logger.severe(ioex.getMessage());
