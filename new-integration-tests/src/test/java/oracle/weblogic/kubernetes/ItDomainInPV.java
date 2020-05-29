@@ -715,8 +715,7 @@ public class ItDomainInPV implements LoggedTest {
 
     Path pvHostPath = null;
     try {
-      pvHostPath = Files.createDirectories(Paths.get(
-          PV_ROOT, this.getClass().getSimpleName(), pvName));
+      pvHostPath = Paths.get(PV_ROOT, this.getClass().getSimpleName(), pvName);
       logger.info("Creating PV directory host path {0}", pvHostPath);
       FileUtils.deleteDirectory(pvHostPath.toFile());
       Files.createDirectories(pvHostPath);
