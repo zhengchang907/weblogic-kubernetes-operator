@@ -37,6 +37,6 @@ if __name__== "main":
 
   with open(node_archive_path, 'rb') as encoded_archive:
     with open(archive_name, 'wb') as decoded_archive:
-      decoded_archive.write(base64.decodebytes(encoded_archive.read())
+      decoded_archive.write(base64.decodebytes(encoded_archive.read()))
   deploy_application()
   exit()
