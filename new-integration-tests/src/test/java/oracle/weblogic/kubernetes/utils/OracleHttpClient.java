@@ -9,6 +9,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
 
@@ -25,16 +27,28 @@ public class OracleHttpClient {
 
   /**
    * Http GET request.
+   *
    * @param url URL of the web resource
+   * @param headers map of HTTP headers
    * @param debug if true prints status code and response body
    * @return HttpResponse object
    * @throws IOException when cannot connect to the URL
-   * @throws InterruptedException  when connection to web resource times out
+   * @throws InterruptedException when connection to web resource times out
    */
-  public static HttpResponse<String> get(String url, boolean debug)
+  public static HttpResponse<String> get(String url, Map<String, String> headers, boolean debug)
       throws IOException, InterruptedException {
-    HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(url)).build();
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
+    requestBuilder
+        .GET()
+        .uri(URI.create(url));
+    if (headers != null) {
+      for (Entry<String, String> entry : headers.entrySet()) {
+        requestBuilder = requestBuilder.header(entry.getKey(), entry.getValue());
+      }
+    }
+    HttpRequest request = requestBuilder.build();
     logger.info("Sending http request {0}", url);
+
     HttpResponse<String> response = httpClient.send(request,
         HttpResponse.BodyHandlers.ofString());
     if (debug) {
@@ -43,4 +57,46 @@ public class OracleHttpClient {
     }
     return response;
   }
+
+  /**
+   * Http GET request.
+   *
+   * @param url URL of the web resource
+   * @return HttpResponse object
+   * @throws IOException when cannot connect to the URL
+   * @throws InterruptedException when connection to web resource times out
+   */
+  public static HttpResponse<String> get(String url) throws IOException,
+      InterruptedException {
+    return get(url, null, false);
+  }
+
+  /**
+   * Http GET request.
+   *
+   * @param url URL of the web resource
+   * @param debug if true prints status code and response body
+   * @return HttpResponse object
+   * @throws IOException when cannot connect to the URL
+   * @throws InterruptedException when connection to web resource times out
+   */
+  public static HttpResponse<String> get(String url, boolean debug) throws IOException,
+      InterruptedException {
+    return get(url, null, debug);
+  }
+
+  /**
+   * Http GET request.
+   *
+   * @param url URL of the web resource
+   * @param headers map of HTTP headers
+   * @return HttpResponse object
+   * @throws IOException when cannot connect to the URL
+   * @throws InterruptedException when connection to web resource times out
+   */
+  public static HttpResponse<String> get(String url, Map<String, String> headers)
+      throws IOException, InterruptedException {
+    return get(url, headers, false);
+  }
+
 }
