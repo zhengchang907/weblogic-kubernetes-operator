@@ -14,7 +14,7 @@ def usage():
 def deploy_application():
   try:
     print 'connecting to the admin server'
-    connect(admin_user, admin_password, t3url)
+    connect(admin_username, admin_password, t3url)
     print 'deploying...'
     deploy(application_name, archive_path, targets, remote='true', upload='true')
     print 'activating changes'
