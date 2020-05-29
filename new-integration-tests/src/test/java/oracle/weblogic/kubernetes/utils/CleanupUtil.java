@@ -27,6 +27,7 @@ import oracle.weblogic.kubernetes.actions.impl.primitive.HelmParams;
 import oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes;
 import org.awaitility.core.ConditionFactory;
 
+import static io.kubernetes.client.util.Yaml.dump;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
@@ -474,6 +475,12 @@ public class CleanupUtil {
             .map(pvc -> pvc.getMetadata())
             .map(metadata -> metadata.getLabels())
             .map(labels -> labels.get("weblogic.domainUid")).get();
+        logger.info("label", label);
+        logger.info("All persistent volumes");
+        logger.info(dump(Kubernetes.listPersistentVolumes(
+            String.format("weblogic.domainUid = %s", label)).getItems()));
+        logger.info(dump(Kubernetes.listPersistentVolumes(
+            String.format("weblogic.domainUid in (%s)", label)).getItems()));
         for (var pv : Kubernetes.listPersistentVolumes(
             String.format("weblogic.domainUid = %s", label)).getItems()) {
           Kubernetes.deletePv(pv.getMetadata().getName());
