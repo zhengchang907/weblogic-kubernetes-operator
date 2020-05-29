@@ -475,6 +475,9 @@ public class CleanupUtil {
             .map(pvc -> pvc.getMetadata())
             .map(metadata -> metadata.getLabels())
             .map(labels -> labels.get("weblogic.domainUid")).get();
+        if(label == null) {
+          continue;
+        }
         logger.info("label", label);
         logger.info("All persistent volumes");
         logger.info(dump(Kubernetes.listPersistentVolumes(

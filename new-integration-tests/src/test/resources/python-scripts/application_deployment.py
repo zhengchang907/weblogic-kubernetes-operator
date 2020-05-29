@@ -1,7 +1,7 @@
 # Copyright (c) 2020, Oracle Corporation and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
-import sys, os
+import sys, os, traceback
 
 script_name = 'application_deployment.py'
 t3url = "t3://" + admin_host + ":" + admin_port
@@ -17,8 +17,6 @@ def deploy_application():
     connect(admin_username, admin_password, t3url)
     print 'deploying...'
     deploy(application_name, archive_path, targets, remote='true', upload='true')
-    print 'activating changes'
-    activate()
     print 'done with deployment'
     disconnect()
   except NameError, e:
