@@ -78,7 +78,6 @@ import oracle.weblogic.kubernetes.utils.ExecResult;
 import org.awaitility.core.ConditionFactory;
 import org.joda.time.DateTime;
 
-import static io.kubernetes.client.util.Yaml.dump;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.with;
@@ -1283,7 +1282,6 @@ public class Kubernetes implements LoggedTest {
   public static V1PersistentVolumeList listPersistentVolumes() {
     KubernetesApiResponse<V1PersistentVolumeList> list = pvClient.list();
     if (list.isSuccess()) {
-      logger.info(dump(list.getObject()));
       return list.getObject();
     } else {
       logger.warning("Failed to list Persistent Volumes,"
@@ -1326,7 +1324,6 @@ public class Kubernetes implements LoggedTest {
    * @return V1PersistentVolumeClaimList of Persistent Volume Claims in namespace
    */
   public static V1PersistentVolumeClaimList listPersistentVolumeClaims(String namespace) {
-    logger.info(dump(pvcClient.list().getObject()));
     KubernetesApiResponse<V1PersistentVolumeClaimList> list = pvcClient.list(namespace);
     if (list.isSuccess()) {
       return list.getObject();

@@ -470,38 +470,41 @@ public class CleanupUtil {
 
     // Delete pvc
     List<V1PersistentVolume> pvs = new ArrayList<V1PersistentVolume>();
-    try {
-      for (var item : Kubernetes.listPersistentVolumeClaims(namespace).getItems()) {
-        String label = Optional.ofNullable(item)
-            .map(pvc -> pvc.getMetadata())
-            .map(metadata -> metadata.getLabels())
-            .map(labels -> labels.get("weblogic.domainUid")).get();
-        if (label == null) {
-          continue;
-        }
-        // get a list of pvs used by the pvcs in this namespace
+
+    for (var item : Kubernetes.listPersistentVolumeClaims(namespace).getItems()) {
+      String label = Optional.ofNullable(item)
+          .map(pvc -> pvc.getMetadata())
+          .map(metadata -> metadata.getLabels())
+          .map(labels -> labels.get("weblogic.domainUid")).get();
+      if (null == label) {
+        continue;
+      }
+      // get a list of pvs used by the pvcs in this namespace
+      try {
         pvs.addAll(Kubernetes.listPersistentVolumes(
             String.format("weblogic.domainUid = %s", label)).getItems());
         // delete the pvc
+        logger.info("Deleting PVC {0}", item.getMetadata().getName());
         Kubernetes.deletePvc(item.getMetadata().getName(), namespace);
+      } catch (ApiException ex) {
+        logger.warning(ex.getResponseBody());
+      } catch (Exception ex) {
+        logger.warning(ex.getMessage());
+        logger.warning("Failed to delete persistent volume claims");
       }
-    } catch (ApiException ex) {
-      logger.warning(ex.getResponseBody());
-    } catch (Exception ex) {
-      logger.warning(ex.getMessage());
-      logger.warning("Failed to delete persistent volumes");
     }
 
     // Delete pv
-    try {
-      if (!pvs.isEmpty()) {
-        for (var item : pvs) {
+    if (!pvs.isEmpty()) {
+      for (var item : pvs) {
+        try {
+          logger.info("Deleting persistent volume {0}", item.getMetadata().getName());
           Kubernetes.deletePv(item.getMetadata().getName());
+        } catch (Exception ex) {
+          logger.warning(ex.getMessage());
+          logger.warning("Failed to delete persistent volumes");
         }
       }
-    } catch (Exception ex) {
-      logger.warning(ex.getMessage());
-      logger.warning("Failed to delete persistent volume claims");
     }
 
     // Delete services

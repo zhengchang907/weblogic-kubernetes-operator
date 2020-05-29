@@ -99,6 +99,7 @@ import static oracle.weblogic.kubernetes.utils.TestUtils.getNextFreePort;
 import static org.awaitility.Awaitility.with;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -315,6 +316,7 @@ public class ItDomainInPV implements LoggedTest {
     int t3channelNodePort = assertDoesNotThrow(()
         -> getServiceNodePort(wlstDomainNamespace, adminServerPodName + "-external", "t3channel"),
         "Getting admin server t3channel node port failed");
+    assertNotEquals(-1, t3ChannelPort, "admin server t3channelport is not valid");
 
     Path archivePath = Paths.get(ITTESTS_DIR, "../src/integration-tests/apps/testwebapp.war");
     //WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
@@ -486,8 +488,9 @@ public class ItDomainInPV implements LoggedTest {
 
     logger.info("Getting node port for T3 channel");
     int t3channelNodePort = assertDoesNotThrow(()
-        -> getServiceNodePort(wlstDomainNamespace, adminServerPodName + "-external", "t3channel"),
+        -> getServiceNodePort(wdtDomainNamespace, adminServerPodName + "-external", "t3channel"),
         "Getting admin server t3channel node port failed");
+    assertNotEquals(-1, t3ChannelPort, "admin server t3channelport is not valid");
 
     Path archivePath = Paths.get(ITTESTS_DIR, "../src/integration-tests/apps/testwebapp.war");
     //WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
