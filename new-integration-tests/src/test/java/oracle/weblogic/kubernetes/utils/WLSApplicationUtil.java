@@ -142,11 +142,14 @@ public class WLSApplicationUtil {
     // WLST py script for deploying application
     Path deployScriptFile = Paths.get(RESOURCE_DIR, "python-scripts", "application_deployment.py");
 
-    // deploy application with deploy scripts and domain properties on persistent volume
-    deploy(deployScriptFile, domainPropertiesFile.toPath(), pvName, pvcName, namespace, deployScriptConfigMapName);
-    // delete the persistent volume claim and persistent volume
-    TestActions.deletePersistentVolumeClaim(pvcName, namespace);
-    TestActions.deletePersistentVolume(pvName);
+    try {
+      // deploy application with deploy scripts and domain properties on persistent volume
+      deploy(deployScriptFile, domainPropertiesFile.toPath(), pvName, pvcName, namespace, deployScriptConfigMapName);
+    } finally {
+      // delete the persistent volume claim and persistent volume
+      TestActions.deletePersistentVolumeClaim(pvcName, namespace);
+      TestActions.deletePersistentVolume(pvName);
+    }
   }
 
   /**

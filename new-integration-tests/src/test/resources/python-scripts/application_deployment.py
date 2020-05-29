@@ -4,6 +4,7 @@
 import sys, os
 
 script_name = 'application_deployment.py'
+t3url = "t3://" + admin_host + ":" + admin_port
 
 def usage():
   print 'Call script as: '
@@ -30,8 +31,7 @@ def deploy_application():
     apply(traceback.print_exception, sys.exc_info())
     exit(exitcode=1)
  
-if __name__== "main":
-  t3url = "t3://" + admin_host + ":" + admin_port
+if __name__== "main":  
   application_name = os.path.basename(archive_path).split('.')[0]
   print "Running deploy using user: " + admin_username + " password: " + admin_password + " t3url: " + t3url \
       + " application name : "+ application_name + " archive: " + archive_path + " targets: " + targets
