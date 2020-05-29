@@ -34,12 +34,12 @@ public class OracleHttpClient {
   public static HttpResponse<String> get(String url, boolean debug)
       throws IOException, InterruptedException {
     HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(url)).build();
-    logger.info("Sending http request ", url);
+    logger.info("Sending http request {0}", url);
     HttpResponse<String> response = httpClient.send(request,
         HttpResponse.BodyHandlers.ofString());
     if (debug) {
-      logger.info("HTTP_STATUS: ", response.statusCode());
-      logger.info("Response Body: ", response.body());
+      logger.info("HTTP_STATUS: {0}", response.statusCode());
+      logger.info("Response Body: {0}", response.body());
     }
     return response;
   }

@@ -326,7 +326,8 @@ public class ItDomainInPV implements LoggedTest {
         .append("http://")
         .append(K8S_NODEPORT_HOST)
         .append(":")
-        .append(serviceNodePort);
+        .append(serviceNodePort)
+        .append("/testwebapp/index.jsp");
     assertEquals(200,
         assertDoesNotThrow(() -> OracleHttpClient.get(url.toString(), true),
             "Accessing sample application on admin server failed")
