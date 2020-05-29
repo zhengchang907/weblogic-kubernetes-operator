@@ -54,7 +54,7 @@ import oracle.weblogic.kubernetes.annotations.Namespaces;
 import oracle.weblogic.kubernetes.extensions.LoggedTest;
 import oracle.weblogic.kubernetes.utils.CommonTestUtils;
 import oracle.weblogic.kubernetes.utils.OracleHttpClient;
-import oracle.weblogic.kubernetes.utils.WLSApplicationUtilCM;
+import oracle.weblogic.kubernetes.utils.DeployUtil;
 import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -345,7 +345,7 @@ public class ItDomainInPV implements LoggedTest {
     //deploy application
     Path archivePath = Paths.get(ITTESTS_DIR, "../src/integration-tests/apps/testwebapp.war");
     logger.info("Deploying webapp to domain {0}", archivePath);
-    WLSApplicationUtilCM.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
+    DeployUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
         ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
         wlstDomainNamespace);
 
@@ -363,11 +363,11 @@ public class ItDomainInPV implements LoggedTest {
         domainUid + "." + clusterName + ".test", K8S_NODEPORT_HOST, nodeportshttp);
     List<String> managedServers = new ArrayList<>();
     for (int i = 1; i <= replicaCount; i++) {
-      managedServers.add(clusterName + "-" + managedServerNameBase + i);
+      managedServers.add(domainUid + "-" + managedServerNameBase + i);
     }
     assertThat(callWebAppAndCheckForServerNameInResponse(curlRequest, managedServers, 20))
-        .as("Verify NGINX can access the sample app from all managed servers in the domain")
-        .withFailMessage("NGINX can not access the sample app from one or more of the managed servers")
+        .as("Verify NGINX can access the test web app from all managed servers in the domain")
+        .withFailMessage("NGINX can not access the test web app from one or more of the managed servers")
         .isTrue();
 
   }
@@ -536,7 +536,7 @@ public class ItDomainInPV implements LoggedTest {
     //WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
     //    ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
     //    wlstDomainNamespace);
-    WLSApplicationUtilCM.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
+    DeployUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
         ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
         wdtDomainNamespace);
     String url = "http://" + K8S_NODEPORT_HOST + ":" + serviceNodePort + "/testwebapp/index.jsp";

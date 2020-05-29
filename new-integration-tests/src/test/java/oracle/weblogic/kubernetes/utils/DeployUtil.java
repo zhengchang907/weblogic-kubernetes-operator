@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /**
  * Utility class to deploy application to WebLogic server.
  */
-public class WLSApplicationUtilCM {
+public class DeployUtil {
 
   private static String image = WLS_BASE_IMAGE_NAME + ":" + WLS_BASE_IMAGE_TAG;
   private static boolean isUseSecret = true;
