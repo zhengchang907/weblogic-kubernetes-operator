@@ -25,6 +25,19 @@ public class OracleHttpClient {
       .followRedirects(HttpClient.Redirect.NORMAL)
       .build();
 
+  /*
+    String lburl = "http://" + K8S_NODEPORT_HOST + ":" + nodeportshttp + "/testwebapp/index.jsp";
+    String hostHeader = domainUid + "." + clusterName + ".test";
+    HashMap<String, String> headers = new HashMap<>();
+    headers.put("host", hostHeader);
+    for (int i = 0; i < 10; i++) {
+      assertEquals(200,
+          assertDoesNotThrow(() -> OracleHttpClient.get(lburl, headers, true),
+              "Accessing sample application on managed servers failed")
+              .statusCode(), "Status code not equals to 200");
+    }
+  */
+
   /**
    * Http GET request.
    *

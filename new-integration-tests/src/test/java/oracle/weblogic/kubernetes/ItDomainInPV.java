@@ -96,7 +96,9 @@ import static oracle.weblogic.kubernetes.utils.CommonTestUtils.createIngressForD
 import static oracle.weblogic.kubernetes.utils.CommonTestUtils.createSecretWithUsernamePassword;
 import static oracle.weblogic.kubernetes.utils.CommonTestUtils.installAndVerifyNginx;
 import static oracle.weblogic.kubernetes.utils.CommonTestUtils.installAndVerifyOperator;
+import static oracle.weblogic.kubernetes.utils.TestUtils.callWebAppAndCheckForServerNameInResponse;
 import static oracle.weblogic.kubernetes.utils.TestUtils.getNextFreePort;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.with;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -333,33 +335,39 @@ public class ItDomainInPV implements LoggedTest {
         "Getting admin server t3channel node port failed");
     assertNotEquals(-1, t3ChannelPort, "admin server t3channelport is not valid");
 
+    //create ingress controller
     Map<String, Integer> clusterNameMsPortMap = new HashMap<>();
     clusterNameMsPortMap.put(clusterName, managedServerPort);
     logger.info("Creating ingress for domain {0} in namespace {1}", domainUid, wlstDomainNamespace);
     createIngressForDomainAndVerify(domainUid, wlstDomainNamespace, clusterNameMsPortMap);
 
+    //deploy application
     Path archivePath = Paths.get(ITTESTS_DIR, "../src/integration-tests/apps/testwebapp.war");
     logger.info("Deploying webapp to domain {0}", archivePath);
     WLSApplicationUtilCM.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
         ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
         wlstDomainNamespace);
+
+    //access application from admin server
     String url = "http://" + K8S_NODEPORT_HOST + ":" + serviceNodePort + "/testwebapp/index.jsp";
     assertEquals(200,
         assertDoesNotThrow(() -> OracleHttpClient.get(url, true),
             "Accessing sample application on admin server failed")
             .statusCode(), "Status code not equals to 200");
 
+    //access application in managed servers through NGINX load balancer
     logger.info("Accessing the sample app through NGINX load balancer");
-    String lburl = "http://" + K8S_NODEPORT_HOST + ":" + nodeportshttp + "/testwebapp/index.jsp";
-    String hostHeader = domainUid + "." + clusterName + ".test";
-    HashMap<String, String> headers = new HashMap<>();
-    headers.put("host", hostHeader);
-    for (int i = 0; i < 10; i++) {
-      assertEquals(200,
-          assertDoesNotThrow(() -> OracleHttpClient.get(lburl, headers, true),
-              "Accessing sample application on managed servers failed")
-              .statusCode(), "Status code not equals to 200");
+    String curlRequest = String.format("curl --silent --show-error --noproxy '*' "
+        + "-H 'host: %s' http://%s:%s/testwebapp/index.jsp",
+        domainUid + "." + clusterName + ".test", K8S_NODEPORT_HOST, nodeportshttp);
+    List<String> managedServers = new ArrayList<>();
+    for (int i = 1; i <= replicaCount; i++) {
+      managedServers.add(clusterName + "-" + managedServerNameBase + i);
     }
+    assertThat(callWebAppAndCheckForServerNameInResponse(curlRequest, managedServers, 20))
+        .as("Verify NGINX can access the sample app from all managed servers in the domain")
+        .withFailMessage("NGINX can not access the sample app from one or more of the managed servers")
+        .isTrue();
 
   }
 
