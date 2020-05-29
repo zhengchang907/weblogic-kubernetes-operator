@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
@@ -53,6 +54,7 @@ import oracle.weblogic.kubernetes.annotations.IntegrationTest;
 import oracle.weblogic.kubernetes.annotations.Namespaces;
 import oracle.weblogic.kubernetes.extensions.LoggedTest;
 import oracle.weblogic.kubernetes.utils.CommonTestUtils;
+import oracle.weblogic.kubernetes.utils.OracleHttpClient;
 import oracle.weblogic.kubernetes.utils.WLSApplicationUtil;
 import org.apache.commons.io.FileUtils;
 import org.awaitility.core.ConditionFactory;
@@ -97,6 +99,7 @@ import static oracle.weblogic.kubernetes.utils.CommonTestUtils.installAndVerifyO
 import static oracle.weblogic.kubernetes.utils.TestUtils.getNextFreePort;
 import static org.awaitility.Awaitility.with;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -316,7 +319,18 @@ public class ItDomainInPV implements LoggedTest {
 
     Path archivePath = Paths.get(ITTESTS_DIR, "../src/integration-tests/apps/testwebapp.war");
     WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
-        ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName, archivePath, wlstDomainNamespace);
+        ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
+        wlstDomainNamespace);
+    assertDoesNotThrow(() -> TimeUnit.MINUTES.sleep(2));
+    StringBuffer url = new StringBuffer()
+        .append("http://")
+        .append(K8S_NODEPORT_HOST)
+        .append(":")
+        .append(serviceNodePort);
+    assertEquals(200,
+        assertDoesNotThrow(() -> OracleHttpClient.get(url.toString(), true),
+            "Accessing sample application on admin server failed")
+            .statusCode(), "Status code not equals to 200");
   }
 
   /**
