@@ -108,7 +108,7 @@ public class WLSApplicationUtilCM {
       data.put(deployScript.getFileName().toString(), Files.readString(deployScript));
       data.put(DOMAIN_PROPERTIES, Files.readString(domainPropertiesFile.toPath()));
       binaryData.put(archivePath.getFileName().toString(),
-          Base64.getEncoder().encode(Files.readAllBytes(archivePath)));
+          Base64.getMimeEncoder().encode(Files.readAllBytes(archivePath)));
     });
 
     V1ObjectMeta meta = new V1ObjectMeta()

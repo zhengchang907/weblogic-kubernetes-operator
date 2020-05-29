@@ -1,22 +1,57 @@
 # Copyright (c) 2020, Oracle Corporation and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 
-import sys, os, traceback, base64
+import sys
+import os
+import traceback
+
+from java.util import Base64
+from org.apache.commons.io import FileUtils
+from java.io import File
+
+
 
 script_name = 'application_deploymentcm.py'
+print 'script_name: ' + script_name
+
+print 'admin_host: ' + admin_host
+print 'admin_port: ' + admin_port
+print 'admin_username: ' + admin_username
+print 'admin_password: ' + admin_password
+print 'targets: ' + targets
+print 'mounted archive: ' + node_archive_path
+
+
 t3url = "t3://" + admin_host + ":" + admin_port
+print 't3url: ' + t3url
+
 archive_name = os.path.basename(node_archive_path)
-application_name = os.path.basename(node_archive_path).split('.')[0]
+print 'archive_name: ' + archive_name
+application_name = archive_name.split('.')[0]
+print 'application_name: ' + application_name
 
 def usage():
   print 'Call script as: '
   print 'wlst.sh ' + script_name + ' -skipWLSModuleScanning -loadProperties domain.properties'
 
+def decode_archive():
+  try:
+    print 'decoding archive...'
+    encoded_archive_bytes = FileUtils.readFileToByteArray(File(node_archive_path))
+    decoded_archive_bytes = Base64.getMimeDecoder().decode(encoded_archive_bytes)
+    FileUtils.writeByteArrayToFile(File(archive_name), decoded_archive_bytes)
+    print 'successfully decoded archive'
+  except:
+    print 'Decoding archive failed'
+    print dumpStack()
+    apply(traceback.print_exception, sys.exc_info())
+    exit(exitcode=1)
+
 def deploy_application():
   try:
     print 'connecting to the admin server'
     connect(admin_username, admin_password, t3url)
-    print 'deploying...'
+    print 'Running deploy(' + application_name + ', ' + archive_name + ', ' + targets + 'remote=\'true\', upload=\'true\')'
     deploy(application_name, archive_name, targets, remote='true', upload='true')
     print 'done with deployment'
     disconnect()
@@ -31,11 +66,7 @@ def deploy_application():
     apply(traceback.print_exception, sys.exc_info())
     exit(exitcode=1)
  
-if __name__== "main":  
-  print "Running deploy using user: " + admin_username + " password: " + admin_password + " t3url: " + t3url \
-      + " application name : "+ application_name + " archive: " + node_archive_path + " targets: " + targets
-  with open(node_archive_path, 'rb') as encoded_archive:
-    with open(archive_name, 'wb') as decoded_archive:
-      decoded_archive.write(base64.decodebytes(encoded_archive.read()))
+if __name__== "main": 
+  decode_archive()
   deploy_application()
   exit()
