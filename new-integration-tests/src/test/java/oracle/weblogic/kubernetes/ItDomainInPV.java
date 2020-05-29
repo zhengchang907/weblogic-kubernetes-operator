@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
@@ -321,7 +320,6 @@ public class ItDomainInPV implements LoggedTest {
     WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
         ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
         wlstDomainNamespace);
-    assertDoesNotThrow(() -> TimeUnit.MINUTES.sleep(2));
     StringBuffer url = new StringBuffer()
         .append("http://")
         .append(K8S_NODEPORT_HOST)
