@@ -12,7 +12,7 @@ def usage():
 def deploy_application():
   try:
     print 'connecting to the admin server'
-    connect(admin_user, admin_password, t3_url)
+    connect(admin_user, admin_password, t3url)
     print 'deploying...'
     deploy()
     print 'activating changes'
@@ -33,7 +33,7 @@ def deploy_application():
 if __name__== "main":
   t3url = "t3://" + admin_host + ":" + admin_port
   application_name = os.path.basename(archive_path).split('.')[0]
-  print "Running deploy using user: " + admin_username + " password: " + admin_password + " t3url: " + t3url
-      + "application name : "+ application_name + " archive: " + archive_path + "targets: " + targets
+  print "Running deploy using user: " + admin_username + " password: " + admin_password + " t3url: " + t3url \
+      + " application name : "+ application_name + " archive: " + archive_path + " targets: " + targets
   deploy_application()
   exit()
