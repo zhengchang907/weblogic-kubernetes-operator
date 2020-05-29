@@ -247,7 +247,7 @@ public class WLSApplicationUtil {
                 condition.getRemainingTimeInMS()))
         .until(jobCompleted(jobName, null, namespace));
 
-    // check job status and fail test if the job failed to create domain
+    // check job status and fail test if the job failed to finish deployment
     V1Job job = getJob(jobName, namespace);
     if (job != null) {
       V1JobCondition jobCondition = job.getStatus().getConditions().stream().filter(
@@ -255,7 +255,7 @@ public class WLSApplicationUtil {
           .findAny()
           .orElse(null);
       if (jobCondition != null) {
-        logger.severe("Job {0} failed to create domain", jobName);
+        logger.severe("Job {0} failed to finish deployment", jobName);
         List<V1Pod> pods = listPods(namespace, "job-name=" + jobName).getItems();
         if (!pods.isEmpty()) {
           logger.severe(getPodLog(pods.get(0).getMetadata().getName(), namespace));

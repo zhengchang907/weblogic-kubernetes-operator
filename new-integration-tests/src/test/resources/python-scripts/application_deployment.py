@@ -5,6 +5,7 @@ import sys, os
 
 script_name = 'application_deployment.py'
 t3url = "t3://" + admin_host + ":" + admin_port
+application_name = os.path.basename(archive_path).split('.')[0]
 
 def usage():
   print 'Call script as: '
@@ -15,9 +16,9 @@ def deploy_application():
     print 'connecting to the admin server'
     connect(admin_user, admin_password, t3url)
     print 'deploying...'
-    deploy()
+    deploy(application_name, archive_path, targets, remote='true', upload='true')
     print 'activating changes'
-    activate(application_name, archive_path, targets, remote='true', upload='true')
+    activate()
     print 'done with deployment'
     disconnect()
   except NameError, e:
@@ -32,7 +33,6 @@ def deploy_application():
     exit(exitcode=1)
  
 if __name__== "main":  
-  application_name = os.path.basename(archive_path).split('.')[0]
   print "Running deploy using user: " + admin_username + " password: " + admin_password + " t3url: " + t3url \
       + " application name : "+ application_name + " archive: " + archive_path + " targets: " + targets
   deploy_application()
