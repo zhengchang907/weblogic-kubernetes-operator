@@ -117,6 +117,7 @@ public class ItDomainInPV implements LoggedTest {
   private static String opNamespace = null;
   private static String wlstDomainNamespace = null;
   private static String wdtDomainNamespace = null;
+
   private static String nginxNamespace = null;
   private static int nodeportshttp;
 

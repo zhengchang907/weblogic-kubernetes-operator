@@ -19,11 +19,9 @@ import oracle.weblogic.domain.Domain;
 import oracle.weblogic.domain.DomainSpec;
 import oracle.weblogic.domain.Model;
 import oracle.weblogic.domain.ServerPod;
-import oracle.weblogic.kubernetes.actions.impl.primitive.HelmParams;
 import oracle.weblogic.kubernetes.annotations.IntegrationTest;
 import oracle.weblogic.kubernetes.annotations.Namespaces;
 import oracle.weblogic.kubernetes.extensions.LoggedTest;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -37,7 +35,6 @@ import static oracle.weblogic.kubernetes.TestConstants.MANAGED_SERVER_NAME_BASE;
 import static oracle.weblogic.kubernetes.TestConstants.MII_BASIC_APP_NAME;
 import static oracle.weblogic.kubernetes.TestConstants.REPO_SECRET_NAME;
 import static oracle.weblogic.kubernetes.TestConstants.WLS_DOMAIN_TYPE;
-import static oracle.weblogic.kubernetes.actions.TestActions.uninstallNginx;
 import static oracle.weblogic.kubernetes.utils.CommonTestUtils.checkPodExists;
 import static oracle.weblogic.kubernetes.utils.CommonTestUtils.checkPodReady;
 import static oracle.weblogic.kubernetes.utils.CommonTestUtils.checkServiceExists;
@@ -76,7 +73,6 @@ class ItScaleMiiDomainNginx implements LoggedTest {
   private static final int replicaCount = 2;
 
   private static String domainNamespace = null;
-  private static HelmParams nginxHelmParams = null;
   private static int nodeportshttp = 0;
 
   private String curlCmd = null;
@@ -114,7 +110,7 @@ class ItScaleMiiDomainNginx implements LoggedTest {
     int nodeportshttps = getNextFreePort(30443, 30543);
 
     // install and verify NGINX
-    nginxHelmParams = installAndVerifyNginx(nginxNamespace, nodeportshttp, nodeportshttps);
+    installAndVerifyNginx(nginxNamespace, nodeportshttp, nodeportshttps);
 
     // create model in image domain with multiple clusters
     createMiiDomainWithMultiClusters();
@@ -173,21 +169,6 @@ class ItScaleMiiDomainNginx implements LoggedTest {
       managedServersBeforeScale = listManagedServersBeforeScale(clusterName, numberOfServers);
       scaleAndVerifyCluster(clusterName, domainUid, domainNamespace, numberOfServers, 0,
           curlCmd, managedServersBeforeScale);
-    }
-  }
-
-  /**
-   * TODO: remove this after Sankar's PR is merged
-   * The cleanup framework does not uninstall NGINX release. Do it here for now.
-   */
-  @AfterAll
-  public void tearDownAll() {
-    // uninstall NGINX release
-    if (nginxHelmParams != null) {
-      assertThat(uninstallNginx(nginxHelmParams))
-          .as("Test uninstallNginx returns true")
-          .withFailMessage("uninstallNginx() did not return true")
-          .isTrue();
     }
   }
 

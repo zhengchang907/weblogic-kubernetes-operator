@@ -66,6 +66,11 @@ public class CleanupUtil {
         uninstallWebLogicOperator(namespace);
       }
 
+      // delete Nginx load balancer if any exists
+      for (var namespace : namespaces) {
+        uninstallNginx(namespace);
+      }
+
       // Delete artifacts in namespace used by the test class and the namespace itself
       for (var namespace : namespaces) {
         deleteNamespacedArtifacts(namespace);
@@ -139,6 +144,18 @@ public class CleanupUtil {
         .releaseName(TestConstants.OPERATOR_RELEASE_NAME)
         .namespace(namespace);
     TestActions.uninstallOperator(opHelmParams);
+  }
+
+  /**
+   * Uninstall the Nginx load balancer.
+   *
+   * @param namespace name of the namespace
+   */
+  private static void uninstallNginx(String namespace) {
+    HelmParams opHelmParams = new HelmParams()
+        .releaseName(TestConstants.NGINX_RELEASE_NAME)
+        .namespace(namespace);
+    TestActions.uninstallNginx(opHelmParams);
   }
 
   /**
