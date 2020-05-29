@@ -320,14 +320,9 @@ public class ItDomainInPV implements LoggedTest {
     WLSApplicationUtil.deployApplication(K8S_NODEPORT_HOST, Integer.toString(t3channelNodePort),
         ADMIN_USERNAME_DEFAULT, ADMIN_PASSWORD_DEFAULT, clusterName + "," + adminServerName, archivePath,
         wlstDomainNamespace);
-    StringBuffer url = new StringBuffer()
-        .append("http://")
-        .append(K8S_NODEPORT_HOST)
-        .append(":")
-        .append(serviceNodePort)
-        .append("/testwebapp/index.jsp");
+    String url = "http://" + K8S_NODEPORT_HOST + ":" + serviceNodePort + "/testwebapp/index.jsp";
     assertEquals(200,
-        assertDoesNotThrow(() -> OracleHttpClient.get(url.toString(), true),
+        assertDoesNotThrow(() -> OracleHttpClient.get(url, true),
             "Accessing sample application on admin server failed")
             .statusCode(), "Status code not equals to 200");
   }

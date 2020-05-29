@@ -5,7 +5,6 @@ package oracle.weblogic.kubernetes.utils;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,7 +58,9 @@ public class WLSApplicationUtilCM {
 
   private static String image = WLS_BASE_IMAGE_NAME + ":" + WLS_BASE_IMAGE_TAG;
   private static boolean isUseSecret = true;
-  private static final String APPLICATIONS = "/applications";
+  private static final String MOUNT_POINT = "/deployScripts/";
+  private static final String DEPLOY_SCRIPT = "application_deploymentcm.py";
+  private static final String DOMAIN_PROPERTIES = "domain.properties";
 
   private static final ConditionFactory withStandardRetryPolicy
       = with().pollDelay(2, SECONDS)
@@ -78,7 +79,7 @@ public class WLSApplicationUtilCM {
    * @param namespace name of the namespace in which server pods running
    */
   public static void deployApplication(String host, String port, String userName,
-      String password, String targets, Path archivePath, String namespace) throws IOException {
+      String password, String targets, Path archivePath, String namespace) {
 
     setImageName();
 
@@ -86,7 +87,7 @@ public class WLSApplicationUtilCM {
     File domainPropertiesFile = assertDoesNotThrow(() -> File.createTempFile("domain", "properties"),
         "Creating domain properties file failed");
     Properties p = new Properties();
-    p.setProperty("archive_path", "/deployScripts/" + archivePath.getFileName());
+    p.setProperty("node_archive_path", MOUNT_POINT + archivePath.getFileName());
     p.setProperty("admin_host", host);
     p.setProperty("admin_port", port);
     p.setProperty("admin_username", userName);
@@ -96,22 +97,26 @@ public class WLSApplicationUtilCM {
         "Failed to write the domain properties to file");
 
     // WLST py script for deploying application
-    Path deployScript = Paths.get(RESOURCE_DIR, "python-scripts", "application_deployment.py");
+    Path deployScript = Paths.get(RESOURCE_DIR, "python-scripts", "application_deploymentcm.py");
 
     logger.info("Creating a config map to hold deploy scripts");
     String deployScriptConfigMapName = "create-deploy-scripts-cm";
 
     Map<String, String> data = new HashMap<>();
-    data.put(deployScript.getFileName().toString(), Files.readString(deployScript));
-    data.put("domain.properties", Files.readString(domainPropertiesFile.toPath()));
     Map<String, byte[]> binaryData = new HashMap<>();
-    binaryData.put(archivePath.getFileName().toString(), Base64.getEncoder().encode(Files.readAllBytes(archivePath)));
+    assertDoesNotThrow(() -> {
+      data.put(deployScript.getFileName().toString(), Files.readString(deployScript));
+      data.put(DOMAIN_PROPERTIES, Files.readString(domainPropertiesFile.toPath()));
+      binaryData.put(archivePath.getFileName().toString(),
+          Base64.getEncoder().encode(Files.readAllBytes(archivePath)));
+    });
 
     V1ObjectMeta meta = new V1ObjectMeta()
         .name(deployScriptConfigMapName)
         .namespace(namespace);
     V1ConfigMap configMap = new V1ConfigMap()
         .data(data)
+        .binaryData(binaryData)
         .metadata(meta);
 
     boolean cmCreated = assertDoesNotThrow(() -> createConfigMap(configMap),
@@ -122,27 +127,16 @@ public class WLSApplicationUtilCM {
     deploy(namespace, deployScriptConfigMapName);
   }
 
-  /**
-   * Create a WebLogic domain on a persistent volume by doing the following. Create a configmap containing WLST script
-   * and property file. Create a Kubernetes job to create domain on persistent volume.
-   *
-   * @param wlstScriptFile python script to create domain
-   * @param domainPropertiesFile properties file containing domain configuration
-   * @param pvName name of the persistent volume to create domain in
-   * @param pvcName name of the persistent volume claim
-   * @param namespace name of the domain namespace in which the job is created
-   * @throws ApiException when Kubernetes cluster query fails
-   */
   private static void deploy(String namespace, String deployScriptConfigMapName) {
     logger.info("Preparing to run deploy job using WLST");
     // create a V1Container with specific scripts and properties for creating domain
     V1Container jobCreationContainer = new V1Container()
         .addCommandItem("/bin/sh")
         .addArgsItem("/u01/oracle/oracle_common/common/bin/wlst.sh")
-        .addArgsItem("/deployScripts/application_deployment.py") //wlst deploy py script
+        .addArgsItem(MOUNT_POINT + "/" + DEPLOY_SCRIPT) //wlst deploy py script
         .addArgsItem("-skipWLSModuleScanning")
         .addArgsItem("-loadProperties")
-        .addArgsItem("/deployScripts/domain.properties"); //domain property file
+        .addArgsItem(MOUNT_POINT + "/" + DOMAIN_PROPERTIES); //domain property file
 
     logger.info("Running a Kubernetes job to deploy");
     assertDoesNotThrow(()
@@ -182,7 +176,7 @@ public class WLSApplicationUtilCM {
                         .volumeMounts(Arrays.asList(
                             new V1VolumeMount()
                                 .name("deploy-job-cm-volume") // deploy scripts volume
-                                .mountPath("/deployScripts"))))) // mounted under /applications inside pod
+                                .mountPath(MOUNT_POINT))))) // mounted under /applications inside pod
                     .volumes(Arrays.asList(
                         new V1Volume()
                             .name("deploy-job-cm-volume") // domain creation scripts volume
@@ -219,7 +213,7 @@ public class WLSApplicationUtilCM {
         List<V1Pod> pods = listPods(namespace, "job-name=" + jobName).getItems();
         if (!pods.isEmpty()) {
           logger.severe(getPodLog(pods.get(0).getMetadata().getName(), namespace));
-          fail("Domain create job failed");
+          fail("Deployment job failed");
         }
       }
     }

@@ -111,7 +111,7 @@ public class WLSApplicationUtil {
     File domainPropertiesFile = assertDoesNotThrow(() -> File.createTempFile("domain", "properties"),
         "Creating domain properties file failed");
     Properties p = new Properties();
-    p.setProperty("archive_path", targetArchive);
+    p.setProperty("node_archive_path", targetArchive);
     p.setProperty("admin_host", host);
     p.setProperty("admin_port", port);
     p.setProperty("admin_username", userName);
