@@ -3,6 +3,7 @@
 
 package oracle.weblogic.kubernetes.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -27,7 +28,6 @@ import oracle.weblogic.kubernetes.actions.impl.primitive.HelmParams;
 import oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes;
 import org.awaitility.core.ConditionFactory;
 
-import static io.kubernetes.client.util.Yaml.dump;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
@@ -468,26 +468,22 @@ public class CleanupUtil {
       logger.warning("Failed to delete secrets");
     }
 
-    // Delete pv
+    // Delete pvc
+    List<V1PersistentVolume> pvs = new ArrayList<V1PersistentVolume>();
     try {
       for (var item : Kubernetes.listPersistentVolumeClaims(namespace).getItems()) {
         String label = Optional.ofNullable(item)
             .map(pvc -> pvc.getMetadata())
             .map(metadata -> metadata.getLabels())
             .map(labels -> labels.get("weblogic.domainUid")).get();
-        if(label == null) {
+        if (label == null) {
           continue;
         }
-        logger.info("label", label);
-        logger.info("All persistent volumes");
-        logger.info(dump(Kubernetes.listPersistentVolumes(
-            String.format("weblogic.domainUid = %s", label)).getItems()));
-        logger.info(dump(Kubernetes.listPersistentVolumes(
-            String.format("weblogic.domainUid in (%s)", label)).getItems()));
-        for (var pv : Kubernetes.listPersistentVolumes(
-            String.format("weblogic.domainUid = %s", label)).getItems()) {
-          Kubernetes.deletePv(pv.getMetadata().getName());
-        }
+        // get a list of pvs used by the pvcs in this namespace
+        pvs.addAll(Kubernetes.listPersistentVolumes(
+            String.format("weblogic.domainUid = %s", label)).getItems());
+        // delete the pvc
+        Kubernetes.deletePvc(item.getMetadata().getName(), namespace);
       }
     } catch (ApiException ex) {
       logger.warning(ex.getResponseBody());
@@ -496,10 +492,12 @@ public class CleanupUtil {
       logger.warning("Failed to delete persistent volumes");
     }
 
-    // Delete pvc
+    // Delete pv
     try {
-      for (var item : Kubernetes.listPersistentVolumeClaims(namespace).getItems()) {
-        Kubernetes.deletePvc(item.getMetadata().getName(), namespace);
+      if (!pvs.isEmpty()) {
+        for (var item : pvs) {
+          Kubernetes.deletePv(item.getMetadata().getName());
+        }
       }
     } catch (Exception ex) {
       logger.warning(ex.getMessage());
