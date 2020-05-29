@@ -1283,6 +1283,7 @@ public class Kubernetes implements LoggedTest {
   public static V1PersistentVolumeList listPersistentVolumes() {
     KubernetesApiResponse<V1PersistentVolumeList> list = pvClient.list();
     if (list.isSuccess()) {
+      logger.info(dump(list.getObject()));
       return list.getObject();
     } else {
       logger.warning("Failed to list Persistent Volumes,"
@@ -1300,6 +1301,7 @@ public class Kubernetes implements LoggedTest {
   public static V1PersistentVolumeList listPersistentVolumes(String labels) throws ApiException {
     V1PersistentVolumeList listPersistentVolume;
     try {
+      listPersistentVolumes();
       listPersistentVolume = coreV1Api.listPersistentVolume(
           PRETTY, // pretty print output
           ALLOW_WATCH_BOOKMARKS, // allowWatchBookmarks requests watch events with type "BOOKMARK"
@@ -1324,7 +1326,7 @@ public class Kubernetes implements LoggedTest {
    * @return V1PersistentVolumeClaimList of Persistent Volume Claims in namespace
    */
   public static V1PersistentVolumeClaimList listPersistentVolumeClaims(String namespace) {
-    logger.info(dump(pvcClient.list()));
+    logger.info(dump(pvcClient.list().getObject()));
     KubernetesApiResponse<V1PersistentVolumeClaimList> list = pvcClient.list(namespace);
     if (list.isSuccess()) {
       return list.getObject();
