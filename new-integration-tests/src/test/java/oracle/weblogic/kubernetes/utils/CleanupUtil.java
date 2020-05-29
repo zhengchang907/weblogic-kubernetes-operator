@@ -28,6 +28,7 @@ import oracle.weblogic.kubernetes.actions.impl.primitive.HelmParams;
 import oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes;
 import org.awaitility.core.ConditionFactory;
 
+import static io.kubernetes.client.util.Yaml.dump;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
@@ -481,8 +482,12 @@ public class CleanupUtil {
       }
       // get a list of pvs used by the pvcs in this namespace
       try {
-        pvs.addAll(Kubernetes.listPersistentVolumes(
-            String.format("weblogic.domainUid = %s", label)).getItems());
+        List<V1PersistentVolume> items = Kubernetes.listPersistentVolumes(
+            String.format("weblogic.domainUid = %s", label)).getItems();
+        logger.info("ALL PERSISTENT VOLUMES with matching label {0}",
+            String.format("weblogic.domainUid = %s", label));
+        logger.info(dump(items));
+        pvs.addAll(items);
         // delete the pvc
         logger.info("Deleting PVC {0}", item.getMetadata().getName());
         Kubernetes.deletePvc(item.getMetadata().getName(), namespace);
