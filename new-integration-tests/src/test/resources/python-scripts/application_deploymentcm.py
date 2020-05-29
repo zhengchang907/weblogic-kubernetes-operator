@@ -3,7 +3,7 @@
 
 import sys, os, traceback, base64
 
-script_name = 'application_deployment.py'
+script_name = 'application_deploymentcm.py'
 t3url = "t3://" + admin_host + ":" + admin_port
 archive_name = os.path.basename(node_archive_path)
 application_name = os.path.basename(node_archive_path).split('.')[0]
@@ -34,7 +34,6 @@ def deploy_application():
 if __name__== "main":  
   print "Running deploy using user: " + admin_username + " password: " + admin_password + " t3url: " + t3url \
       + " application name : "+ application_name + " archive: " + node_archive_path + " targets: " + targets
-
   with open(node_archive_path, 'rb') as encoded_archive:
     with open(archive_name, 'wb') as decoded_archive:
       decoded_archive.write(base64.decodebytes(encoded_archive.read()))
