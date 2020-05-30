@@ -104,6 +104,7 @@ public class CleanupUtil {
                     condition.getRemainingTimeInMS()))
             .until(namespaceNotFound(namespace));
       }
+      deleteNamespaces();
     } catch (Exception ex) {
       logger.warning(ex.getMessage());
       logger.warning("Cleanup failed");
@@ -549,6 +550,28 @@ public class CleanupUtil {
     } catch (Exception ex) {
       logger.warning(ex.getMessage());
       logger.warning("Failed to delete namespace");
+    }
+  }
+
+  private static void deleteNamespaces() {
+    try {
+      for (var namespace : Kubernetes.listNamespaces()) {
+        logger.info("Namespace found : {0}", namespace);
+        if (namespace.startsWith("ns-")) {
+          logger.info("Deleting namespace: {0}", namespace);
+          Kubernetes.deleteNamespace(namespace);
+        }
+      }
+      logger.info("Listing Clusterrolebindings");
+      for (var rb : Kubernetes.listClusterRoleBindings(null).getItems()) {
+        logger.info(rb.getMetadata().getName());
+      }
+      logger.info("Listing Clusterroles");
+      for (var r : Kubernetes.listClusterRoles(null).getItems()) {
+        logger.info(r.getMetadata().getName());
+      }
+    } catch (ApiException ex) {
+      logger.severe(ex.getResponseBody());
     }
   }
 
