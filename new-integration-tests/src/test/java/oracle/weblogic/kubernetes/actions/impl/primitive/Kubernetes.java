@@ -1299,7 +1299,6 @@ public class Kubernetes implements LoggedTest {
   public static V1PersistentVolumeList listPersistentVolumes(String labels) throws ApiException {
     V1PersistentVolumeList listPersistentVolume;
     try {
-      listPersistentVolumes();
       listPersistentVolume = coreV1Api.listPersistentVolume(
           PRETTY, // pretty print output
           ALLOW_WATCH_BOOKMARKS, // allowWatchBookmarks requests watch events with type "BOOKMARK"

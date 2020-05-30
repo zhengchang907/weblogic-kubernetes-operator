@@ -28,7 +28,6 @@ import oracle.weblogic.kubernetes.actions.impl.primitive.HelmParams;
 import oracle.weblogic.kubernetes.actions.impl.primitive.Kubernetes;
 import org.awaitility.core.ConditionFactory;
 
-import static io.kubernetes.client.util.Yaml.dump;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
@@ -501,17 +500,12 @@ public class CleanupUtil {
       try {
         List<V1PersistentVolume> items = Kubernetes.listPersistentVolumes(
             String.format("weblogic.domainUid = %s", label)).getItems();
-        logger.info("ALL PERSISTENT VOLUMES with matching label {0}",
-            String.format("weblogic.domainUid = %s", label));
-        logger.info(dump(items));
         pvs.addAll(items);
         // delete the pvc
-        logger.info("Deleting PVC {0}", item.getMetadata().getName());
         Kubernetes.deletePvc(item.getMetadata().getName(), namespace);
       } catch (ApiException ex) {
         logger.warning(ex.getResponseBody());
       } catch (Exception ex) {
-        logger.warning(ex.getMessage());
         logger.warning("Failed to delete persistent volume claims");
       }
     }
@@ -523,7 +517,6 @@ public class CleanupUtil {
           logger.info("Deleting persistent volume {0}", item.getMetadata().getName());
           Kubernetes.deletePv(item.getMetadata().getName());
         } catch (Exception ex) {
-          logger.warning(ex.getMessage());
           logger.warning("Failed to delete persistent volumes");
         }
       }

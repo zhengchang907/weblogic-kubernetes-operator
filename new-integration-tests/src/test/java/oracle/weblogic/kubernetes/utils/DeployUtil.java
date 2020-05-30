@@ -48,7 +48,6 @@ import static oracle.weblogic.kubernetes.assertions.TestAssertions.jobCompleted;
 import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
 import static org.awaitility.Awaitility.with;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -59,7 +58,7 @@ public class DeployUtil {
   private static String image = WLS_BASE_IMAGE_NAME + ":" + WLS_BASE_IMAGE_TAG;
   private static boolean isUseSecret = true;
   private static final String MOUNT_POINT = "/deployScripts/";
-  private static final String DEPLOY_SCRIPT = "application_deploymentcm.py";
+  private static final String DEPLOY_SCRIPT = "application_deployment.py";
   private static final String DOMAIN_PROPERTIES = "domain.properties";
 
   private static final ConditionFactory withStandardRetryPolicy
@@ -71,12 +70,12 @@ public class DeployUtil {
    * Deploy application.
    *
    * @param host name of the admin server host
-   * @param port node port of admin server
+   * @param port default channel node port of admin server
    * @param userName admin server user name
    * @param password admin server password
-   * @param targets list of targets to deploy applications
-   * @param archivePath path of the application archive
-   * @param namespace name of the namespace in which server pods running
+   * @param targets comma separated list of targets to deploy applications
+   * @param archivePath local path of the application archive
+   * @param namespace name of the namespace in which WebLogic server pods running
    */
   public static void deployApplication(String host, String port, String userName,
       String password, String targets, Path archivePath, String namespace) {
@@ -97,15 +96,15 @@ public class DeployUtil {
         "Failed to write the domain properties to file");
 
     // WLST py script for deploying application
-    Path deployScript = Paths.get(RESOURCE_DIR, "python-scripts", "application_deploymentcm.py");
+    Path deployScript = Paths.get(RESOURCE_DIR, "python-scripts", DEPLOY_SCRIPT);
 
-    logger.info("Creating a config map to hold deploy scripts");
+    logger.info("Creating a config map to hold deployment files");
     String deployScriptConfigMapName = "create-deploy-scripts-cm";
 
     Map<String, String> data = new HashMap<>();
     Map<String, byte[]> binaryData = new HashMap<>();
     assertDoesNotThrow(() -> {
-      data.put(deployScript.getFileName().toString(), Files.readString(deployScript));
+      data.put(DEPLOY_SCRIPT, Files.readString(deployScript));
       data.put(DOMAIN_PROPERTIES, Files.readString(domainPropertiesFile.toPath()));
       binaryData.put(archivePath.getFileName().toString(),
           Base64.getMimeEncoder().encode(Files.readAllBytes(archivePath)));
@@ -119,14 +118,19 @@ public class DeployUtil {
         .binaryData(binaryData)
         .metadata(meta);
 
-    boolean cmCreated = assertDoesNotThrow(() -> createConfigMap(configMap),
+    assertDoesNotThrow(() -> createConfigMap(configMap),
         String.format("Failed to create configmap %s with files", configMap));
-    assertTrue(cmCreated, String.format("Failed while creating ConfigMap %s", configMap));
 
     // deploy application with deploy scripts and domain properties on persistent volume
     deploy(namespace, deployScriptConfigMapName);
   }
 
+  /**
+   * Deploy application by creating a job.
+   *
+   * @param namespace namespace in which to create job
+   * @param deployScriptConfigMapName configmap containing deployment scripts
+   */
   private static void deploy(String namespace, String deployScriptConfigMapName) {
     logger.info("Preparing to run deploy job using WLST");
     // create a V1Container with specific scripts and properties for creating domain
@@ -142,22 +146,19 @@ public class DeployUtil {
     assertDoesNotThrow(()
         -> createDeployJob(deployScriptConfigMapName, namespace, jobCreationContainer),
         "Deployment failed");
-
   }
 
   /**
-   * Create a job to create a domain in persistent volume.
+   * Create a job to deploy the application to domain.
    *
-   * @param pvName name of the persistent volume to create domain in
-   * @param pvcName name of the persistent volume claim
-   * @param domainScriptCM configmap holding domain creation script files
-   * @param namespace name of the domain namespace in which the job is created
-   * @param jobContainer V1Container with job commands to create domain
+   * @param deployScriptConfigMap configmap holding deployment files
+   * @param namespace name of the namespace in which the job is created
+   * @param jobContainer V1Container with job commands to deploy archive
    * @throws ApiException when Kubernetes cluster query fails
    */
   private static void createDeployJob(String deployScriptConfigMap, String namespace,
       V1Container jobContainer) throws ApiException {
-    logger.info("Running Kubernetes job to create domain");
+    logger.info("Running Kubernetes job to deploy application");
 
     V1Job jobBody = new V1Job()
         .metadata(
@@ -175,21 +176,21 @@ public class DeployUtil {
                         .imagePullPolicy("IfNotPresent")
                         .volumeMounts(Arrays.asList(
                             new V1VolumeMount()
-                                .name("deploy-job-cm-volume") // deploy scripts volume
-                                .mountPath(MOUNT_POINT))))) // mounted under /applications inside pod
+                                .name("deploy-job-cm-volume") // deployment files scripts volume
+                                .mountPath(MOUNT_POINT))))) // mounted under /deploySctipts inside pod
                     .volumes(Arrays.asList(
                         new V1Volume()
-                            .name("deploy-job-cm-volume") // domain creation scripts volume
+                            .name("deploy-job-cm-volume") // deployment scripts volume
                             .configMap(new V1ConfigMapVolumeSource()
-                                .name(deployScriptConfigMap)))) //config map containing domain scripts
+                                .name(deployScriptConfigMap)))) //config map containing deployment scripts
                     .imagePullSecrets(isUseSecret ? Arrays.asList(
                         new V1LocalObjectReference()
                             .name(OCR_SECRET_NAME))
                         : null))));
     String jobName = assertDoesNotThrow(()
-        -> createNamespacedJob(jobBody), "Failed to create Job");
+        -> createNamespacedJob(jobBody), "Failed to create deploy Job");
 
-    logger.info("Checking if the build deploy job {0} completed in namespace {1}",
+    logger.info("Checking if the deploy job {0} completed in namespace {1}",
         jobName, namespace);
     withStandardRetryPolicy
         .conditionEvaluationListener(
@@ -201,7 +202,7 @@ public class DeployUtil {
                 condition.getRemainingTimeInMS()))
         .until(jobCompleted(jobName, null, namespace));
 
-    // check job status and fail test if the job failed to create domain
+    // check job status and fail test if the job failed to deploy
     V1Job job = getJob(jobName, namespace);
     if (job != null) {
       V1JobCondition jobCondition = job.getStatus().getConditions().stream().filter(
@@ -221,7 +222,8 @@ public class DeployUtil {
   }
 
   private static void setImageName() {
-    //determine if the tests are running in Kind cluster. if true use images from Kind registry
+    //determine if the tests are running in Kind cluster.
+    //if true use images from Kind registry
     if (KIND_REPO != null) {
       String kindRepoImage = KIND_REPO + image.substring(TestConstants.OCR_REGISTRY.length() + 1);
       logger.info("Using image {0}", kindRepoImage);
