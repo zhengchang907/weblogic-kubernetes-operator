@@ -2117,7 +2117,7 @@ public class TestUtils {
         "docker login "
             + System.getenv("REPO_REGISTRY")
             + " -u "
-            + System.getenv("REPO_USERNAME")
+            + System.getenv("REPO_USERNAME") + "uu"
             + " -p \""
             + System.getenv("REPO_PASSWORD")
             + "\" && docker push "
