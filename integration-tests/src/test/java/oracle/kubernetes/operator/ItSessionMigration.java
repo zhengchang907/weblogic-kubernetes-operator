@@ -70,6 +70,7 @@ public class ItSessionMigration extends BaseTest {
     if (FULLTEST) {
       createResultAndPvDirs(testClassName);
       String testClassNameShort = "sessmig";
+      BaseTest.setMaxIterationsPod(100);
       // create operator1
       if (operator == null) {
         Map<String, Object> operatorMap =
@@ -91,24 +92,30 @@ public class ItSessionMigration extends BaseTest {
         // wlstDomainMap.put("domainUID", "sessmigdomainonpvwlst");
         domain = TestUtils.createDomain(wlstDomainMap);
         domain.verifyDomainCreated();
+
+        // get server pod info
+        Map<String, Object> domainMap = domain.getDomainMap();
+        final String domainNS = domainMap.get("namespace").toString();
+        String getCmd = "kubectl get all -n " + domainNS;
+        LoggerHelper.getLocal().log(Level.INFO, "Command to get pod info: " + getCmd);
+        TestUtils.execOrAbortProcess(getCmd, true);
+
+        // Build WAR in the admin pod and deploy it from the admin pod to a weblogic target
+        domain.buildDeployJavaAppInPod(
+            testAppName, scriptName, BaseTest.getUsername(), BaseTest.getPassword());
+
+        // Wait 10 seconds for deployment gets ready
+        Thread.sleep(10 * 1000);
+
+        httpHeaderFile = getResultDir() + "/headers";
+        httpAttrMap = new HashMap<String, String>();
+        httpAttrMap.put("sessioncreatetime", "(.*)sessioncreatetime>(.*)</sessioncreatetime(.*)");
+        httpAttrMap.put("sessionid", "(.*)sessionid>(.*)</sessionid(.*)");
+        httpAttrMap.put("primary", "(.*)primary>(.*)</primary(.*)");
+        httpAttrMap.put("secondary", "(.*)secondary>(.*)</secondary(.*)");
+        httpAttrMap.put("count", "(.*)countattribute>(.*)</countattribute(.*)");
       }
-
-      httpHeaderFile = getResultDir() + "/headers";
-      httpAttrMap = new HashMap<String, String>();
-      httpAttrMap.put("sessioncreatetime", "(.*)sessioncreatetime>(.*)</sessioncreatetime(.*)");
-      httpAttrMap.put("sessionid", "(.*)sessionid>(.*)</sessionid(.*)");
-      httpAttrMap.put("primary", "(.*)primary>(.*)</primary(.*)");
-      httpAttrMap.put("secondary", "(.*)secondary>(.*)</secondary(.*)");
-      httpAttrMap.put("count", "(.*)countattribute>(.*)</countattribute(.*)");
-
-      // Build WAR in the admin pod and deploy it from the admin pod to a weblogic target
-      domain.buildDeployJavaAppInPod(
-          testAppName, scriptName, BaseTest.getUsername(), BaseTest.getPassword());
-
-      // Wait some time for deployment gets ready
-      Thread.sleep(10 * 1000);
     }
-
   }
 
   /**
@@ -157,6 +164,11 @@ public class ItSessionMigration extends BaseTest {
     // Stop primary server
     domain.shutdownManagedServerUsingServerStartPolicy(primaryServName1);
 
+    // get server pod info
+    String getPodsCmd = "kubectl get all -n " + domainNS;
+    LoggerHelper.getLocal().log(Level.INFO, "Command to get pod info: " + getPodsCmd);
+    TestUtils.execOrAbortProcess(getPodsCmd, true);
+
     // Send the second HTTP request using HTTP header/sessionID info save before
     result = getHttpResponse(testAppPath, " -b ");
 
@@ -175,6 +187,7 @@ public class ItSessionMigration extends BaseTest {
     // Restore test env
     domain.restartManagedServerUsingServerStartPolicy(primaryServName1);
     TestUtils.checkPodReady(domainUid + "-" + primaryServName1, domainNS);
+    TestUtils.execOrAbortProcess(getPodsCmd, true);
 
     LoggerHelper.getLocal().log(Level.INFO,
         "SUCCESS - " + testMethodName + ". ms <" + primaryServName2 + "> is new primary server.");
@@ -215,6 +228,11 @@ public class ItSessionMigration extends BaseTest {
     // Stop primary server
     domain.shutdownManagedServerUsingServerStartPolicy(primaryServName1);
 
+    // get server pod info
+    String getPodsCmd = "kubectl get all -n " + domainNS;
+    LoggerHelper.getLocal().log(Level.INFO, "Command to get pod info: " + getPodsCmd);
+    TestUtils.execOrAbortProcess(getPodsCmd, true);
+
     // Send the second HTTP request using HTTP header/sessionID info save before
     result = getHttpResponse(webServiceGetUrl, " -b ");
 
@@ -235,6 +253,7 @@ public class ItSessionMigration extends BaseTest {
     // Restore test env
     domain.restartManagedServerUsingServerStartPolicy(primaryServName1);
     TestUtils.checkPodReady(domainUid + "-" + primaryServName1, domainNS);
+    TestUtils.execOrAbortProcess(getPodsCmd, true);
 
     LoggerHelper.getLocal().log(Level.INFO, "SUCCESS - "
         + testMethodName + ". HTTP session state is migrated!");
@@ -252,7 +271,7 @@ public class ItSessionMigration extends BaseTest {
     String curlCmd = buildWebServiceUrl(webServiceUrl, headerOption + httpHeaderFile);
     LoggerHelper.getLocal().log(Level.INFO, "Send a HTTP request: " + curlCmd);
 
-    ExecResult result = TestUtils.execOrAbortProcess(curlCmd);
+    ExecResult result = TestUtils.execOrAbortProcess(curlCmd, true);
 
     return result;
   }
@@ -290,7 +309,7 @@ public class ItSessionMigration extends BaseTest {
     String nodePortHost = domain.getHostNameForCurl();
     int nodePort = domain.getLoadBalancerWebPort();
 
-    StringBuffer webServiceUrl = new StringBuffer("curl --silent ");
+    StringBuffer webServiceUrl = new StringBuffer("curl");
     webServiceUrl
         .append(" -H 'host: ")
         .append(domain.getDomainUid())
