@@ -75,6 +75,22 @@ function state_dump {
     done
   done
 
+  echo "Copying coredns logs and describes to pod-log.kube-system.COREDNSPODNAME and pod-describe.kube-system.COREDNSPODNAME in ${DUMP_DIR}"
+  set +x
+  local corednspods="`$kubectlcmd get pods -n kube-system -l k8s-app=kube-dns --ignore-not-found | egrep -v -e "(STATUS)" | awk '{print $1}'`"
+  set -x
+  local corednspod
+  for corednspod in $corednspods; do
+    local corednslogfile=${DUMP_DIR}/pod-log.kube-system.${corednspod}
+    local corednsdescfile=${DUMP_DIR}/pod-describe.kube-system.${corednspod}
+    $kubectlcmd logs $corednspod -n kube-system > $corednslogfile
+    $kubectlcmd describe pod $corednspod -n kube-system > $corednsdescfile
+  done
+
+  kubednsfname="${DUMP_DIR}/kubectl.describe.service.kube-dns.ns-kube-system"
+  echo "Generating $fname"
+  $kubectlcmd describe service kube-dns -n kube-system > $kubednsfname
+
   mkdir -p $ARCHIVE_DIR || fail Could not archive, could not create target directory \'$ARCHIVE_DIR\'.
   
   # Get various k8s resource describes and redirect/copy to files 
