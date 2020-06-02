@@ -82,6 +82,9 @@ function startWLS() {
   ${SCRIPTPATH}/wlst.sh $SCRIPTPATH/start-server.py
 
   traceTiming "POD '${SERVICE_NAME}' WLS STARTED"
+
+  trace "Printing contents of /etc/resolv.conf:"
+  cat /etc/resolv.conf
 }
 
 function mockWLS() {
