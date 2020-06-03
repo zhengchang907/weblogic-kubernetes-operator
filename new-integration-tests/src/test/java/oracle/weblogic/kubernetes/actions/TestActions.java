@@ -295,6 +295,18 @@ public class TestActions {
   }
 
   /**
+   * Add labels to a namespace.
+   *
+   * @param name name of the namespace
+   * @param labels map of labels to add to the namespace
+   * @throws ApiException when adding labels to namespace fails
+   */
+  public static void addLabelsToNamespace(String name, Map<String, String> labels)
+      throws ApiException {
+    Namespace.addLabelsToNamespace(name, labels);
+  }
+
+  /**
    * List of namespaces in Kubernetes cluster.
    *
    * @return List of names of all namespaces in Kubernetes cluster
