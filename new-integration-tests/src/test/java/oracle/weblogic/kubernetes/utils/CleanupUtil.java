@@ -562,6 +562,10 @@ public class CleanupUtil {
           Kubernetes.deleteNamespace(namespace);
         }
       }
+      logger.info("Listing Persistent Volumes");
+      for (var pv : Kubernetes.listPersistentVolumes().getItems()) {
+        logger.info(pv.getMetadata().getName());
+      }
       logger.info("Listing Clusterrolebindings");
       for (var rb : Kubernetes.listClusterRoleBindings(null).getItems()) {
         logger.info(rb.getMetadata().getName());
