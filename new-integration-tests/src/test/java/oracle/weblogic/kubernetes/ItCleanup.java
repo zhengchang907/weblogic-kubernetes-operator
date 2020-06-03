@@ -3,8 +3,12 @@
 
 package oracle.weblogic.kubernetes;
 
+import java.util.List;
+
 import oracle.weblogic.kubernetes.annotations.IntegrationTest;
+import oracle.weblogic.kubernetes.annotations.Namespaces;
 import oracle.weblogic.kubernetes.extensions.LoggedTest;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +20,11 @@ import static oracle.weblogic.kubernetes.extensions.LoggedTest.logger;
 @DisplayName("Verify the WebLogic server pods can run with domain created in persistent volume")
 @IntegrationTest
 public class ItCleanup implements LoggedTest {
+
+  @BeforeAll
+  public static void initAll(@Namespaces(1) List<String> namespaces) {
+    logger.info("Got namespace {0}", namespaces.get(0));
+  }
 
   @Test
   public void cleanup() {
