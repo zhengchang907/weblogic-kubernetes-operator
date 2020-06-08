@@ -73,6 +73,7 @@ import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1ServiceAccountList;
 import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1ServicePort;
+import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.util.Config;
 import oracle.weblogic.domain.Domain;
 import oracle.weblogic.domain.DomainList;
@@ -81,6 +82,7 @@ import oracle.weblogic.kubernetes.utils.ExecResult;
 import org.awaitility.core.ConditionFactory;
 import org.joda.time.DateTime;
 
+import static io.kubernetes.client.util.Yaml.dump;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.with;
@@ -415,25 +417,27 @@ public class Kubernetes implements LoggedTest {
    *
    * @param name name of the pod
    * @param namespace name of namespace
-   * @return true if successful
+   * @throws ApiException when delete pod fails
    */
-  public static boolean deletePod(String name, String namespace) {
-
-    KubernetesApiResponse<V1Pod> response = podClient.delete(namespace, name);
-
-    if (!response.isSuccess()) {
-      logger.warning("Failed to delete pod '" + name + "' from namespace: "
-          + namespace + " with HTTP status code: " + response.getHttpStatusCode());
-      return false;
+  public static void deletePod(String name, String namespace) throws ApiException {
+    try {
+      V1Status deleteNamespacedPod = coreV1Api.deleteNamespacedPod(
+          name,
+          namespace,
+          PRETTY,
+          null,
+          GRACE_PERIOD,
+          null,
+          FOREGROUND,
+          null
+      );
+      if (deleteNamespacedPod != null) {
+        logger.info(dump(deleteNamespacedPod));
+      }
+    } catch (ApiException apex) {
+      logger.severe(apex.getResponseBody());
+      throw apex;
     }
-
-    if (response.getObject() != null) {
-      logger.info(
-          "Received after-deletion status of the requested object, will be deleting "
-              + "pod in background!");
-    }
-
-    return true;
   }
 
   /**
