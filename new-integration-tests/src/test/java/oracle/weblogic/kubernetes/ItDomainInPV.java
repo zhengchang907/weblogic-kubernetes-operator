@@ -324,6 +324,8 @@ public class ItDomainInPV implements LoggedTest {
       checkServiceExists(managedServerPodNamePrefix + i, wlstDomainNamespace);
     }
 
+    fail("Testing.......");
+
     logger.info("Getting node port for default channel");
     int serviceNodePort = assertDoesNotThrow(()
         -> getServiceNodePort(wlstDomainNamespace, adminServerPodName + "-external", "default"),

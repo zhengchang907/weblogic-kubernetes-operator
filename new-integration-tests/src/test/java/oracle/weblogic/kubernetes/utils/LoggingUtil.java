@@ -13,11 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -279,7 +274,7 @@ public class LoggingUtil {
       String namespace,
       String pvcName,
       String pvName,
-      Path destinationPath) throws ApiException {
+      Path destinationPath) throws ApiException, IOException {
 
     V1Pod pvPod = null;
     try {
@@ -378,13 +373,6 @@ public class LoggingUtil {
         .until(podDoesNotExist(podName, null, namespace));
   }
 
-  // The io.kubernetes.client.Copy.copyDirectoryFromPod(V1Pod pod, String srcPath, Path destination)
-  // API has a bug which keeps the i/o stream open and copyDirectoryFromPod not to exit. As  a
-  // temporary fix using a Thread to do the copy and discard it after a minute. The assumption here
-  // is that the copying of persistsent volume will be done in a minute. If we feel that we need more
-  // time for the copy to complete then we can increase the wait time.
-  // This won't be necessary once the bug is fixed in the api. Here is the issue # for the API bug.
-  // https://github.com/kubernetes-client/java/issues/861
   /**
    * Copy the mounted persistent volume directory to local file system.
    * @param pvPod V1Pod object to copy from
@@ -392,32 +380,7 @@ public class LoggingUtil {
    * @throws ApiException when copy fails
    */
   private static void copyDirectoryFromPod(V1Pod pvPod, Path destinationPath)
-      throws ApiException {
-    Future<String> copyJob = null;
-    try {
-      Runnable copy = () -> {
-        try {
-          logger.info("Copying the contents of PV to {0}", destinationPath.toString());
-          Kubernetes.copyDirectoryFromPod(pvPod, "/shared", destinationPath);
-        } catch (IOException | ApiException ex) {
-          logger.warning(ex.getMessage());
-        }
-      };
-      ExecutorService executorService = Executors.newSingleThreadExecutor();
-      copyJob = executorService.submit(copy, "Done copying");
-      copyJob.get(1, MINUTES);
-    } catch (ExecutionException ex) {
-      logger.warning("Exception in copy");
-    } catch (TimeoutException ex) {
-      logger.warning("Copy timed out");
-    } catch (InterruptedException ex) {
-      logger.warning("Copy interrupted");
-    } finally {
-      if (copyJob != null && !copyJob.isDone()) {
-        logger.info("Cancelling the copy job");
-        copyJob.cancel(true);
-      }
-    }
+      throws ApiException, IOException {
+    Kubernetes.copyDirectoryFromPod(pvPod, "/shared", destinationPath);
   }
-
 }
