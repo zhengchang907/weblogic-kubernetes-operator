@@ -281,12 +281,16 @@ public class LoggingUtil {
       // create a temporary pod
       pvPod = setupPVPod(namespace, pvcName, pvName);
       // copy from the temporary pod to local folder
-      copyDirectoryFromPod(pvPod, destinationPath);
+      logger.info("Starting to copy the PV contents");
+      Kubernetes.copyDirectoryFromPod(pvPod, "/shared", destinationPath);
+      logger.info("Done copying the PV contents");
     } finally {
       // remove the temporary pod
+      logger.info("Deleting the temp PV pod");
       if (pvPod != null) {
         cleanupPVPod(namespace);
       }
+      logger.info("Done deleting the temp PV pod");
     }
   }
 
@@ -371,16 +375,5 @@ public class LoggingUtil {
                 condition.getElapsedTimeInMS(),
                 condition.getRemainingTimeInMS()))
         .until(podDoesNotExist(podName, null, namespace));
-  }
-
-  /**
-   * Copy the mounted persistent volume directory to local file system.
-   * @param pvPod V1Pod object to copy from
-   * @param destinationPath location for the destination path
-   * @throws ApiException when copy fails
-   */
-  private static void copyDirectoryFromPod(V1Pod pvPod, Path destinationPath)
-      throws ApiException, IOException {
-    Kubernetes.copyDirectoryFromPod(pvPod, "/shared", destinationPath);
   }
 }
