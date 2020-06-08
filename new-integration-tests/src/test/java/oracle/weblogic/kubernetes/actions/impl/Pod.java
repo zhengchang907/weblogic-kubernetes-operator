@@ -18,9 +18,9 @@ public class Pod implements LoggedTest {
    *
    * @param name name of the pod
    * @param namespace name of namespace
-   * @throws ApiException if Kubernetes client API call fails
+   * @throws Exception if Kubernetes client API call fails
    */
-  public static void deletePod(String name, String namespace) throws ApiException {
+  public static void deletePod(String name, String namespace) throws Exception {
     Kubernetes.deletePod(name, namespace);
   }
 

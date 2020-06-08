@@ -352,6 +352,7 @@ public class LoggingUtil {
 
   /**
    * Delete the temporary pv pod.
+   *
    * @param namespace name of the namespace in which the copy pod running
    * @throws ApiException when pod deletion fails
    */
@@ -363,7 +364,11 @@ public class LoggingUtil {
         .atMost(1, MINUTES).await();
 
     // Delete the temporary pod
-    Kubernetes.deletePod(podName, namespace);
+    try {
+      Kubernetes.deletePod(podName, namespace);
+    } catch (Exception ex) {
+      // no op
+    }
 
     // Wait for the pod to be deleted
     withStandardRetryPolicy

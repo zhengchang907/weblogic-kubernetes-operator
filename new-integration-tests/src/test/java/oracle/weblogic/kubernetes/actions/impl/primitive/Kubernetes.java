@@ -82,7 +82,6 @@ import oracle.weblogic.kubernetes.utils.ExecResult;
 import org.awaitility.core.ConditionFactory;
 import org.joda.time.DateTime;
 
-import static io.kubernetes.client.util.Yaml.dump;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.with;
@@ -417,9 +416,9 @@ public class Kubernetes implements LoggedTest {
    *
    * @param name name of the pod
    * @param namespace name of namespace
-   * @throws ApiException when delete pod fails
+   * @throws Exception when delete pod fails
    */
-  public static void deletePod(String name, String namespace) throws ApiException {
+  public static void deletePod(String name, String namespace) throws Exception {
     try {
       V1Status deleteNamespacedPod = coreV1Api.deleteNamespacedPod(
           name,
@@ -431,12 +430,9 @@ public class Kubernetes implements LoggedTest {
           FOREGROUND,
           null
       );
-      if (deleteNamespacedPod != null) {
-        logger.info(dump(deleteNamespacedPod));
-      }
-    } catch (ApiException apex) {
-      logger.severe(apex.getResponseBody());
-      throw apex;
+    } catch (Exception ex) {
+      logger.severe(ex.getMessage());
+      throw ex;
     }
   }
 
