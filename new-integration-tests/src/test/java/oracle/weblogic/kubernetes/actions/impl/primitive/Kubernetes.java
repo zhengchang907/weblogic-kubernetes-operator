@@ -73,7 +73,7 @@ import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1ServiceAccountList;
 import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1ServicePort;
-import io.kubernetes.client.util.ClientBuilder;
+import io.kubernetes.client.util.Config;
 import oracle.weblogic.domain.Domain;
 import oracle.weblogic.domain.DomainList;
 import oracle.weblogic.kubernetes.extensions.LoggedTest;
@@ -128,8 +128,8 @@ public class Kubernetes implements LoggedTest {
 
   static {
     try {
-      Configuration.setDefaultApiClient(ClientBuilder.defaultClient());
-      apiClient = Configuration.getDefaultApiClient();
+      apiClient = Config.defaultClient();
+      Configuration.setDefaultApiClient(apiClient);
       coreV1Api = new CoreV1Api();
       customObjectsApi = new CustomObjectsApi();
       rbacAuthApi = new RbacAuthorizationV1Api();
