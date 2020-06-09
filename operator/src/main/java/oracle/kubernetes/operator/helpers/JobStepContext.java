@@ -43,11 +43,10 @@ public abstract class JobStepContext extends BasePodStepContext {
   private static final LoggingFacade LOGGER = LoggingFactory.getLogger("Operator", "Operator");
   private static final String WEBLOGIC_OPERATOR_SCRIPTS_INTROSPECT_DOMAIN_SH =
         "/weblogic-operator/scripts/introspectDomain.sh";
-  private final DomainPresenceInfo info;
   private V1Job jobModel;
 
   JobStepContext(Packet packet) {
-    info = packet.getSpi(DomainPresenceInfo.class);
+    super(packet);
   }
 
   private static V1VolumeMount readOnlyVolumeMount(String volumeName, String mountPath) {
@@ -209,7 +208,7 @@ public abstract class JobStepContext extends BasePodStepContext {
 
   private V1Job createJobModel() {
     return new V1Job()
-          .metadata(createMetadata())
+          .metadata(updateForOwnerReference(createMetadata()))
           .spec(createJobSpec(TuningParameters.getInstance()));
   }
 

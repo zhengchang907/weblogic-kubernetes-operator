@@ -71,7 +71,6 @@ public abstract class PodStepContext extends BasePodStepContext {
   private static final String READINESS_PATH = "/weblogic/ready";
 
   final WlsServerConfig scan;
-  private final DomainPresenceInfo info;
   private final WlsDomainConfig domainTopology;
   private final Step conflictStep;
   private V1Pod podModel;
@@ -81,8 +80,8 @@ public abstract class PodStepContext extends BasePodStepContext {
   private String domainImageName;
 
   PodStepContext(Step conflictStep, Packet packet) {
+    super(packet);
     this.conflictStep = conflictStep;
-    info = packet.getSpi(DomainPresenceInfo.class);
     domainTopology = (WlsDomainConfig) packet.get(ProcessingConstants.DOMAIN_TOPOLOGY);
     miiModelSecretsHash = (String)packet.get(ProcessingConstants.SECRETS_HASH);
     miiDomainZipHash = (String)packet.get(ProcessingConstants.DOMAIN_HASH);
@@ -423,6 +422,7 @@ public abstract class PodStepContext extends BasePodStepContext {
 
     updateForStartupMode(pod);
     updateForShutdown(pod);
+    updateForOwnerReference(metadata);
     return updateForDeepSubstitution(pod.getSpec(), pod);
   }
 

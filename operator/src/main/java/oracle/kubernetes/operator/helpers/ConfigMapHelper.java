@@ -57,7 +57,7 @@ public class ConfigMapHelper {
    * @return Step for creating config map containing scripts
    */
   public static Step createScriptConfigMapStep(String operatorNamespace, String domainNamespace) {
-    return new ScriptConfigMapStep(operatorNamespace, domainNamespace);
+    return new ScriptConfigMapStep(operatorNamespace, domainNamespace, null);
   }
 
   static FileGroupReader getScriptReader() {
@@ -187,8 +187,8 @@ public class ConfigMapHelper {
   static class ScriptConfigMapStep extends Step {
     final ConfigMapContext context;
 
-    ScriptConfigMapStep(String operatorNamespace, String domainNamespace) {
-      context = new ScriptConfigMapContext(this, operatorNamespace, domainNamespace);
+    ScriptConfigMapStep(String operatorNamespace, String domainNamespace, Packet packet) {
+      context = new ScriptConfigMapContext(this, operatorNamespace, domainNamespace, packet);
     }
 
     @Override
@@ -200,8 +200,8 @@ public class ConfigMapHelper {
   static class ScriptConfigMapContext extends ConfigMapContext {
     private final Map<String, String> classpathScripts = loadScriptsFromClasspath();
 
-    ScriptConfigMapContext(Step conflictStep, String operatorNamespace, String domainNamespace) {
-      super(conflictStep, operatorNamespace, domainNamespace);
+    ScriptConfigMapContext(Step conflictStep, String operatorNamespace, String domainNamespace, Packet packet) {
+      super(conflictStep, operatorNamespace, domainNamespace, packet);
 
       this.model = createModel(classpathScripts);
     }
@@ -307,13 +307,14 @@ public class ConfigMapHelper {
     }
   }
 
-  abstract static class ConfigMapContext {
+  abstract static class ConfigMapContext extends StepContextBase {
     protected final Step conflictStep;
     protected final String operatorNamespace;
     protected final String domainNamespace;
     protected V1ConfigMap model;
 
-    ConfigMapContext(Step conflictStep, String operatorNamespace, String domainNamespace) {
+    ConfigMapContext(Step conflictStep, String operatorNamespace, String domainNamespace, Packet packet) {
+      super(packet);
       this.conflictStep = conflictStep;
       this.operatorNamespace = operatorNamespace;
       this.domainNamespace = domainNamespace;
@@ -423,7 +424,7 @@ public class ConfigMapHelper {
             wlsDomainConfig);
         SitConfigMapContext context =
             new SitConfigMapContext(
-                this, info.getDomainUid(), getOperatorNamespace(), info.getNamespace(), data);
+                this, info.getDomainUid(), getOperatorNamespace(), info.getNamespace(), data, packet);
 
         return doNext(
             DomainValidationSteps.createValidateDomainTopologyStep(context.verifyConfigMap(getNext())),
@@ -454,8 +455,9 @@ public class ConfigMapHelper {
         String domainUid,
         String operatorNamespace,
         String domainNamespace,
-        Map<String, String> data) {
-      super(conflictStep, operatorNamespace, domainNamespace);
+        Map<String, String> data,
+        Packet packet) {
+      super(conflictStep, operatorNamespace, domainNamespace, packet);
 
       this.domainUid = domainUid;
       this.cmName = getConfigMapName(domainUid);
@@ -471,7 +473,7 @@ public class ConfigMapHelper {
       return new V1ConfigMap()
           .apiVersion("v1")
           .kind("ConfigMap")
-          .metadata(createMetadata())
+          .metadata(updateForOwnerReference(createMetadata()))
           .data(data);
     }
 
