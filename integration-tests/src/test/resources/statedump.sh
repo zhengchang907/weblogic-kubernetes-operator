@@ -87,8 +87,12 @@ function state_dump {
     $kubectlcmd describe pod $corednspod -n kube-system > $corednsdescfile
   done
 
+  local corefilecmdescfile=${DUMP_DIR}/pod-describe.cm.kube-system.coredns
+  echo "Generating $corefilecmdescfile"
+  $kubectlcmd describe cm coredns -n kube-system > $corefilecmdescfile
+
   kubednsfname="${DUMP_DIR}/kubectl.describe.service.kube-dns.ns-kube-system"
-  echo "Generating $fname"
+  echo "Generating $kubednsfname"
   $kubectlcmd describe service kube-dns -n kube-system > $kubednsfname
 
   mkdir -p $ARCHIVE_DIR || fail Could not archive, could not create target directory \'$ARCHIVE_DIR\'.
