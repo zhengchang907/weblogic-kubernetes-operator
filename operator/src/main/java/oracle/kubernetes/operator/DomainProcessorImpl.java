@@ -90,7 +90,12 @@ public class DomainProcessorImpl implements DomainProcessor {
     return DOMAINS.computeIfAbsent(ns, k -> new ConcurrentHashMap<>()).get(domainUid);
   }
 
-  static void registerDomainPresenceInfo(DomainPresenceInfo info) {
+  /**
+   * Add the specified presence info to the collection maintained by this class. Will replace any previous
+   * presence info for the same namespace and domain UID.
+   * @param info the new presence info
+   */
+  public static void registerDomainPresenceInfo(DomainPresenceInfo info) {
     DOMAINS
           .computeIfAbsent(info.getNamespace(), k -> new ConcurrentHashMap<>())
           .put(info.getDomainUid(), info);
@@ -554,6 +559,19 @@ public class DomainProcessorImpl implements DomainProcessor {
 
   private void internalMakeRightDomainPresence(
         @Nonnull DomainPresenceInfo info, boolean isDeleting, boolean isWillInterrupt) {
+    Packet packet = new Packet();
+    recordIntrospectionRequest(packet, info);
+    processDomain(info, isDeleting, isWillInterrupt, packet);
+  }
+
+  @Override
+  public void introspectDomain(@Nonnull Domain domain) {
+    Packet packet = new Packet();
+    packet.put(DOMAIN_INTROSPECT_REQUESTED, true);
+    processDomain(getExistingDomainPresenceInfo(domain.getNamespace(), domain.getDomainUid()), false, true, packet);
+  }
+
+  private void processDomain(DomainPresenceInfo info, boolean isDeleting, boolean isWillInterrupt, Packet packet) {
     LOGGER.fine(MessageKeys.PROCESSING_DOMAIN, info.getDomainUid());
     Step strategy =
         new StartPlanStep(
@@ -562,8 +580,6 @@ public class DomainProcessorImpl implements DomainProcessor {
       strategy = DomainValidationSteps.createDomainValidationSteps(info.getNamespace(), strategy);
     }
 
-    Packet packet = new Packet();
-    recordIntrospectionRequest(packet, info);
     packet
         .getComponents()
         .put(

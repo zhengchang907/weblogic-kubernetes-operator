@@ -5,42 +5,25 @@ package oracle.kubernetes.operator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.meterware.simplestub.Memento;
-import com.meterware.simplestub.StaticStubSupport;
-import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
-import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
-import oracle.kubernetes.operator.helpers.AnnotationHelper;
-import oracle.kubernetes.operator.helpers.ConfigMapHelper;
 import oracle.kubernetes.operator.helpers.DomainPresenceInfo;
-import oracle.kubernetes.operator.helpers.DomainTopology;
 import oracle.kubernetes.operator.helpers.KubernetesTestSupport;
-import oracle.kubernetes.operator.helpers.KubernetesUtils;
 import oracle.kubernetes.operator.helpers.LegalNames;
 import oracle.kubernetes.operator.helpers.ServiceHelper;
-import oracle.kubernetes.operator.helpers.TuningParametersStub;
-import oracle.kubernetes.operator.helpers.UnitTestHash;
-import oracle.kubernetes.operator.rest.ScanCacheStub;
-import oracle.kubernetes.operator.utils.InMemoryCertificates;
-import oracle.kubernetes.operator.utils.WlsDomainConfigSupport;
 import oracle.kubernetes.operator.wlsconfig.WlsClusterConfig;
 import oracle.kubernetes.operator.wlsconfig.WlsDomainConfig;
 import oracle.kubernetes.operator.wlsconfig.WlsServerConfig;
@@ -77,7 +60,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
-public class DomainProcessorTest {
+public class DomainProcessorTest extends DomainProcessingTestBase {
   private static final String ADMIN_NAME = "admin";
   private static final String CLUSTER = "cluster";
   private static final int MAX_SERVERS = 5;
@@ -90,11 +73,7 @@ public class DomainProcessorTest {
 
   private final List<Memento> mementos = new ArrayList<>();
   private final List<LogRecord> logRecords = new ArrayList<>();
-  private final KubernetesTestSupport testSupport = new KubernetesTestSupport();
   private DomainConfigurator domainConfigurator;
-  private final Map<String, Map<String, DomainPresenceInfo>> presenceInfoMap = new HashMap<>();
-  private final DomainProcessorImpl processor =
-      new DomainProcessorImpl(DomainProcessorDelegateStub.createDelegate(testSupport));
   private final Domain domain = DomainProcessorTestSetup.createTestDomain();
 
   private static WlsDomainConfig createDomainConfig() {
@@ -113,29 +92,19 @@ public class DomainProcessorTest {
    */
   @Before
   public void setUp() throws Exception {
+    super.setUp();
     mementos.add(TestUtils.silenceOperatorLogger()
           .collectLogMessages(logRecords, NOT_STARTING_DOMAINUID_THREAD).withLogLevel(Level.FINE));
-    mementos.add(testSupport.install());
-    mementos.add(StaticStubSupport.install(DomainProcessorImpl.class, "DOMAINS", presenceInfoMap));
-    mementos.add(TuningParametersStub.install());
-    mementos.add(InMemoryCertificates.install());
-    mementos.add(UnitTestHash.install());
-    mementos.add(ScanCacheStub.install());
 
     domainConfigurator = DomainConfiguratorFactory.forDomain(domain);
     testSupport.defineResources(domain);
     new DomainProcessorTestSetup(testSupport).defineKubernetesResources(createDomainConfig());
-    DomainProcessorTestSetup.defineRequiredResources(testSupport);
   }
 
-  /**
-   * Cleanup test environment.
-   */
   @After
   public void tearDown() {
-    for (Memento memento : mementos) {
-      memento.revert();
-    }
+    super.tearDown();
+    mementos.forEach(Memento::revert);
   }
 
   @Test
@@ -272,7 +241,7 @@ public class DomainProcessorTest {
   @Test
   public void whenDomainHasRunningServersAndExistingTopology_dontRunIntrospectionJob() throws JsonProcessingException {
     defineServerResources(ADMIN_NAME);
-    defineSituationConfigMap();
+    defineConfigurationOverridesMap();
     testSupport.doOnCreate(KubernetesTestSupport.JOB, j -> recordJob((V1Job) j));
 
     processor.makeRightDomainPresence(new DomainPresenceInfo(domain), false, false, true);
@@ -284,7 +253,7 @@ public class DomainProcessorTest {
   @Test
   public void whenDomainHasIntrospectVersionDifferentFromOldDomain_runIntrospectionJob() throws Exception {
     defineServerResources(ADMIN_NAME);
-    defineSituationConfigMap();
+    defineConfigurationOverridesMap();
     DomainProcessorImpl.registerDomainPresenceInfo(new DomainPresenceInfo(domain));
     testSupport.doOnCreate(KubernetesTestSupport.JOB, j -> recordJob((V1Job) j));
 
@@ -295,9 +264,21 @@ public class DomainProcessorTest {
   }
 
   @Test
+  public void whenIntrospectRequested_runIntrospectionJob() throws Exception {
+    defineServerResources(ADMIN_NAME);
+    defineConfigurationOverridesMap();
+    DomainProcessorImpl.registerDomainPresenceInfo(new DomainPresenceInfo(domain));
+    testSupport.doOnCreate(KubernetesTestSupport.JOB, j -> recordJob((V1Job) j));
+
+    processor.introspectDomain(domain);
+
+    assertThat(job, notNullValue());
+  }
+
+  @Test
   public void whenFromModelDomainHasIntrospectVersionDifferentFromOldDomain_dontRunIntrospectionJob() throws Exception {
     defineServerResources(ADMIN_NAME);
-    defineSituationConfigMap();
+    defineConfigurationOverridesMap();
     DomainProcessorImpl.registerDomainPresenceInfo(new DomainPresenceInfo(domain));
     testSupport.doOnCreate(KubernetesTestSupport.JOB, j -> recordJob((V1Job) j));
 
@@ -316,34 +297,10 @@ public class DomainProcessorTest {
     return newDomain;
   }
 
-  private void defineSituationConfigMap() throws JsonProcessingException {
-    testSupport.defineResources(createGenerateDomainMap());
-  }
-
   private V1Job job;
 
   private void recordJob(V1Job job) {
     this.job = job;
-  }
-
-  // define a config map with a topology to avoid the no-topology condition that always runs the introspector
-  private V1ConfigMap createGenerateDomainMap() throws JsonProcessingException {
-    return new V1ConfigMap()
-          .metadata(createGeneratedDomainMapMeta())
-          .data(new HashMap<>(Map.of(IntrospectorConfigMapKeys.TOPOLOGY_YAML, defineTopology())));
-  }
-
-  private V1ObjectMeta createGeneratedDomainMapMeta() {
-    return new V1ObjectMeta().namespace(NS).name(ConfigMapHelper.getIntrospectorConfigMapName(UID));
-  }
-
-  private String defineTopology() throws JsonProcessingException {
-    WlsDomainConfigSupport configSupport = new WlsDomainConfigSupport("domain")
-          .withAdminServerName("admin").withWlsServer("admin", 8045);
-
-    return new ObjectMapper(new YAMLFactory())
-          .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
-          .writeValueAsString(new DomainTopology(configSupport.createDomainConfig()));
   }
 
 
@@ -378,40 +335,6 @@ public class DomainProcessorTest {
 
   private List<V1Pod> getRunningPods() {
     return testSupport.getResources(KubernetesTestSupport.POD);
-  }
-
-  private void defineServerResources(String serverName) {
-    testSupport.defineResources(createServerPod(serverName), createServerService(serverName));
-  }
-
-  private V1Pod createServerPod(String serverName) {
-    return AnnotationHelper.withSha256Hash(
-        new V1Pod()
-            .metadata(
-                withServerLabels(
-                    new V1ObjectMeta()
-                        .name(LegalNames.toPodName(DomainProcessorTestSetup.UID, serverName))
-                        .namespace(NS),
-                    serverName))
-            .spec(new V1PodSpec()));
-  }
-
-  private V1ObjectMeta withServerLabels(V1ObjectMeta meta, String serverName) {
-    return KubernetesUtils.withOperatorLabels(DomainProcessorTestSetup.UID, meta)
-        .putLabelsItem(SERVERNAME_LABEL, serverName);
-  }
-
-  private V1Service createServerService(String serverName) {
-    return AnnotationHelper.withSha256Hash(
-        new V1Service()
-            .metadata(
-                withServerLabels(
-                    new V1ObjectMeta()
-                        .name(
-                            LegalNames.toServerServiceName(
-                                DomainProcessorTestSetup.UID, serverName))
-                        .namespace(NS),
-                    serverName)));
   }
 
   private void assertServerPodAndServicePresent(DomainPresenceInfo info, String serverName) {

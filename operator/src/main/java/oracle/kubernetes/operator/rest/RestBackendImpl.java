@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.json.Json;
 import javax.json.JsonPatchBuilder;
 import javax.ws.rs.WebApplicationException;
@@ -21,6 +23,7 @@ import io.kubernetes.client.custom.V1Patch;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
 import io.kubernetes.client.openapi.models.V1UserInfo;
+import oracle.kubernetes.operator.DomainProcessor;
 import oracle.kubernetes.operator.helpers.AuthenticationProxy;
 import oracle.kubernetes.operator.helpers.AuthorizationProxy;
 import oracle.kubernetes.operator.helpers.AuthorizationProxy.Operation;
@@ -31,10 +34,14 @@ import oracle.kubernetes.operator.logging.LoggingFacade;
 import oracle.kubernetes.operator.logging.LoggingFactory;
 import oracle.kubernetes.operator.logging.MessageKeys;
 import oracle.kubernetes.operator.rest.backend.RestBackend;
+import oracle.kubernetes.operator.rest.model.DomainUpdate;
 import oracle.kubernetes.operator.wlsconfig.WlsClusterConfig;
 import oracle.kubernetes.operator.wlsconfig.WlsDomainConfig;
 import oracle.kubernetes.weblogic.domain.model.Domain;
 import oracle.kubernetes.weblogic.domain.model.DomainList;
+
+import static oracle.kubernetes.operator.logging.MessageKeys.INVALID_DOMAIN_UID;
+import static oracle.kubernetes.operator.rest.model.DomainUpdateType.INTROSPECT;
 
 /**
  * RestBackendImpl implements the backend of the WebLogic operator REST api by making calls to
@@ -58,20 +65,23 @@ public class RestBackendImpl implements RestBackend {
   private final AuthorizationProxy atz = new AuthorizationProxy();
   private final String principal;
   private final Collection<String> targetNamespaces;
+  private final DomainProcessor processor;
   private V1UserInfo userInfo;
 
   /**
    * Construct a RestBackendImpl that is used to handle one WebLogic operator REST request.
    *
+   * @param processor the object that processes changes to running domains
    * @param principal is the name of the Kubernetes user to use when calling the Kubernetes REST
    *     api.
    * @param accessToken is the access token of the Kubernetes service account of the client calling
-   *     the WebLogic operator REST api.
+ *     the WebLogic operator REST api.
    * @param targetNamespaces a list of Kubernetes namepaces that contain domains that the WebLogic
-   *     operator manages.
    */
-  RestBackendImpl(String principal, String accessToken, Collection<String> targetNamespaces) {
+  RestBackendImpl(
+        DomainProcessor processor, String principal, String accessToken, Collection<String> targetNamespaces) {
     LOGGER.entering(principal, targetNamespaces);
+    this.processor = processor;
     this.principal = principal;
     userInfo = authenticate(accessToken);
     this.targetNamespaces = targetNamespaces;
@@ -140,7 +150,7 @@ public class RestBackendImpl implements RestBackend {
       LOGGER.throwing(e);
       throw e;
     }
-    if (!status.getAuthenticated()) {
+    if (isNotAuthenticated(status)) {
       // don't know why the user didn't get authenticated
       WebApplicationException e = createWebApplicationException(Status.UNAUTHORIZED, null);
       LOGGER.throwing(e);
@@ -152,6 +162,10 @@ public class RestBackendImpl implements RestBackend {
     }
     LOGGER.exiting(userInfo);
     return userInfo;
+  }
+
+  private boolean isNotAuthenticated(@Nonnull V1TokenReviewStatus status) {
+    return !Boolean.TRUE.equals(status.getAuthenticated());
   }
 
   @Override
@@ -193,11 +207,35 @@ public class RestBackendImpl implements RestBackend {
   }
 
   @Override
+  public void updateDomain(String domainUid, DomainUpdate params) {
+    verifyDomain(domainUid);
+    authorize(domainUid, Operation.update);
+
+    if (params.getUpdateType() == INTROSPECT) {
+      introspect(domainUid);
+    } else {
+      throw new WebApplicationException(Status.BAD_REQUEST);
+    }
+  }
+
+  private void verifyDomain(String domainUid) {
+    if (!isDomainUid(domainUid)) {
+      throw new WebApplicationException(LOGGER.formatMessage(INVALID_DOMAIN_UID, domainUid), Status.BAD_REQUEST);
+    }
+  }
+
+  private void introspect(String domainUid) {
+    getDomain(domainUid).ifPresent(processor::introspectDomain);
+  }
+
+  private Optional<Domain> getDomain(String domainUid) {
+    return getDomainsList().stream().filter(domain -> domainUid.equals(domain.getDomainUid())).findFirst();
+  }
+
+  @Override
   public Set<String> getClusters(String domainUid) {
     LOGGER.entering(domainUid);
-    if (!isDomainUid(domainUid)) {
-      throw new AssertionError(LOGGER.formatMessage(MessageKeys.INVALID_DOMAIN_UID, domainUid));
-    }
+    verifyDomain(domainUid);
     authorize(domainUid, Operation.get);
 
     // Get list of WLS Configured Clusters defined for the corresponding WLS Domain identified by

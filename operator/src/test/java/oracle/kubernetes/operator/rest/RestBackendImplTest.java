@@ -8,17 +8,24 @@ import java.util.Collections;
 import java.util.List;
 import javax.ws.rs.WebApplicationException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.meterware.simplestub.Memento;
 import com.meterware.simplestub.StaticStubSupport;
-import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1SubjectAccessReview;
 import io.kubernetes.client.openapi.models.V1SubjectAccessReviewStatus;
 import io.kubernetes.client.openapi.models.V1TokenReview;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
 import io.kubernetes.client.openapi.models.V1UserInfo;
+import oracle.kubernetes.operator.DomainProcessingTestBase;
+import oracle.kubernetes.operator.DomainProcessorImpl;
+import oracle.kubernetes.operator.DomainProcessorTestSetup;
+import oracle.kubernetes.operator.helpers.DomainPresenceInfo;
 import oracle.kubernetes.operator.helpers.KubernetesTestSupport;
 import oracle.kubernetes.operator.rest.RestBackendImpl.TopologyRetriever;
 import oracle.kubernetes.operator.rest.backend.RestBackend;
+import oracle.kubernetes.operator.rest.model.DomainUpdate;
+import oracle.kubernetes.operator.rest.model.DomainUpdateType;
 import oracle.kubernetes.operator.utils.WlsDomainConfigSupport;
 import oracle.kubernetes.operator.wlsconfig.WlsDomainConfig;
 import oracle.kubernetes.utils.TestUtils;
@@ -26,13 +33,15 @@ import oracle.kubernetes.weblogic.domain.ClusterConfigurator;
 import oracle.kubernetes.weblogic.domain.DomainConfigurator;
 import oracle.kubernetes.weblogic.domain.DomainConfiguratorFactory;
 import oracle.kubernetes.weblogic.domain.model.Domain;
-import oracle.kubernetes.weblogic.domain.model.DomainSpec;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.net.HttpURLConnection.HTTP_CONFLICT;
+import static oracle.kubernetes.operator.DomainProcessorTestSetup.NS;
+import static oracle.kubernetes.operator.DomainProcessorTestSetup.UID;
+import static oracle.kubernetes.operator.DomainProcessorTestSetup.createTestDomain;
 import static oracle.kubernetes.operator.helpers.KubernetesTestSupport.DOMAIN;
 import static oracle.kubernetes.operator.helpers.KubernetesTestSupport.SUBJECT_ACCESS_REVIEW;
 import static oracle.kubernetes.operator.helpers.KubernetesTestSupport.TOKEN_REVIEW;
@@ -42,28 +51,20 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.junit.MatcherAssert.assertThat;
 
 @SuppressWarnings("SameParameterValue")
-public class RestBackendImplTest {
+public class RestBackendImplTest extends DomainProcessingTestBase {
 
   private static final int REPLICA_LIMIT = 4;
-  private static final String NS = "namespace1";
-  private static final String NAME1 = "domain";
-  private static final String NAME2 = "domain2";
-  private WlsDomainConfigSupport configSupport = new WlsDomainConfigSupport(NAME1);
+  private static final String UID2 = "domain2";
+  public static final String ADMIN = "admin";
+  private final WlsDomainConfigSupport configSupport = new WlsDomainConfigSupport(UID);
 
-  private List<Memento> mementos = new ArrayList<>();
+  private final List<Memento> mementos = new ArrayList<>();
   private RestBackend restBackend;
-  private Domain domain = createDomain(NS, NAME1);
-  private Domain domain2 = createDomain(NS, NAME2);
+  private final Domain domain1 = createTestDomain();
+  private final Domain domain2 = createTestDomain();
   private Domain updatedDomain;
-  private DomainConfigurator configurator = DomainConfiguratorFactory.forDomain(domain);
-  private KubernetesTestSupport testSupport = new KubernetesTestSupport();
+  private final DomainConfigurator configurator = DomainConfiguratorFactory.forDomain(domain1);
   private WlsDomainConfig config;
-
-  private static Domain createDomain(String namespace, String name) {
-    return new Domain()
-        .withMetadata(new V1ObjectMeta().namespace(namespace).name(name))
-        .withSpec(new DomainSpec().withDomainUid(name));
-  }
 
   /**
    * Setup test.
@@ -71,19 +72,25 @@ public class RestBackendImplTest {
    */
   @Before
   public void setUp() throws Exception {
+    super.setUp();
     mementos.add(TestUtils.silenceOperatorLogger());
-    mementos.add(testSupport.install());
     mementos.add(
         StaticStubSupport.install(RestBackendImpl.class, "INSTANCE", new TopologyRetrieverStub()));
 
-    testSupport.defineResources(domain, domain2);
+    renameDomain(domain2, UID2);
+    testSupport.defineResources(domain1, domain2);
     testSupport.doOnCreate(TOKEN_REVIEW, r -> authenticate((V1TokenReview) r));
     testSupport.doOnCreate(SUBJECT_ACCESS_REVIEW, s -> allow((V1SubjectAccessReview) s));
     testSupport.doOnUpdate(DOMAIN, d -> updatedDomain = (Domain) d);
     configSupport.addWlsCluster("cluster1", "ms1", "ms2", "ms3", "ms4", "ms5", "ms6");
-    restBackend = new RestBackendImpl("", "", Collections.singletonList(NS));
+    restBackend = new RestBackendImpl(processor, "", "", Collections.singletonList(NS));
 
     setupScanCache();
+  }
+
+  private void renameDomain(Domain domain, String name) {
+    domain.getMetadata().setName(name);
+    domain.getSpec().setDomainUid(name);
   }
 
   private void authenticate(V1TokenReview tokenReview) {
@@ -94,26 +101,56 @@ public class RestBackendImplTest {
     subjectAccessReview.setStatus(new V1SubjectAccessReviewStatus().allowed(true));
   }
 
-  /**
-   * Tear down test.
-   */
   @After
   public void tearDown() {
-    for (Memento memento : mementos) {
-      memento.revert();
-    }
+    super.tearDown();
+    mementos.forEach(Memento::revert);
+  }
+
+  @Test(expected = WebApplicationException.class)
+  public void whenUnknownDomain_throwException() {
+    restBackend.updateDomain("no_such_uid", new DomainUpdate(DomainUpdateType.INTROSPECT));
+  }
+
+  @Test(expected = WebApplicationException.class)
+  public void whenUnknownDomainUpdateCommand_throwException() {
+    restBackend.updateDomain(UID, new DomainUpdate(null));
+  }
+
+  @Test
+  public void whenIntrospectionRequested_runIntrospectionJob() throws JsonProcessingException {
+    new DomainProcessorTestSetup(testSupport).defineKubernetesResources(createDomainConfig());
+    defineServerResources(ADMIN);
+    defineConfigurationOverridesMap();
+    DomainProcessorImpl.registerDomainPresenceInfo(new DomainPresenceInfo(domain1));
+    testSupport.doOnCreate(KubernetesTestSupport.JOB, j -> recordJob((V1Job) j));
+
+    restBackend.updateDomain(UID, new DomainUpdate(DomainUpdateType.INTROSPECT));
+
+    assertThat(job, notNullValue());
+  }
+
+  private V1Job job;
+
+  private void recordJob(V1Job job) {
+    this.job = job;
+  }
+
+  private WlsDomainConfig createDomainConfig() {
+    return new WlsDomainConfig("base_domain")
+        .withAdminServer(ADMIN, "domain1-admin-server", 7001);
   }
 
   @Test(expected = WebApplicationException.class)
   public void whenNegativeScaleSpecified_throwException() {
-    restBackend.scaleCluster(NAME1, "cluster1", -1);
+    restBackend.scaleCluster(UID, "cluster1", -1);
   }
 
   @Test
   public void whenPerClusterReplicaSettingMatchesScaleRequest_doNothing() {
     configureCluster("cluster1").withReplicas(5);
 
-    restBackend.scaleCluster(NAME1, "cluster1", 5);
+    restBackend.scaleCluster(UID, "cluster1", 5);
 
     assertThat(getUpdatedDomain(), nullValue());
   }
@@ -130,7 +167,7 @@ public class RestBackendImplTest {
   public void whenPerClusterReplicaSetting_scaleClusterUpdatesSetting() {
     configureCluster("cluster1").withReplicas(1);
 
-    restBackend.scaleCluster(NAME1, "cluster1", 5);
+    restBackend.scaleCluster(UID, "cluster1", 5);
 
     assertThat(getUpdatedDomain().getReplicaCount("cluster1"), equalTo(5));
   }
@@ -138,7 +175,7 @@ public class RestBackendImplTest {
   @Test
   @Ignore
   public void whenNoPerClusterReplicaSetting_scaleClusterCreatesOne() {
-    restBackend.scaleCluster(NAME1, "cluster1", 5);
+    restBackend.scaleCluster(UID, "cluster1", 5);
 
     assertThat(getUpdatedDomain().getReplicaCount("cluster1"), equalTo(5));
   }
@@ -147,25 +184,25 @@ public class RestBackendImplTest {
   public void whenNoPerClusterReplicaSettingAndDefaultMatchesRequest_doNothing() {
     configureDomain().withDefaultReplicaCount(REPLICA_LIMIT);
 
-    restBackend.scaleCluster(NAME1, "cluster1", REPLICA_LIMIT);
+    restBackend.scaleCluster(UID, "cluster1", REPLICA_LIMIT);
 
     assertThat(getUpdatedDomain(), nullValue());
   }
 
   @Test(expected = WebApplicationException.class)
   public void whenReplaceDomainReturnsError_scaleClusterThrowsException() {
-    testSupport.failOnResource(DOMAIN, NAME2, NS, HTTP_CONFLICT);
+    testSupport.failOnResource(DOMAIN, UID2, NS, HTTP_CONFLICT);
 
     DomainConfiguratorFactory.forDomain(domain2).configureCluster("cluster1").withReplicas(2);
 
-    restBackend.scaleCluster(NAME2, "cluster1", 3);
+    restBackend.scaleCluster(UID2, "cluster1", 3);
   }
 
   @Test
   public void verify_getWlsDomainConfig_returnsWlsDomainConfig() {
-    WlsDomainConfig wlsDomainConfig = ((RestBackendImpl) restBackend).getWlsDomainConfig(NAME1);
+    WlsDomainConfig wlsDomainConfig = ((RestBackendImpl) restBackend).getWlsDomainConfig(UID);
 
-    assertThat(wlsDomainConfig.getName(), equalTo(NAME1));
+    assertThat(wlsDomainConfig.getName(), equalTo(UID));
   }
 
   @Test
@@ -180,7 +217,7 @@ public class RestBackendImplTest {
   public void verify_getWlsDomainConfig_doesNotReturnNull_whenScanIsNull() {
     config = null;
 
-    WlsDomainConfig wlsDomainConfig = ((RestBackendImpl) restBackend).getWlsDomainConfig(NAME1);
+    WlsDomainConfig wlsDomainConfig = ((RestBackendImpl) restBackend).getWlsDomainConfig(UID);
 
     assertThat(wlsDomainConfig, notNullValue());
   }

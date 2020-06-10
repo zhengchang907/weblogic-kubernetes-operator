@@ -3,6 +3,8 @@
 
 package oracle.kubernetes.operator;
 
+import javax.annotation.Nonnull;
+
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Event;
 import io.kubernetes.client.openapi.models.V1Pod;
@@ -32,4 +34,6 @@ public interface DomainProcessor {
   public void stopNamespace(String ns);
 
   public void reportSuspendedFibers();
+
+  void introspectDomain(@Nonnull Domain domain);
 }

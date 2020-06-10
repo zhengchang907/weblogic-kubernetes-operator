@@ -394,7 +394,7 @@ public class Main {
 
   private static void startRestServer(String principal, Collection<String> targetNamespaces)
       throws Exception {
-    RestServer.create(new RestConfigImpl(principal, targetNamespaces));
+    RestServer.create(new RestConfigImpl(processor, principal, targetNamespaces));
     RestServer.getInstance().start(container);
   }
 

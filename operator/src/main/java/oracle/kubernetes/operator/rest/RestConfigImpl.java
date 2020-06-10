@@ -5,6 +5,7 @@ package oracle.kubernetes.operator.rest;
 
 import java.util.Collection;
 
+import oracle.kubernetes.operator.DomainProcessor;
 import oracle.kubernetes.operator.logging.LoggingFacade;
 import oracle.kubernetes.operator.logging.LoggingFactory;
 import oracle.kubernetes.operator.rest.backend.RestBackend;
@@ -17,16 +18,19 @@ public class RestConfigImpl implements RestConfig {
 
   private final String principal;
   private final Collection<String> targetNamespaces;
+  private final DomainProcessor processor;
 
   /**
    * Constructs a RestConfigImpl.
    *
+   * @param processor the object that processes changes to running domains
    * @param principal is the name of the Kubernetes User or Service Account to use when calling the
    *     Kubernetes REST API.
    * @param targetNamespaces is a list of the Kubernetes Namespaces covered by this Operator.
    */
-  public RestConfigImpl(String principal, Collection<String> targetNamespaces) {
+  public RestConfigImpl(DomainProcessor processor, String principal, Collection<String> targetNamespaces) {
     LOGGER.entering(principal, targetNamespaces);
+    this.processor = processor;
     this.principal = principal;
     this.targetNamespaces = targetNamespaces;
     LOGGER.exiting();
@@ -90,7 +94,7 @@ public class RestConfigImpl implements RestConfig {
   @Override
   public RestBackend getBackend(String accessToken) {
     LOGGER.entering();
-    RestBackend result = new RestBackendImpl(principal, accessToken, targetNamespaces);
+    RestBackend result = new RestBackendImpl(processor, principal, accessToken, targetNamespaces);
     LOGGER.exiting();
     return result;
   }
