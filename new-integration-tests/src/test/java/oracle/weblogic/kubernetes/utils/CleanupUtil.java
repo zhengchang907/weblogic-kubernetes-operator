@@ -40,15 +40,12 @@ public class CleanupUtil {
 
   private static void deleteNamespaces() {
     try {
-      for (var namespace : Kubernetes.listNamespaces()) {
-        logger.info("Namespace found : {0}", namespace);
-        if (namespace.startsWith("ns-")) {
-          logger.info("Deleting namespace: {0}", namespace);
-          Kubernetes.deleteNamespace(namespace);
-        }
-      }
       logger.info("Listing Persistent Volumes");
       for (var pv : Kubernetes.listPersistentVolumes().getItems()) {
+        logger.info(pv.getMetadata().getName());
+      }
+      logger.info("Listing Persistent Volume claims");
+      for (var pv : Kubernetes.listPersistentVolumeClaims("ns-flag").getItems()) {
         logger.info(pv.getMetadata().getName());
       }
       logger.info("Listing Clusterrolebindings");
@@ -58,6 +55,13 @@ public class CleanupUtil {
       logger.info("Listing Clusterroles");
       for (var r : Kubernetes.listClusterRoles(null).getItems()) {
         logger.info(r.getMetadata().getName());
+      }
+      for (var namespace : Kubernetes.listNamespaces()) {
+        logger.info("Namespace found : {0}", namespace);
+        if (namespace.startsWith("ns-")) {
+          logger.info("Deleting namespace: {0}", namespace);
+          Kubernetes.deleteNamespace(namespace);
+        }
       }
     } catch (ApiException ex) {
       logger.severe(ex.getResponseBody());
