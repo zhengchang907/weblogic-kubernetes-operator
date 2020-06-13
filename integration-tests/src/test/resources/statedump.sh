@@ -95,6 +95,10 @@ function state_dump {
   echo "Generating $kubednsfname"
   $kubectlcmd describe service kube-dns -n kube-system > $kubednsfname
 
+  kubeversionfname="${DUMP_DIR}/kubectl.version"
+  echo "Generating $kubeversionfname"
+  $kubectlcmd version > $kubeversionfname
+
   mkdir -p $ARCHIVE_DIR || fail Could not archive, could not create target directory \'$ARCHIVE_DIR\'.
   
   # Get various k8s resource describes and redirect/copy to files 
