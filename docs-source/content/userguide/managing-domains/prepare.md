@@ -29,8 +29,8 @@ Perform these steps to prepare your Kubernetes cluster to run a WebLogic domain:
     ```
 
     * Replace `domain-namespace-1` with the namespace that the domain will be in.
-    * Replace `domain1-weblogic-credentials` with the name of the secret.  The operator expects the secret name to be
-      the `domainUID` followed by the literal string `-weblogic-credentials`, and many of the samples assume this name.
+    * Replace `domain1-weblogic-credentials` with the name of the secret, conforming to the following rule: The operator expects the secret name to be
+      the `domainUID` followed by the literal string `-weblogic-credentials`. `domainUID` is the unique identifier of the domain. Many of the samples assume a `domainUID` of `domain1`.
     * Replace the string `username` in the third line with the user name for the administrative user.
     * Replace the string `password` in the fourth line with the password.
 

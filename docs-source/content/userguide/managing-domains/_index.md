@@ -28,8 +28,13 @@ Be aware of the following important considerations for WebLogic domains running 
 
   {{% notice warning %}}
   Oracle strongly recommends storing an image containing a WebLogic domain home (`domainHomeSourceType` is `Image`)
+<<<<<<< HEAD
   as private in the registry (for example, Oracle Cloud Infrastructure Registry, GitHub Container Registry, and such).
   A container image that contains a WebLogic domain has sensitive information including
+=======
+  as private in the registry (for example, Oracle Cloud Infrastructure Registry, Azure Container Registry, Docker Hub, and such).
+  A Docker image that contains a WebLogic domain has sensitive information including
+>>>>>>> Running WLS on AKS via "Model in image"
   keys and credentials that are used to access external resources (for example, the data source password).
   For more information, see
   [WebLogic domain in container image protection]({{<relref "/security/domain-security/image-protection#weblogic-domain-in-container-image-protection">}}).
@@ -121,12 +126,6 @@ sample]({{< relref "/samples/simple/domains/manually-create-domain/_index.md" >}
 You can modify the WebLogic domain configuration for Domain in PV, Domain in Image, and Model in Image before deploying a Domain YAML file:
 
 When the domain is in a persistent volume, you can use WLST or WDT to change the configuration.
-
-For Domain in Image and Domain in PV you can use [configuration overrides]({{< relref "/userguide/managing-domains/configoverrides/_index.md" >}}).
-
-Configuration overrides allow changing a configuration without modifying its original `config.xml` or system resource XML files, and supports
-parameterizing overrides so that you can inject values into them from Kubernetes Secrets. For example, you can inject database user names, passwords,
-and URLs that are stored in a secret.
 
 For Domain in Image and Domain in PV you can use [configuration overrides]({{< relref "/userguide/managing-domains/configoverrides/_index.md" >}}).
 
