@@ -68,9 +68,9 @@ cd weblogic-kubernetes-operator
 You must have the `cluster-admin` role to install the operator. The operator does not need the `cluster-admin` role at runtime. Grant the Helm service account the cluster-admin role, using this configuration file `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/model-in-image/helm-sa-cluster-admin-role.yaml`.
 
 ```bash
-$ cd kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/model-in-image
+# $ cd kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/model-in-image
 $ kubectl apply -f helm-sa-cluster-admin-role.yaml
-clusterrolebinding.rbac.authorization.k8s.io/helm-user-cluster-admin-role created
+# clusterrolebinding.rbac.authorization.k8s.io/helm-user-cluster-admin-role created
 ```
 
 Create a namespace and service account for the operator.
