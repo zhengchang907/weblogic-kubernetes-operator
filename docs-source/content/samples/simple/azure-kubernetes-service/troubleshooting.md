@@ -166,17 +166,17 @@ $ helm install weblogic-operator kubernetes/charts/weblogic-operator \
 Error: timed out waiting for the condition
 ```
 
-Make sure your are working with branch v3.1.0. Remove the operator and install again.
+Make sure your are working with branch master. Remove the operator and install again.
 
 ```bash
 $ helm uninstall weblogic-operator -n sample-weblogic-operator-ns
 release "weblogic-operator" uninstalled
 ```
 
-Checkout `v3.1.0` and install the operator.
+Checkout master and install the operator.
 
 ```bash
-$ git checkout v3.1.0
+$ git checkout master
 $ cd weblogic-kubernetes-operator
 $ helm install weblogic-operator kubernetes/charts/weblogic-operator \
    --namespace sample-weblogic-operator-ns \
@@ -261,151 +261,3 @@ kube-system                   omsagent-rcmgr                              1/1   
 kube-system                   omsagent-rs-787ff54d9d-w7tp5                1/1     Running   0          3h44m
 kube-system                   tunnelfront-794845c84b-v9f98                1/1     Running   0          3h44m
 ```
-
-##### Fail to pull the operator image
-
-You may run into error when installing the operator:
-
-```text
-Error: timed out waiting for the condition
-```
-
-You can check the log of operator pod using the following commands:
-
-```bash
-$ kubectl get pods -n sample-weblogic-operator-ns
-NAME                                 READY   STATUS    RESTARTS   AGE
-weblogic-operator-f86b879fd-9969b   1/1     Running   0          32s
-
-$ kubectl describe pod weblogic-operator-f86b879fd-9969b -n sample-weblogic-operator-ns
-...
-Events:
-  Type     Reason          Age                   From               Message
-  ----     ------          ----                  ----               -------
-  Normal   Scheduled       10m                   default-scheduler  Successfully assigned sample-weblogic-operator-ns/weblogic-operator-f86b879fd-9969b to aks-agentpool-42459350-vmss000002
-  Normal   SandboxChanged  10m                   kubelet            Pod sandbox changed, it will be killed and re-created.
-  Warning  Failed          10m (x3 over 10m)     kubelet            Failed to pull image "oracle/weblogic-kubernetes-operator:3.2.0": rpc error: code = Unknown desc = Error response from daemon: manifest for oracle/weblogic-kubernetes-operator:3.2.0 not found: manifest unknown: manifest unknown
-  Warning  Failed          10m (x3 over 10m)     kubelet            Error: ErrImagePull
-  Normal   Pulling         9m20s (x4 over 10m)   kubelet            Pulling image "oracle/weblogic-kubernetes-operator:3.2.0"
-  Warning  Failed          5m52s (x22 over 10m)  kubelet            Error: ImagePullBackOff
-  Normal   BackOff         51s (x45 over 10m)    kubelet            Back-off pulling image "oracle/weblogic-kubernetes-operator:3.2.0"
-```
-
-Then run the docker command to check if the image is available.
-
-```bash
-docker pull oracle/weblogic-kubernetes-operator:3.2.0
-Error response from daemon: manifest for oracle/weblogic-kubernetes-operator:3.2.0 not found: manifest unknown: manifest unknown
-```
-
-If the operator image is unavailable, either use the older version or build a new image can solve the error. You have to set `--image` in the installation command.
-
-The following are steps to build a new image:
-
-1. Build the operator
-
-   You need JDK 11 to build the operator; check your current JDK version by running `java -version`.
-
-   Run the following command to build the operator:
-
-   ```bash
-   $ cd weblogic-kubernetes-operator/operator
-   $ mvn clean package
-   ...
-   [INFO] Reactor Summary for weblogic-kubernetes-operator 3.2.0:
-   [INFO] 
-   [INFO] weblogic-kubernetes-operator ....................... SUCCESS [02:45 min]
-   [INFO] operator-swagger ................................... SUCCESS [02:18 min]
-   [INFO] json-schema ........................................ SUCCESS [ 20.636 s]
-   [INFO] jsonschema-maven-plugin Maven Mojo ................. SUCCESS [ 57.514 s]
-   [INFO] operator-runtime ................................... SUCCESS [06:25 min]
-   [INFO] integration-tests .................................. SUCCESS [01:33 min]
-   [INFO] installation-tests ................................. SUCCESS [  9.552 s]
-   [INFO] Project Reports .................................... SUCCESS [  0.139 s]
-   [INFO] ------------------------------------------------------------------------
-   [INFO] BUILD SUCCESS
-   [INFO] ------------------------------------------------------------------------
-   [INFO] Total time:  14:32 min
-   [INFO] Finished at: 2020-12-01T01:57:46+08:00
-   [INFO] ------------------------------------------------------------------------
-   ```
-
-2. Build the operator image
-
-   ```bash
-   $ cd weblogic-kubernetes-operator
-   $ ./buildDockerImage.sh
-   Building image 'oracle/weblogic-kubernetes-operator:3.2.0' ...
-   [+] Building 54.0s (12/12) FINISHED                                                                                                                                  
-   => [internal] load .dockerignore                                                                                                                               0.0s
-   => => transferring context: 2B                                                                                                                                 0.0s
-   => [internal] load build definition from Dockerfile                                                                                                            0.0s
-   => => transferring dockerfile: 38B                                                                                                                             0.0s
-   => [internal] load metadata for docker.io/library/oraclelinux:7-slim                                                                                           3.4s
-   => CACHED [1/7] FROM docker.io/library/oraclelinux:7-slim@sha256:a926a3e7a5f94d881a71c3d27afa11147040f9bffcf16a0671a11a4c1e3dcdc4                              0.0s
-   => [internal] load build context                                                                                                                               1.5s
-   => => transferring context: 60.62MB                                                                                                                            1.5s
-   => [2/7] RUN set -eux;     yum -y install gzip tar openssl;     rm -rf /var/cache/yum                                                                         23.6s
-   => [3/7] RUN set -eux;     curl -fL -o /jdk.tar.gz "https://download.java.net/java/GA/jdk15/779bf45e88a44cbd9ea6621d33e33db1/36/GPL/openjdk-15_linux-x64_bin  25.5s 
-   => [4/7] COPY --chown=oracle:root src/scripts/* /operator/                                                                                                     0.0s 
-   => [5/7] COPY --chown=oracle:root operator/target/weblogic-kubernetes-operator.jar /operator/weblogic-kubernetes-operator.jar                                  0.0s 
-   => [6/7] COPY --chown=oracle:root operator/target/lib/*.jar /operator/lib/                                                                                     0.2s 
-   => [7/7] WORKDIR /operator/                                                                                                                                    0.0s 
-   => exporting to image                                                                                                                                          1.0s 
-   => => exporting layers                                                                                                                                         1.0s 
-   => => writing image sha256:f5a7c9b6815d7b1fff4b81539dd52d361106192ba05ad71d7ad9ce3f7194da75                                                                    0.0s
-   => => naming to docker.io/oracle/weblogic-kubernetes-operator:3.2.0                                                                                            0.0s
-
-   WebLogic Kubernetes Operator Docker Image is ready:
-
-      --> oracle/weblogic-kubernetes-operator:3.2.0
-
-   Build completed in 55 seconds.
-   ```
-
-3. Tag the image and push to your public repository
-
-   ```bash
-   $ docker tag oracle/weblogic-kubernetes-operator:3.2.0 <your-docker-public-repo-path>:3.2.0
-   $ docker push <your-docker-public-repo-path>:3.2.0
-   ```
-
-4. Install the operator with the new image
-
-   ```bash
-   # remove the failed operator
-   $ helm remove weblogic-operator -n sample-weblogic-operator-ns
-   # install the operator again
-   $ helm install weblogic-operator kubernetes/charts/weblogic-operator \
-      --namespace sample-weblogic-operator-ns \
-      --set serviceAccount=sample-weblogic-operator-sa \
-      --set "enableClusterRoleBinding=true" \
-      --set image=<your-docker-public-repo-path>:3.2.0 \
-      --set "domainNamespaceSelectionStrategy=LabelSelector" \
-      --set "domainNamespaceLabelSelector=weblogic-operator\=enabled" \
-      --wait
-   ```
-
-   If you are using a private registry, see 
-[Operator image pull secret]({{<relref "/security/secrets#operator-image-pull-secret">}}). 
-
-5. Verify the operator
-
-   The status will be running:
-
-   ```bash
-   $ kubectl get pods -n sample-weblogic-operator-ns
-   NAME                                 READY   STATUS    RESTARTS   AGE
-   weblogic-operator-775b668c8f-nwwnn   1/1     Running   0          32s
-   ```
-
-
-
-
-
-
-
-
-
-
-
