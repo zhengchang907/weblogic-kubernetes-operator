@@ -97,7 +97,7 @@ sample-weblogic-operator-sa   1         9m5s
 Install the operator. Ensure your current directory is `weblogic-kubernetes-operator`. It may take you several minutes to install the operator.
 
 ```bash
-$ cd weblogic-kubernetes-operator
+# cd weblogic-kubernetes-operator
 $ helm install weblogic-operator kubernetes/charts/weblogic-operator \
   --namespace sample-weblogic-operator-ns \
   --set image=oracle/weblogic-kubernetes-operator:3.1.1 \
