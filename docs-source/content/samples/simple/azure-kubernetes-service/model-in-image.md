@@ -100,7 +100,7 @@ Install the operator. Ensure your current directory is `weblogic-kubernetes-oper
 # cd weblogic-kubernetes-operator
 $ helm install weblogic-operator kubernetes/charts/weblogic-operator \
   --namespace sample-weblogic-operator-ns \
-  --set image=oracle/weblogic-kubernetes-operator:3.1.1 \
+  --set image=ghcr.io/oracle/weblogic-kubernetes-operator:3.1.1 \
   --set serviceAccount=sample-weblogic-operator-sa \
   --set "enableClusterRoleBinding=true" \
   --set "domainNamespaceSelectionStrategy=LabelSelector" \
