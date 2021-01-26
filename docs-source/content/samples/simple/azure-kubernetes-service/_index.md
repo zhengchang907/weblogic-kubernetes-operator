@@ -28,23 +28,21 @@ Azure Kubernetes Service makes it simple to deploy a managed Kubernetes cluster 
 
 To learn more, please see the [Azure Kubernetes Service](https://docs.microsoft.com/azure/aks/) overview page.
 
-You can follow the [Create an AKS cluster]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster.md" >}}) to set up the Kubernetes cluster and create storage.
-
 #### Domain home source types
 
-This sample demonstrates running the WebLogic cluster on AKS via two domain home types:
-
-- [Domain in PV]({{< relref "/samples/simple/azure-kubernetes-service/domain-on-pv.md" >}}): running the WebLogic cluster on AKS with domain home in PV offers the following benefits.
-
-   - Use standard Oracle-provided images with patches installed.
-   - No docker environment required. You are able to run your business quickly without building knowledge of docker.
-   - Mutate the live domain configuration with Administration Console from a browser or WLST.
+This sample demonstrates running the WebLogic cluster on AKS via two domain home types. The instructions for each are self contained and independent:
 
 - [Model in image]({{< relref "/samples/simple/azure-kubernetes-service/model-in-image.md" >}}): running the WebLogic cluster on AKS with domain home in image offers the following benefits.
 
    - Reuse image to create different domains with different `domainUID` and different configurations.
    - Mutate the domain home configuration with additional model files supplied in a `ConfigMap`.  Many such changes do not need to restart the entire domain for the change to take effect.
    - The model file syntax is far simpler and less error prone than the configuration override syntax, and, unlike configuration overrides, allows you to directly add data sources and JMS modules.
+
+- [Domain in PV]({{< relref "/samples/simple/azure-kubernetes-service/domain-on-pv.md" >}}): running the WebLogic cluster on AKS with domain home in PV offers the following benefits.
+
+   - Use standard Oracle-provided images with patches installed.
+   - No docker environment required. You are able to run your business quickly without building knowledge of docker.
+   - Mutate the live domain configuration with Administration Console from a browser or WLST.
 
 ### References
 
