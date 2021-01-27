@@ -31,14 +31,8 @@ This sample assumes the following prerequisite environment.
 
 ##### Create an Azure Kubernetes Service cluster 
 
-Create the Azure Kubernetes Service cluster using the Azure CLI. To set up your Kubernetes cluster, follow [Create an AKS cluster]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster.md" >}}). After your Kubernetes cluster is up and running, run the following commands to make sure `kubectl` can access the Kubernetes cluster:
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body.md" >}}
 
-```bash
-$ kubectl get nodes -o wide
-NAME                                  STATUS   ROLES   AGE     VERSION    INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-aks-pool1haiche-33688868-vmss000000   Ready    agent   4m25s   v1.17.13   10.240.0.4    <none>        Ubuntu 16.04.7 LTS   4.15.0-1098-azure   docker://19.3.12
-aks-pool1haiche-33688868-vmss000001   Ready    agent   4m12s   v1.17.13   10.240.0.5    <none>        Ubuntu 16.04.7 LTS   4.15.0-1098-azure   docker://19.3.12
-```
 
 ##### Oracle Container Registry
 
@@ -47,10 +41,6 @@ You will need an Oracle Container Registry account. The following steps will dir
 Obtain the WebLogic Server image from the [Oracle Container Registry](https://container-registry.oracle.com/).
 
   - First time users, [follow these directions](/weblogic-kubernetes-operator/userguide/managing-domains/domain-in-image/base-images/#obtaining-standard-images-from-the-oracle-container-registry).   
-  - Find and then pull the WebLogic 12.2.1.4 install image:
-     ```bash
-     $ docker pull container-registry.oracle.com/middleware/weblogic:12.2.1.4
-     ```
 
 ##### Install WebLogic Server Kubernetes Operator
 
@@ -353,7 +343,7 @@ You may run into a `Dockerfile` parsing error if your docker buildkit is enabled
 
 AKS can pull Docker images from any container registry, but the easiest integration is to use Azure Container Registry (ACR).  In this section we will create a new Azure Container Registry, connect it to our pre-existing AKS cluster and push the Docker image built in the preceding section to it.  For complete details see [Azure Container Registry documentation](https://docs.microsoft.com/en-us/azure/container-registry/).
 
-Let's create an instance of ACR in the same resource group we used for AKS. We will use the environment variables used during the steps in [Create an Azure Kubernetes Service cluster]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster" >}}).  For simplicity, we use the resource group name as the name of the ACR instance.
+Let's create an instance of ACR in the same resource group we used for AKS. We will use the environment variables used during the steps above.  For simplicity, we use the resource group name as the name of the ACR instance.
 
 ```shell
 $ az acr create --resource-group $AKS_PERS_RESOURCE_GROUP --name $AKS_PERS_RESOURCE_GROUP --sku Basic
@@ -834,10 +824,7 @@ Found 0 local data sources:
 
 Naturally, you will want to deploy newer versions of the EAR application, located in the WDT archive ZIP file at `wlsdeploy/applications/myapp-v1`. To learn how to do this, follow the steps in [Update 3]({{< relref "/samples/simple/domains/model-in-image/update3" >}}).
 
-
-#### Clean up resources
-
-  [Clean up resources]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster#clean-up-resources" >}}): clean up Azure resources using Azure CLI
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/clean-up-resources.md" >}}
 
 #### Troubleshooting
 

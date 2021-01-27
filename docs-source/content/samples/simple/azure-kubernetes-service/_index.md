@@ -11,8 +11,6 @@ description: "Sample for using the operator to set up a WLS cluster on the Azure
    - [Introduction](#introduction)
      - [Azure Kubernetes Service cluster](#azure-kubernetes-service-cluster)
      - [Domain home source types](#domain-home-source-types)
-     - [Access image](#access-images)
-   - [Create an AKS cluster]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster.md" >}}): creating an AKS cluster with storage using Azure CLI
    - [Domain in PV]({{< relref "/samples/simple/azure-kubernetes-service/domain-on-pv.md" >}}): running the WebLogic cluster on AKS with domain home on PV
    - [Model in image]({{< relref "/samples/simple/azure-kubernetes-service/model-in-image.md" >}}): running the WebLogic cluster on AKS with domain model in image
    - [Troubleshooting]({{< relref "/samples/simple/azure-kubernetes-service/troubleshooting.md" >}})
@@ -20,7 +18,7 @@ description: "Sample for using the operator to set up a WLS cluster on the Azure
 
 ### Introduction
 
-This sample demonstrates how to use the [Oracle WebLogic Server Kubernetes Operator]({{< relref "/" >}}) (hereafter "the operator") to set up a WebLogic Server (WLS) cluster on the Azure Kubernetes Service (AKS). After going through the steps, your WLS domain runs on an AKS cluster.  You have several options for managing the cluster, depending on which [domain home source type]({{< relref "/userguide/managing-domains/choosing-a-model/" >}}) you choose.  With "domain in PV", you can manage your WLS domain by accessing the WebLogic Server Administration Console or WLST.  With "Model in image" you use the operator to perform WLS administrative operations.
+This sample demonstrates how to use the [Oracle WebLogic Server Kubernetes Operator]({{< relref "/" >}}) (hereafter "the operator") to set up a WebLogic Server (WLS) cluster on the Azure Kubernetes Service (AKS). After going through the steps, your WLS domain runs on an AKS cluster.  You have several options for managing the cluster, depending on which [domain home source type]({{< relref "/userguide/managing-domains/choosing-a-model/" >}}) you choose.  With "Domain in PV", you can manage your WLS domain by accessing the WebLogic Server Administration Console or WLST.  With "Model in image" you use the operator to perform WLS administrative operations.
 
 #### Azure Kubernetes Service cluster
 
@@ -30,7 +28,7 @@ To learn more, please see the [Azure Kubernetes Service](https://docs.microsoft.
 
 #### Domain home source types
 
-This sample demonstrates running the WebLogic cluster on AKS via two domain home types. The instructions for each are self contained and independent:
+This sample demonstrates running the WebLogic cluster on AKS via two domain home types. The instructions for each are self contained and independent. This section lists the domain home source types recommended for use with AKS, along with some benefits of each.
 
 - [Model in image]({{< relref "/samples/simple/azure-kubernetes-service/model-in-image.md" >}}): running the WebLogic cluster on AKS with domain home in image offers the following benefits.
 

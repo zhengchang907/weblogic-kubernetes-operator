@@ -10,8 +10,9 @@ This sample demonstrates how to use the [Oracle WebLogic Server Kubernetes Opera
 #### Contents
 
  - [Prerequisites](#prerequisites)
-    - [Create an AKS cluster](#create-an-azure-kubernetes-service-cluster)
-    - [Oracle Container Registry](#oracle-container-registry)
+ - [Create an AKS cluster](#create-an-azure-kubernetes-service-cluster)
+ - [Create storage and set up file share](#create-storage-and-set-up-file-share)
+ - [Oracle Container Registry](#oracle-container-registry)
  - [Install WebLogic Server Kubernetes Operator](#install-weblogic-server-kubernetes-operator)
  - [Create WebLogic domain](#create-weblogic-domain)
  - [Automation](#automation)
@@ -28,34 +29,16 @@ This sample assumes the following prerequisite environment setup.
 * Operating System: GNU/Linux, macOS or [WSL for Windows 10](https://docs.microsoft.com/windows/wsl/install-win10).
 * [Git](https://git-scm.com/downloads), use `git --version` to test if `git` works.  This document was tested with version 2.17.1.
 * [Azure CLI](https://docs.microsoft.com/cli/azure), use `az --version` to test if `az` works.  This document was tested with version 2.9.1.
+* [Docker for Desktop](https://www.docker.com/products/docker-desktop).  This document was tested with `Docker version 20.10.2, build 2291f61`
 * [kubectl](https://kubernetes-io-vnext-staging.netlify.com/docs/tasks/tools/install-kubectl/), use `kubectl version` to test if `kubectl` works.  This document was tested with version v1.16.3.
 * [helm](https://helm.sh/docs/intro/install/), version 3.1 and later, use `helm version` to check the `helm` version.  This document was tested with version v3.2.4.
-
-##### Create an Azure Kubernetes Service cluster 
-
-Create the Azure Kubernetes Service cluster using the Azure CLI. Follow [Create an AKS cluster]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster.md" >}}) to set up your Kubernetes cluster. After your Kubernetes cluster is up and running, run the following commands to make sure kubectl can access the Kubernetes cluster:
-
-```shell
-$ kubectl get nodes -o wide
-NAME                                  STATUS   ROLES   AGE     VERSION    INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-aks-pool1haiche-33688868-vmss000000   Ready    agent   4m25s   v1.17.13   10.240.0.4    <none>        Ubuntu 16.04.7 LTS   4.15.0-1098-azure   docker://19.3.12
-aks-pool1haiche-33688868-vmss000001   Ready    agent   4m12s   v1.17.13   10.240.0.5    <none>        Ubuntu 16.04.7 LTS   4.15.0-1098-azure   docker://19.3.12
-```
-
-##### Oracle Container Registry
-
-You will need an Oracle account. The following steps will direct you to accept the license agreement for WebLogic Server.  Make note of your Oracle Account password and email.  This sample pertains to 12.2.1.4, but other versions may work as well.
-
-  - In a web browser, navigate to https://container-registry.oracle.com and log in using the Oracle Single Sign-On authentication service. If you do not already have SSO credentials, at the top of the page, click the Sign In link to create them.
-  - The Oracle Container Registry provides a WebLogic Server 12.2.1.4.0 Docker image, which already has the necessary patches applied, and the Oracle WebLogic Server 12.2.1.4.0 and 14.1.1.0.0 images, which do not require any patches.
 
 {{% notice info %}} The following sections of the sample instructions will guide you, step-by-step, through the process of setting up a WebLogic cluster on AKS - remaining as close as possible to a native Kubernetes experience. This lets you understand and customize each step. If you wish to have a more automated experience that abstracts some lower level details, you can skip to the [Automation](#automation) section.
 {{% /notice %}}
 
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body.md" >}}
 
-#### Install WebLogic Server Kubernetes Operator
-
-The Oracle WebLogic Server Kubernetes Operator is an adapter to integrate WebLogic Server and Kubernetes, allowing Kubernetes to serve as a container infrastructure hosting WLS instances.  The operator runs as a Kubernetes Pod and stands ready to perform actions related to running WLS on Kubernetes.
+##### Clone WebLogic Server Kubernetes Operator repository
 
 Clone the [Oracle WebLogic Server Kubernetes Operator repository](https://github.com/oracle/weblogic-kubernetes-operator) to your machine. We will use several scripts in this repository to create a WebLogic domain. This sample was tested with v3.0.3.
 
@@ -65,6 +48,13 @@ $ git clone https://github.com/oracle/weblogic-kubernetes-operator.git
 #TODO: we have to fix the branch after the source code are merged
 #git checkout v3.1.1
 ```
+
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-storage.md" >}}
+
+
+#### Install WebLogic Server Kubernetes Operator
+
+The Oracle WebLogic Server Kubernetes Operator is an adapter to integrate WebLogic Server and Kubernetes, allowing Kubernetes to serve as a container infrastructure hosting WLS instances.  The operator runs as a Kubernetes Pod and stands ready to perform actions related to running WLS on Kubernetes.
 
 Kubernetes Operators use [Helm](https://helm.sh/) to manage Kubernetes applications. The operator’s Helm chart is located in the `kubernetes/charts/weblogic-operator` directory. Please install the operator by running the corresponding command.
 
@@ -156,7 +146,7 @@ We need to set up the domain configuration for the WebLogic domain.
 
    If you used the automation script to create the AKS cluster, skip this step and go to step 2.
 
-   If you create Azure resources step by step according to [Create an AKS cluster]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster.md" >}}), validate all the resources created above using the script `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/validate.sh`.
+   If you create Azure resources step by step according to the steps above, validate all the resources created above using the script `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/validate.sh`.
 
    Use the following commands to check if the resources are ready:
 
@@ -193,12 +183,12 @@ We need to set up the domain configuration for the WebLogic domain.
 
    The domain creation inputs can be customized by editing input file. We provided sample input values in `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/domain-on-pv/create-domain-inputs.yaml`.
 
-   Copy the sample input file to `~/azure/weblogic-on-aks`. If you want to edit your copy, please make sure the following values must be specified:
+   Copy the sample input file to `~/azure/weblogic-on-aks`. If you want to edit your copy, please make sure the following values are specified:
 
    | Name in YAML file | Example value | Notes |
    |-------------------|---------------|-------|
    |`imagePullSecretName`|`regcred`|Remove `#` at the beginning of `imagePullSecretName`, and make sure its value is the same value with `${SECRET_NAME_DOCKER}`|
-   |`persistentVolumeClaimName`|`wls-azurefile`|Make sure it must be the same value with `${NAME_PREFIX}-azurefile` in [Create an AKS cluster]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster.md" >}}). If you created the AKS cluster with automation script, you can copy the PVC name from output of "Persistent Volumn Clain name".|
+   |`persistentVolumeClaimName`|`wls-azurefile`|Make sure it must be the same value with `${NAME_PREFIX}-azurefile` in the steps above. If you created the AKS cluster with automation script, you can copy the PVC name from output of "Persistent Volumn Clain name".|
    |`exposeAdminNodePort`|`true`|Expose the admin port, we will use Administration Console to deploy a sample application. |
 
 
@@ -313,7 +303,7 @@ We need to set up the domain configuration for the WebLogic domain.
 
 4. You must create `LoadBalancer` services for the Administration Server and the WLS cluster.  This enables WLS to service requests from outside the AKS cluster.
 
-   Use the sample configuration file `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/domain-on-pv/admin-lb.yaml` to create a load balancer service for the Administration Server. If you are choosing not to use the predefined YAML file and instead created new one with customized values, then substitute the following content with you domain values.
+   Use the sample configuration file `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/domain-on-pv/admin-lb.yaml` to create a load balancer service for the Administration Server. If you are choosing not to use the predefined YAML file and instead created new one with customized values, then substitute the following content with your domain values.
 
    ```yaml
    apiVersion: v1
@@ -355,7 +345,7 @@ We need to set up the domain configuration for the WebLogic domain.
      type: LoadBalancer
    ```
 
-   Create the load balancer service using the following command:
+   Create the load balancer services using the following commands:
 
    ```bash
    $ cd kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/domain-on-pv
@@ -480,21 +470,13 @@ The sample script will create a WLS domain home on the AKS cluster, including
   - creating WLS domain home.
   - generating the domain resource YAML files, which can be used to restart the Kubernetes artifacts of the corresponding domain.
 
-Clone WebLogic Server Kubernetes Operator repository and checkout `v3.0.3`.
-
-```bash
-$ git clone https://github.com/oracle/weblogic-kubernetes-operator.git
-$ cd weblogic-kubernetes-operator
-$ git checkout v3.0.3
-```
-
-You must specify the input values, you can edit `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/create-domain-on-aks-inputs.yaml` directly, or copy the file and edit your copy. The following values must be specified:
+For input values, you can edit `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/create-domain-on-aks-inputs.yaml` directly, or copy the file and edit your copy. The following values must be specified:
 
 | Name in YAML file | Example value | Notes |
 |-------------------|---------------|-------|
-| `azureServicePrincipalAppId` | `nr086o75-pn59-4782-no5n-nq2op0rsr1q6` | Application ID of your service principal, refer to the application ID in the [Create Service Principal]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster#create-service-principal-for-aks" >}}) section. |
-| `azureServicePrincipalClientSecret` | `8693089o-q190-45ps-9319-or36252s3s90` | A client secret of your service principal, refer to the client secret in the [Create Service Principal]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster#create-service-principal-for-aks" >}}) section. |
-| `azureServicePrincipalTenantId` | `72s988os-86s1-cafe-babe-2q7pq011qo47` | Tenant (Directory ) ID of your service principal, refer to the client secret in the [Create Service Principal]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster#create-service-principal-for-aks" >}}) section. |
+| `azureServicePrincipalAppId` | `nr086o75-pn59-4782-no5n-nq2op0rsr1q6` | Application ID of your service principal, refer to the application ID in the [Create Service Principal]("#create-service-principal-for-aks") section. |
+| `azureServicePrincipalClientSecret` | `8693089o-q190-45ps-9319-or36252s3s90` | A client secret of your service principal, refer to the client secret in the [Create Service Principal]("#create-service-principal-for-aks") section. |
+| `azureServicePrincipalTenantId` | `72s988os-86s1-cafe-babe-2q7pq011qo47` | Tenant (Directory ) ID of your service principal, refer to the client secret in the [Create Service Principal]("#create-service-principal-for-aks") section. |
 | `dockerEmail` | `yourDockerEmail` | Oracle Single Sign-On (SSO) account email, used to pull the WebLogic Server Docker image. |
 | `dockerPassword` | `yourDockerPassword`| Password for Oracle SSO account, used to pull the WebLogic Server Docker image.  In clear text. |
 | `dockerUserName` | `yourDockerId` | The same value as `dockerEmail`.  |
@@ -572,9 +554,7 @@ The logs are stored in the Azure file share. Follow these steps to access the lo
 ![WebLogic Server Logs](../screenshot-logs.png)
 {{% /expand %}}
 
-#### Clean up resources
-
-[Clean up resource]({{< relref "/samples/simple/azure-kubernetes-service/create-aks-cluster#clean-up-resources" >}}): clean up Azure resources using Azure CLI
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/clean-up-resources.md" >}}
 
 #### Troubleshooting
 
