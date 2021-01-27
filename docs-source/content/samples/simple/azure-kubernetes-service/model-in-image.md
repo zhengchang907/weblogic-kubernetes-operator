@@ -17,34 +17,14 @@ description: "Sample for creating a WebLogic cluster on the Azure Kubernetes Ser
  - [Clean up resource](#clean-up-resources)
  - [Troubleshooting](#troubleshooting)
  - [Useful links](#useful-links)
-
-#### Prerequisites
-
-This sample assumes the following prerequisite environment.
-
-* Operating System: GNU/Linux, macOS or [WSL2 for Windows 10](https://docs.microsoft.com/windows/wsl/install-win10).
-* [Git](https://git-scm.com/downloads), use `git --version` to test if `git` works.  This document was tested with version 2.17.1.
-* [Azure CLI](https://docs.microsoft.com/cli/azure), use `az --version` to test if `az` works.  This document was tested with version 2.15.1.
-* [kubectl](https://kubernetes-io-vnext-staging.netlify.com/docs/tasks/tools/install-kubectl/), use `kubectl version` to test if `kubectl` works.  This document was tested with version v1.16.3.
-* [helm](https://helm.sh/docs/intro/install/), version 3.1 and later, use `helm version` to check the `helm` version.  This document was tested with version v3.3.0.
-* [docker](https://docs.docker.com/get-docker/), use `docker version` to test if `docker` works. This document was tested with version 19.03.13.
+ 
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/prerequisites.md" >}}
 
 ##### Create an Azure Kubernetes Service cluster 
 
 {{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body.md" >}}
 
-
-##### Oracle Container Registry
-
-You will need an Oracle Container Registry account. The following steps will direct you to accept the Oracle Standard Terms and Restrictions to pull the WebLogic Server images.  Make note of your Oracle Account password and email.  This sample pertains to 12.2.1.4, but other versions may work as well.
-
-Obtain the WebLogic Server image from the [Oracle Container Registry](https://container-registry.oracle.com/).
-
-  - First time users, [follow these directions](/weblogic-kubernetes-operator/userguide/managing-domains/domain-in-image/base-images/#obtaining-standard-images-from-the-oracle-container-registry).   
-
-##### Install WebLogic Server Kubernetes Operator
-
-The Oracle WebLogic Server Kubernetes Operator is an adapter to integrate WebLogic Server and Kubernetes, allowing Kubernetes to serve as a container infrastructure hosting WLS instances.  The operator runs as a Kubernetes Pod and stands ready to perform actions related to running WLS on Kubernetes.
+##### Clone WebLogic Server Kubernetes Operator repository
 
 Clone the [Oracle WebLogic Server Kubernetes Operator repository](https://github.com/oracle/weblogic-kubernetes-operator) to your machine. We will use several scripts in this repository to create a WebLogic domain. This sample was tested with v3.1.1.
 
@@ -54,6 +34,10 @@ cd weblogic-kubernetes-operator
 #TODO: we have to fix the branch after the source code are merged
 #git checkout v3.1.1
 ```
+
+##### Install WebLogic Server Kubernetes Operator
+
+The Oracle WebLogic Server Kubernetes Operator is an adapter to integrate WebLogic Server and Kubernetes, allowing Kubernetes to serve as a container infrastructure hosting WLS instances.  The operator runs as a Kubernetes Pod and stands ready to perform actions related to running WLS on Kubernetes.
 
 You must have the `cluster-admin` role to install the operator. The operator does not need the `cluster-admin` role at runtime. Grant the Helm service account the cluster-admin role, using this configuration file `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/model-in-image/helm-sa-cluster-admin-role.yaml`.
 

@@ -22,16 +22,7 @@ This sample demonstrates how to use the [Oracle WebLogic Server Kubernetes Opera
  - [Troubleshooting](#troubleshooting) 
  - [Useful links](#useful-links)
 
-#### Prerequisites
-
-This sample assumes the following prerequisite environment setup.
-
-* Operating System: GNU/Linux, macOS or [WSL for Windows 10](https://docs.microsoft.com/windows/wsl/install-win10).
-* [Git](https://git-scm.com/downloads), use `git --version` to test if `git` works.  This document was tested with version 2.17.1.
-* [Azure CLI](https://docs.microsoft.com/cli/azure), use `az --version` to test if `az` works.  This document was tested with version 2.9.1.
-* [Docker for Desktop](https://www.docker.com/products/docker-desktop).  This document was tested with `Docker version 20.10.2, build 2291f61`
-* [kubectl](https://kubernetes-io-vnext-staging.netlify.com/docs/tasks/tools/install-kubectl/), use `kubectl version` to test if `kubectl` works.  This document was tested with version v1.16.3.
-* [helm](https://helm.sh/docs/intro/install/), version 3.1 and later, use `helm version` to check the `helm` version.  This document was tested with version v3.2.4.
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/prerequisites.md" >}}
 
 {{% notice info %}} The following sections of the sample instructions will guide you, step-by-step, through the process of setting up a WebLogic cluster on AKS - remaining as close as possible to a native Kubernetes experience. This lets you understand and customize each step. If you wish to have a more automated experience that abstracts some lower level details, you can skip to the [Automation](#automation) section.
 {{% /notice %}}
@@ -40,7 +31,7 @@ This sample assumes the following prerequisite environment setup.
 
 ##### Clone WebLogic Server Kubernetes Operator repository
 
-Clone the [Oracle WebLogic Server Kubernetes Operator repository](https://github.com/oracle/weblogic-kubernetes-operator) to your machine. We will use several scripts in this repository to create a WebLogic domain. This sample was tested with v3.0.3.
+Clone the [Oracle WebLogic Server Kubernetes Operator repository](https://github.com/oracle/weblogic-kubernetes-operator) to your machine. We will use several scripts in this repository to create a WebLogic domain. This sample was tested with v3.1.1.
 
 ```bash
 $ git clone https://github.com/oracle/weblogic-kubernetes-operator.git
@@ -61,13 +52,13 @@ Kubernetes Operators use [Helm](https://helm.sh/) to manage Kubernetes applicati
 ```bash
 $ helm repo add weblogic-operator https://oracle.github.io/weblogic-kubernetes-operator/charts
 $ helm repo update
-$ helm install weblogic-operator weblogic-operator/weblogic-operator --version "3.0.3"
+$ helm install weblogic-operator weblogic-operator/weblogic-operator --version "3.1.1"
 ```
 
 The output will show something similar to the following:
 
 ```bash
-$ helm install weblogic-operator weblogic-operator/weblogic-operator --version "3.0.3"
+$ helm install weblogic-operator weblogic-operator/weblogic-operator --version "3.1.1"
 NAME: weblogic-operator
 LAST DEPLOYED: Wed Jul  1 23:47:44 2020
 NAMESPACE: default
@@ -76,7 +67,7 @@ REVISION: 1
 TEST SUITE: None
 ```
 
-Verify the operator with the following command; the status will be running.
+Verify the operator with the following command; the status will be `Running`.
 
 ```bash
 $ kubectl get pods -w
