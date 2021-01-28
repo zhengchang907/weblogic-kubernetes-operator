@@ -128,22 +128,6 @@ Successful output will look similar to:
 Merged "wlsaks1596087429" as current context in /home/username/.kube/config
 ```
 
-To verify the connection to your cluster, use the `kubectl get` command to return a list of the cluster nodes.
-
-```bash
-$ kubectl get nodes
-```
-
-Example output:
-
-```bash
-$ kubectl get nodes
-NAME                                STATUS   ROLES   AGE     VERSION
-aks-nodepool1-15992006-vmss000000   Ready    agent   7m49s   v1.15.11
-aks-nodepool1-15992006-vmss000001   Ready    agent   7m32s   v1.15.11
-aks-nodepool1-15992006-vmss000002   Ready    agent   7m52s   v1.15.11
-```
-
 After your Kubernetes cluster is up and running, run the following commands to make sure kubectl can access the Kubernetes cluster:
 
 ```shell
