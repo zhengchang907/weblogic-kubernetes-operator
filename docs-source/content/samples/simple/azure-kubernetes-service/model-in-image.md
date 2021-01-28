@@ -19,6 +19,7 @@ description: "Sample for creating a WebLogic cluster on the Azure Kubernetes Ser
  - [Useful links](#useful-links)
  
 {{< readfile file="/samples/simple/azure-kubernetes-service/includes/prerequisites.md" >}}
+* A Java JDK, Version 8 or 11. Azure recommends [Azul Zulu for Azure](https://www.azul.com/downloads/azure-only/zulu/). Ensure your `JAVA_HOME` environment variable is set correctly in the shells in which you run the commands.
 
 ##### Create an Azure Kubernetes Service cluster 
 
@@ -330,7 +331,7 @@ AKS can pull Docker images from any container registry, but the easiest integrat
 Let's create an instance of ACR in the same resource group we used for AKS. We will use the environment variables used during the steps above.  For simplicity, we use the resource group name as the name of the ACR instance.
 
 ```shell
-$ az acr create --resource-group $AKS_PERS_RESOURCE_GROUP --name $AKS_PERS_RESOURCE_GROUP --sku Basic
+$ az acr create --resource-group $AKS_PERS_RESOURCE_GROUP --name $AKS_PERS_RESOURCE_GROUP --sku Basic --admin-enabled true
 ```
 
 Closely examine the JSON output from this command. Save the value of the `loginServer` property aside. It will look something like the following.
@@ -491,8 +492,8 @@ Modify the Domain YAML with your values.
 
 | Name in YAML file | Example value | Notes |
 |-------------------|---------------|-------|
-|`spec.image`|`<YOUR DOCKER_REPO_PATH>/model-in-image:WLS-v1`|Must be the same as the value to which you pushed the image to by running the command `docker push $AKS_PERS_ACR/$AKS_PERS_ACR:model-in-image-aks`|
-|`spec.imagePullSecretNames.name`|`regsecret`|Make sure its value is the same value with `${SECRET_NAME_DOCKER}`|
+|`spec.image`|`<YOUR DOCKER_REPO_PATH>/$AKS_PERS_ACR/$AKS_PERS_ACR:model-in-image-aks`|Must be the same as the value to which you pushed the image to by running the command `docker push $AKS_PERS_ACR/$AKS_PERS_ACR:model-in-image-aks`|
+|`spec.imagePullSecrets.name`|`regsecret`|Make sure its value is the same value with `${SECRET_NAME_DOCKER}`|
 
 Run the following command to create the domain custom resource:
 
