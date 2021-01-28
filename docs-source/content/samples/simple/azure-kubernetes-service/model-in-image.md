@@ -469,7 +469,7 @@ $ export AKS_PERS_ACR_PASSWORD=<the-password-from-your-output>
 Use the `create-docker-credentials-secret.sh` script to store the ACR credentials as a Kubernetes secret.
 
 ```shell
-$ cd kubernetes/samples/scripts/create-kuberetes-secrets
+# cd kubernetes/samples/scripts/create-kuberetes-secrets
 $ export SECRET_NAME_DOCKER="regsecret"
 $ ./create-docker-credentials-secret.sh -s ${SECRET_NAME_DOCKER} -e $AKS_PERS_RESOURCE_GROUP -p $AKS_PERS_ACR_PASSWORD -u $AKS_PERS_RESOURCE_GROUP -d $AKS_PERS_ACR -n sample-domain1-ns
 secret/regsecret created
