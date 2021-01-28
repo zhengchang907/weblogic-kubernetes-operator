@@ -361,6 +361,10 @@ Finally, connect AKS to the ACR.  For more details on connecting ACR to an exist
 $ az aks update --name $AKS_CLUSTER_NAME --resource-group $AKS_PERS_RESOURCE_GROUP --attach-acr $AKS_PERS_RESOURCE_GROUP
 ```
 
+If you see an error that seems related to you not being an **Owner on this subscription**, please refer to the troubleshooting section [Cannot attach ACR due to not being Owner of subscription]({{< relref "/samples/simple/azure-kubernetes-service/troubleshooting#cannot-attach-acr-due-to-not-being-owner-of-subscription" >}}).
+
+
+
 #### Create WebLogic domain
 
 In this section, you will deploy the new image to namespace `sample-domain1-ns`, including the following steps:

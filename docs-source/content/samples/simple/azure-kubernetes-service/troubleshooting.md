@@ -14,6 +14,7 @@ description: "Troubleshooting."
    - [System pods are pending](#the-aks-cluster-system-pods-are-pending)
    - [WebLogic Kubernetes Operator ErrImagePull](#fail-to-pull-the-operator-image)
 - [WSL2 bad timestamp](#wsl2-bad-timestamp)
+- [Cannot attach ACR due to not being Owner of subscription](#cannot-attach-acr-due-to-not-being-owner-of-subscription)
 
 #### Get pod error details
 
@@ -261,3 +262,28 @@ kube-system                   omsagent-rcmgr                              1/1   
 kube-system                   omsagent-rs-787ff54d9d-w7tp5                1/1     Running   0          3h44m
 kube-system                   tunnelfront-794845c84b-v9f98                1/1     Running   0          3h44m
 ```
+
+#### Cannot attach ACR due to not being Owner of subscription
+
+If you're unable to create an ACR and you're using a Service Principal, you can use manual Role Assignments to grant access to the ACR as described in [Azure Container Registry authentication with service principals](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-service-principal).
+    
+First, find the `objectId` of the Service Principal used when the AKS cluster was created. You will need the output from `az ad sp create-for-rbac`, which you were directed to save to a file.  Within the output, you need the value of the `name` property. It will start with `http`.  Get the `objectId` with this command.
+
+```bash
+$ az ad sp show --id http://<your-name-from-the-saved-output> | grep objectId
+"objectId": "nror4p30-qnoq-4129-o89r-p60n71805npp",
+```
+
+Next, assign the `acrpull` role to that Service Principal with this command.
+
+```bash
+$ az role assignment create --assignee-object-id <your-objectId-from-above> --scope $AKS_PERS_RESOURCE_GROUP --role acrpull
+{
+  "canDelegate": null,
+  "condition": null,
+...
+  "type": "Microsoft.Authorization/roleAssignments"
+}
+```
+
+Once you do this, re-try the command that gave the error.
