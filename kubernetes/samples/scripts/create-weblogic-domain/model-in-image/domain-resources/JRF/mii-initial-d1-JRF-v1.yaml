@@ -93,7 +93,7 @@ spec:
       - name: USER_MEM_ARGS
         value: "-Djava.security.egd=file:/dev/./urandom -Xms512m -Xmx1024m "
    
-  # The number of managed servers to start for unlisted clusters
+  # The number of admin servers to start for unlisted clusters
   replicas: 1
 
   # The desired behavior for starting a specific cluster's member servers
@@ -115,6 +115,7 @@ spec:
                       values:
                         - $(CLUSTER_NAME)
                 topologyKey: "kubernetes.io/hostname"
+    # The number of managed servers to start for unlisted clusters
     replicas: 2
 
   # Change the restartVersion to force the introspector job to rerun
