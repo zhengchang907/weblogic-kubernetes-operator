@@ -613,7 +613,7 @@ $ kubectl  apply -f cluster-lb.yaml
 service/sample-domain1-cluster-1-external-lb created
 ```
 
-Get the addresses of the Administration Server and Managed Servers (please wait for the external IP addresses to be assigned):
+Get the external IP addresses of the administration server and cluster load balancers (please wait for the external IP addresses to be assigned):
 
 ```bash
 $ kubectl get svc -n sample-domain1-ns --watch
@@ -762,12 +762,12 @@ Events:             <none>
 
 ##### Access the application
 
-Access the Administration Console using the load balancer IP address, `http://52.191.234.149:7001/console`
+Access the Administration Console using the admin load balancer IP address, `http://52.191.234.149:7001/console`
 
-Access the sample application.
+Access the sample application using the cluster load balancer IP address.
 
 ```bash
-## Access the sample application using the load balancer IP (52.191.235.71)
+## Access the sample application using the cluster load balancer IP (52.191.235.71)
 $ curl http://52.191.235.71:8001/myapp_war/index.jsp
 
 <html><body><pre>
