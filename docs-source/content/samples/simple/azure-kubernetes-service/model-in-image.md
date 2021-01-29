@@ -20,6 +20,7 @@ description: "Sample for creating a WebLogic cluster on the Azure Kubernetes Ser
  
 {{< readfile file="/samples/simple/azure-kubernetes-service/includes/prerequisites.md" >}}
 * A Java JDK, Version 8 or 11. Azure recommends [Azul Zulu for Azure](https://www.azul.com/downloads/azure-only/zulu/). Ensure your `JAVA_HOME` environment variable is set correctly in the shells in which you run the commands.
+* Ensure you have the zip utility installed.
 
 ##### Create an Azure Kubernetes Service cluster 
 
