@@ -24,10 +24,7 @@ This sample demonstrates how to use the [Oracle WebLogic Server Kubernetes Opera
 
 {{< readfile file="/samples/simple/azure-kubernetes-service/includes/prerequisites.md" >}}
 
-{{% notice info %}} The following sections of the sample instructions will guide you, step-by-step, through the process of setting up a WebLogic cluster on AKS - remaining as close as possible to a native Kubernetes experience. This lets you understand and customize each step. If you wish to have a more automated experience that abstracts some lower level details, you can skip to the [Automation](#automation) section.
-{{% /notice %}}
-
-{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body.md" >}}
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body-01.md" >}}
 
 ##### Clone WebLogic Server Kubernetes Operator repository
 
@@ -40,10 +37,15 @@ $ git clone https://github.com/oracle/weblogic-kubernetes-operator.git
 #git checkout v3.1.1
 ```
 
+{{% notice info %}} The following sections of the sample instructions will guide you, step-by-step, through the process of setting up a WebLogic cluster on AKS - remaining as close as possible to a native Kubernetes experience. This lets you understand and customize each step. If you wish to have a more automated experience that abstracts some lower level details, you can skip to the [Automation](#automation) section.
+{{% /notice %}}
+
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body-02.md" >}}
+
 {{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-storage.md" >}}
 
 
-#### Install WebLogic Server Kubernetes Operator
+#### Install WebLogic Server Kubernetes Operator into the AKS cluster
 
 The Oracle WebLogic Server Kubernetes Operator is an adapter to integrate WebLogic Server and Kubernetes, allowing Kubernetes to serve as a container infrastructure hosting WLS instances.  The operator runs as a Kubernetes Pod and stands ready to perform actions related to running WLS on Kubernetes.
 
@@ -170,7 +172,7 @@ We need to set up the domain configuration for the WebLogic domain.
      Persistent Volume Claim: wls-azurefile
    ```
 
-2. Follow [Domain home on a PV - Use the script to create a domain]({{< relref "/samples/simple/domains/domain-home-on-pv#use-the-script-to-create-a-domain" >}}) to create the WebLogic domain home within the AKS cluster.
+2. Now let's ask the operator to create a WebLogic Server domain within the AKS cluster. The process to ask the operator to create a WLS domain involves customizing a domain creation inputs YAML file and then following some additional instructions.
 
    The domain creation inputs can be customized by editing input file. We provided sample input values in `kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/domain-on-pv/create-domain-inputs.yaml`.
 
@@ -187,7 +189,11 @@ We need to set up the domain configuration for the WebLogic domain.
    #cd kubernetes/samples/scripts/create-weblogic-domain-on-azure-kubernetes-service/domain-on-pv
    $ if [ ! -d ~/azure/weblogic-on-aks ]; then mkdir ~/azure/weblogic-on-aks; fi
    $ cp create-domain-inputs.yaml ~/azure/weblogic-on-aks/my-create-domain-inputs.yaml
+   ```
+   
+   For complete details on domain creation, see [Domain home on a PV - Use the script to create a domain]({{< relref "/samples/simple/domains/domain-home-on-pv#use-the-script-to-create-a-domain" >}}).  If you do not want the complete details and just want to continue with the domain creation for AKS, invoke the `create-domain.sh` script as shown next.
 
+   ```bash
    #cd kubernetes/samples/scripts/create-weblogic-domain/domain-home-on-pv
    $ ./create-domain.sh -i ~/azure/weblogic-on-aks/my-create-domain-inputs.yaml -o ~/azure -e -v
    ```
@@ -465,9 +471,9 @@ For input values, you can edit `kubernetes/samples/scripts/create-weblogic-domai
 
 | Name in YAML file | Example value | Notes |
 |-------------------|---------------|-------|
-| `azureServicePrincipalAppId` | `nr086o75-pn59-4782-no5n-nq2op0rsr1q6` | Application ID of your service principal, refer to the application ID in the [Create Service Principal]("#create-service-principal-for-aks") section. |
-| `azureServicePrincipalClientSecret` | `8693089o-q190-45ps-9319-or36252s3s90` | A client secret of your service principal, refer to the client secret in the [Create Service Principal]("#create-service-principal-for-aks") section. |
-| `azureServicePrincipalTenantId` | `72s988os-86s1-cafe-babe-2q7pq011qo47` | Tenant (Directory ) ID of your service principal, refer to the client secret in the [Create Service Principal]("#create-service-principal-for-aks") section. |
+| `azureServicePrincipalAppId` | `nr086o75-pn59-4782-no5n-nq2op0rsr1q6` | Application ID of your service principal, refer to the application ID in the [Create Service Principal]({{< relref "/samples/simple/azure-kubernetes-service/domain-on-pv#create-a-service-principal-for-aks" >}}) section. |
+| `azureServicePrincipalClientSecret` | `8693089o-q190-45ps-9319-or36252s3s90` | A client secret of your service principal, refer to the client secret in the [Create Service Principal]({{< relref "/samples/simple/azure-kubernetes-service/domain-on-pv#create-a-service-principal-for-aks" >}}) section. |
+| `azureServicePrincipalTenantId` | `72s988os-86s1-cafe-babe-2q7pq011qo47` | Tenant (Directory ) ID of your service principal, refer to the client secret in the [Create Service Principal]({{< relref "/samples/simple/azure-kubernetes-service/domain-on-pv#create-a-service-principal-for-aks" >}}) section. |
 | `dockerEmail` | `yourDockerEmail` | Oracle Single Sign-On (SSO) account email, used to pull the WebLogic Server Docker image. |
 | `dockerPassword` | `yourDockerPassword`| Password for Oracle SSO account, used to pull the WebLogic Server Docker image.  In clear text. |
 | `dockerUserName` | `yourDockerId` | The same value as `dockerEmail`.  |

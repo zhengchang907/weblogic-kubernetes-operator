@@ -24,9 +24,9 @@ This sample demonstrates how to use the [Oracle WebLogic Server Kubernetes Opera
 * A Java JDK, Version 8 or 11. Azure recommends [Azul Zulu for Azure](https://www.azul.com/downloads/azure-only/zulu/). Ensure your `JAVA_HOME` environment variable is set correctly in the shells in which you run the commands.
 * Ensure you have the zip/unzip utility installed, use `zip/unzip -v` to test if `zip/unzip` works.
 
-##### Create an Azure Kubernetes Service cluster 
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body-01.md" >}}
 
-{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body.md" >}}
+{{< readfile file="/samples/simple/azure-kubernetes-service/includes/create-aks-cluster-body-02.md" >}}
 
 ##### Clone WebLogic Server Kubernetes Operator repository
 
