@@ -5,6 +5,8 @@ weight: 3
 description: "Sample for creating a WebLogic cluster on the Azure Kubernetes Service with model in image approache."
 ---
 
+This sample demonstrates how to use the [Oracle WebLogic Server Kubernetes Operator](/weblogic-kubernetes-operator/) (hereafter "the operator") to set up a WebLogic Server (WLS) cluster on the Azure Kubernetes Service (AKS) using the model in image approach. After going through the steps, your WLS domain runs on an AKS cluster instance and you can manage your WLS domain by accessing the WebLogic Server Administration Console.
+
 #### Contents
 
  - [Prerequisites](#prerequisites)
