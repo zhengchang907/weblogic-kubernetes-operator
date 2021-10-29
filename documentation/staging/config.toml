@@ -1,7 +1,7 @@
 # analytics
 googleAnalytics = "UA-129126578-2"
 
-baseURL = "/"
+baseURL = "/weblogic-kubernetes-operator/"
 languageCode = "en-us"
 title = "WebLogic Kubernetes Operator"
 
